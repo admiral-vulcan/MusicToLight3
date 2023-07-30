@@ -101,7 +101,7 @@ def color_wipe(color, wait_ms=50):
         strip.show()
 
 
-def color_flow(pos, audio_input):
+def color_flow(pos, audio_input, reduce=2):
     """Draw a color flow that moves across display."""
     recent_audio_inputs.append(audio_input)
     mean_vol = np.mean(recent_audio_inputs)
@@ -111,20 +111,20 @@ def color_flow(pos, audio_input):
         # tricky math! we use each pixel as a fraction of the full 96-color wheel
         # (strip.numPixels() steps) % 96 to make the wheel progress
         wheel_pos = ((i * 256 // strip.numPixels()) + pos) % 256
-        r, b = wheel(wheel_pos)
+        r, b = wheel(wheel_pos, reduce)
         r = int(r * 50 * mean_vol)
         b = int(b * 50 * mean_vol)
         strip.setPixelColor(i, Color(r, 0, b))
     strip.show()
 
 
-def wheel(pos):
+def wheel(pos, reduce=2):
     """Generate color spectrum across 0-255 positions."""
     if pos < 128:
-        return (pos * 2) // 2, (255 - pos * 2) // 2  # divide by 2 for reduced brightness
+        return (pos * 2) // reduce, (255 - pos * 2) // reduce  # divide by 4 for reduced brightness
     else:
         pos -= 128
-        return (255 - pos * 2) // 2, (pos * 2) // 2  # divide by 2 for reduced brightness
+        return (255 - pos * 2) // reduce, (pos * 2) // reduce  # divide by 4 for reduced brightness
 
 
 # Rot einfärben

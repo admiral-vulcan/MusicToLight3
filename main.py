@@ -1,11 +1,13 @@
 import pyaudio
 import collections
+import time
 import math
 import numpy as np
 import aubio
 from scipy.signal import ellip, sosfilt, sos2zpk, lfilter_zi
 from aud_proc import *
 from eurolite_t36 import *
+from scanner import *
 from led_strip import *
 
 # Filter-Einstellungen
@@ -78,6 +80,8 @@ runtime_mb = 0
 previous_heavy = True
 
 # initialise devices
+scan_reset(1)
+scan_reset(2)
 set_eurolite_t36(5, 0, 0, 0, 0, 0)
 set_eurolite_t36(5, 0, 0, 0, 255, 0)
 color_wipe(Color(0, 0, 0), 0)
@@ -85,6 +89,8 @@ print("Listening... Press Ctrl+C to stop.")
 
 try:
     while True:
+        scan_opened(2)
+        run_in_thread(scan_color, (2, runtime_bit))
 
         runtime_bit += 1
 
@@ -250,6 +256,7 @@ try:
                     pitches.clear()
                     drop_history.clear()
                     heaviness_history.clear()
+                    color_flow(runtime_bit, np.max(signal_input), 20)  # last arg is brightness divider
                     print("** no input **")
 
 except KeyboardInterrupt:
