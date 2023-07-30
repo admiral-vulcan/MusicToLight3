@@ -59,24 +59,29 @@ def music_visualizer(audio_input):
     else:
         to_mean_factor = 1
 
-    # audio_input *= to_max_factor
-
     # Convert audio input to an integer in the range 0 to strip.numPixels() / 2
     num_leds = int(to_mean_factor * audio_input * (strip.numPixels() // 2))
     num_leds = exponential_decrease(num_leds, 128)
-    # print(num_leds)
 
     mid_point = strip.numPixels() // 2
 
+    # Cap mean_vol at 1
+    mean_vol = min(mean_vol, 1)
+
     # Visualize the audio energy on the LED strip
     for i in range(strip.numPixels()):
+        # Calculate the distance from the mid point in range [0, 1]
+        distance_from_mid = abs(i - mid_point) / (strip.numPixels() / 2)
+        distance_from_mid = min(distance_from_mid, 1)  # Ensure distance_from_mid is not more than 1
+        # Exponential increase in red color as we move away from the center
+        red = int((distance_from_mid ** 2) * mean_vol * 255)
+        red = min(red, 255)  # Ensure red is not more than 255
+        # Exponential decrease in blue color as we move away from the center
+        blue = int(((1 - distance_from_mid) ** 2) * mean_vol * 255)
+        blue = min(blue, 255)  # Ensure blue is not more than 255
+        # print(f"mean_vol: {mean_vol}, distance_from_mid: {distance_from_mid}, red: {red}, blue: {blue}")
         if mid_point - num_leds <= i <= mid_point + num_leds:
-            # Set the color of lit LEDs based on the audio energy
-            # feel free to adjust colors and the color scaling
-            red = int(exponential_decrease(mean_vol * 255, 255))
-            green = int(exponential_decrease(mean_vol * 255, 255))
-            blue = int(exponential_decrease(mean_vol * 255, 255))
-            strip.setPixelColor(i, Color(red, green, blue))
+            strip.setPixelColor(i, Color(red, 0, blue))
         else:
             # Turn off the rest of the LEDs
             strip.setPixelColor(i, Color(0, 0, 0))
@@ -94,6 +99,32 @@ def color_wipe(color, wait_ms=50):
             time.sleep(wait_ms / 1000.0)
     if wait_ms == 0:
         strip.show()
+
+
+def color_flow(pos, audio_input):
+    """Draw a color flow that moves across display."""
+    recent_audio_inputs.append(audio_input)
+    mean_vol = np.mean(recent_audio_inputs)
+    # print(mean_vol)
+
+    for i in range(strip.numPixels()):
+        # tricky math! we use each pixel as a fraction of the full 96-color wheel
+        # (strip.numPixels() steps) % 96 to make the wheel progress
+        wheel_pos = ((i * 256 // strip.numPixels()) + pos) % 256
+        r, b = wheel(wheel_pos)
+        r = int(r * 50 * mean_vol)
+        b = int(b * 50 * mean_vol)
+        strip.setPixelColor(i, Color(r, 0, b))
+    strip.show()
+
+
+def wheel(pos):
+    """Generate color spectrum across 0-255 positions."""
+    if pos < 128:
+        return (pos * 2) // 2, (255 - pos * 2) // 2  # divide by 2 for reduced brightness
+    else:
+        pos -= 128
+        return (255 - pos * 2) // 2, (pos * 2) // 2  # divide by 2 for reduced brightness
 
 
 # Rot einfärben

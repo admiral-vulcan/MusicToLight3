@@ -70,6 +70,11 @@ pitches = collections.deque(maxlen=average_samples)
 
 done_chase = deque(maxlen=int(250))  # adjust as needed
 
+runtime_bit = 0
+runtime_byte = 0
+runtime_kb = 0
+runtime_mb = 0
+
 previous_heavy = True
 
 # initialise devices
@@ -80,6 +85,23 @@ print("Listening... Press Ctrl+C to stop.")
 
 try:
     while True:
+
+        runtime_bit += 1
+
+        if runtime_bit > 255:
+            runtime_bit = 0
+            runtime_byte += 1
+
+        if runtime_byte > 1024:
+            runtime_byte = 0
+            runtime_kb += 1
+
+        if runtime_kb > 1024:
+            runtime_kb = 0
+            runtime_mb += 1
+
+        # print(runtime_mb, runtime_kb, runtime_byte, runtime_bit)
+
         audiobuffer = line_in.read(int(buffer_size / 2), exception_on_overflow=False)
         signal_input = np.frombuffer(audiobuffer, dtype=np.float32)
 
@@ -157,7 +179,7 @@ try:
         if red > 255:
             red = 255
 
-        print(red)
+        # print(red)
 
         # theater_chase(Color(127, 127, 127), 50)
 
@@ -166,17 +188,18 @@ try:
         if heavy:
 
             music_visualizer(np.max(signal_input))
+            # color_flow(runtime_bit, np.max(signal_input))
             drop = False
             # Überprüfen, ob ein Beat erkannt wurde
             if is_beat:
                 drop_history.clear()
                 # print("**************************************************************")
-                # print("*************************** Beat! ****************************")
+                print("*************************** Beat! ****************************")
                 # print("**************************************************************")
                 set_eurolite_t36(5, 255, 0, 50, 255, 0)
             else:
                 # print("**************************************************************")
-                # print("*************************** Heavy! ***************************")
+                print("*************************** Heavy! ***************************")
                 # print("**************************************************************")
                 set_eurolite_t36(5, red, 0, 255, 255, 0)
 
@@ -186,21 +209,24 @@ try:
 
             if np.max(signal_input) > 0.007:
                 input_history.append(1.0)
-                # if not heavy and not drop:
-                #     print("** ? **", np.max(signal_input))
+                if not heavy and not drop:
+                    color_flow(runtime_bit, np.max(signal_input))
+                    print("** ? **", np.max(signal_input))
 
                 if 0 < sum(drop_history) < 128 and drop:
-                    color_wipe(Color(0, 0, 0), 0)
+                    # color_wipe(Color(0, 0, 0), 0)
                     # print("**************************************************************")
-                    # print("*********************** Drop detected. ***********************")
+                    print("*********************** Drop detected. ***********************")
                     # print("**************************************************************")
+                    color_flow(runtime_bit, np.max(signal_input))
                     set_eurolite_t36(5, invert(sum(drop_history)-128, 256), 0, 100, 255, 0)
 
                 if 128 <= sum(drop_history) < 256 and drop:
-                    color_wipe(Color(0, 0, 0), 0)
+                    # color_wipe(Color(0, 0, 0), 0)
                     # print("**************************************************************")
-                    # print("*********************** Drop rises... ************************")
+                    print("*********************** Drop rises... ************************")
                     # print("**************************************************************")
+                    color_flow(runtime_bit, np.max(signal_input))
                     set_eurolite_t36(5, 0, 0, invert(sum(drop_history), 256), 255, 0)
 
                 if sum(drop_history) >= 256 and drop:
@@ -210,7 +236,7 @@ try:
                         theater_chase(Color(127, 127, 127), 50)
                     done_chase.append(1)
                     # print("**************************************************************")
-                    # print("********************** Drop persistent! **********************")
+                    print("********************** Drop persistent! **********************")
                     # print("**************************************************************")
             else:
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
@@ -224,7 +250,7 @@ try:
                     pitches.clear()
                     drop_history.clear()
                     heaviness_history.clear()
-                    print("** no input **", np.max(signal_input))
+                    print("** no input **")
 
 except KeyboardInterrupt:
     color_wipe(Color(0, 0, 0), 0)
