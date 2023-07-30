@@ -1,0 +1,234 @@
+import pyaudio
+import collections
+import math
+import numpy as np
+import aubio
+from scipy.signal import ellip, sosfilt, sos2zpk, lfilter_zi
+from aud_proc import *
+from eurolite_t36 import *
+from led_strip import *
+
+# Filter-Einstellungen
+thx_band = (1, 120)
+low_band = (1, 300)
+mid_band = (300, 2000)
+high_band = (2000, 16000)
+
+# PyAudio Konfiguration
+buffer_size = 4096
+hop_size = buffer_size // 2
+pyaudio_format = pyaudio.paFloat32
+n_channels = 1
+samplerate = 44100
+
+# Create a new pitch detection object
+pDetection = aubio.pitch("default", buffer_size, hop_size, samplerate)
+pDetection.set_unit("Hz")  # We want the result as frequency in Hz
+pDetection.set_tolerance(0.8)
+
+# Erstellen Sie Aubio-Beat-Detection-Objekt
+aubio_onset = aubio.onset("complex", buffer_size, hop_size, samplerate)
+
+# Design the elliptic filter
+thx_sos, thx_zi = design_filter(thx_band[0], thx_band[1], samplerate)
+low_sos, low_zi = design_filter(low_band[0], low_band[1], samplerate)
+mid_sos, mid_zi = design_filter(mid_band[0], mid_band[1], samplerate)
+high_sos, high_zi = design_filter(high_band[0], high_band[1], samplerate)
+# PyAudio Objekt
+p = pyaudio.PyAudio()
+line_in = p.open(format=pyaudio_format,
+                 channels=n_channels,
+                 rate=samplerate,
+                 input=True,
+                 frames_per_buffer=buffer_size)
+
+# Setzen Sie die Anzahl der Proben für die Durchschnittsberechnung
+average_samples = int(5 * samplerate / buffer_size)  # average over ~5 seconds
+average_heavy_samples = int(samplerate / buffer_size)  # average over ~1 second
+
+# Initialisieren Sie eine deque (double-ended queue) mit einer festen Länge
+volumes = collections.deque(maxlen=average_samples)
+heavyvols = collections.deque(maxlen=20)
+max_values = collections.deque(maxlen=20)  # store the maximum values for ~2 seconds
+heaviness_values = collections.deque(maxlen=average_samples)  # Sammeln der Heaviness-Werte
+
+low_volumes = collections.deque(maxlen=average_samples)
+mid_volumes = collections.deque(maxlen=average_samples)
+high_volumes = collections.deque(maxlen=average_samples)
+
+# Initialisieren Sie last_counts, previous_count_over und heavy_counter vor der Schleife
+last_counts = collections.deque(maxlen=5)
+previous_count_over = 0
+heavy_counter = 0
+delta_values = collections.deque(maxlen=20)
+
+dominant_frequencies = collections.deque(maxlen=average_samples)
+heaviness_history = collections.deque(maxlen=average_samples)
+drop_history = collections.deque(maxlen=512)
+input_history = collections.deque(maxlen=average_samples)
+pitches = collections.deque(maxlen=average_samples)
+
+done_chase = deque(maxlen=int(250))  # adjust as needed
+
+previous_heavy = True
+
+# initialise devices
+set_eurolite_t36(5, 0, 0, 0, 0, 0)
+set_eurolite_t36(5, 0, 0, 0, 255, 0)
+color_wipe(Color(0, 0, 0), 0)
+print("Listening... Press Ctrl+C to stop.")
+
+try:
+    while True:
+        audiobuffer = line_in.read(int(buffer_size / 2), exception_on_overflow=False)
+        signal_input = np.frombuffer(audiobuffer, dtype=np.float32)
+
+        # Adjust gain
+        signal, gain_factor = adjust_gain(volumes, signal_input)
+
+        # Calculate the volume of the current signal
+        volume = np.sqrt(np.mean(signal ** 2))
+        # Add the current volume to the list of previous volumes
+        volumes.append(volume)
+
+        # apply low frequency filter to signal
+        low_signal, low_zi = sosfilt(low_sos, signal, zi=low_zi)
+        low_volume = np.sqrt(np.mean(low_signal ** 2))
+        low_volumes.append(low_volume)
+
+        # apply mid frequency filter to signal
+        mid_signal, mid_zi = sosfilt(mid_sos, signal, zi=mid_zi)
+        mid_volume = np.sqrt(np.mean(mid_signal ** 2))
+        mid_volumes.append(mid_volume)
+
+        # apply high frequency filter to signal
+        high_signal, high_zi = sosfilt(high_sos, signal, zi=high_zi)
+        high_volume = np.sqrt(np.mean(high_signal ** 2))
+        high_volumes.append(high_volume)
+
+        # Calculate energies
+        energy = np.sum(signal ** 2)
+        db_energy = 10 * np.log10(energy)
+        relative_energy = energy / len(signal)
+        db_relative_energy = 10 * np.log10(relative_energy)
+
+        thx_signal, zi = sosfilt(thx_sos, signal, zi=thx_zi)  # Apply the filter with the previous final state
+        thx_signal = thx_signal.astype(np.float32)
+
+        heavyvols.append(np.max(thx_signal))
+        heavyvol = np.mean(heavyvols)
+        max_value = np.max(thx_signal)
+        min_value = np.min(thx_signal)
+        delta_value = max_value - min_value
+        max_values.append(max_value)
+        delta_values.append(delta_value)
+        count_over = sum(1 for value in max_values if value > 0.08)
+        last_counts.append(count_over)
+
+        # Check if signal is heavy
+        heavy, heavy_counter = is_heavy(signal, delta_values, count_over, max_values, last_counts, heavy_counter)
+        heaviness = calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter)
+        heaviness_values.append(heaviness)  # Sammeln der aktuellen Heaviness-Werte
+
+        dominant_freq = dominant_frequency(signal, samplerate)
+        dominant_frequencies.append(dominant_freq)
+        heaviness_history.append(heavy)
+
+        drop = detect_drop(np.mean(volumes), heavy, dominant_frequencies, heaviness_history, drop_history)
+        drop_history.append(drop)
+
+        previous_heavy = heavy
+
+        # Beat erkennen
+        is_beat = aubio_onset(thx_signal)
+
+        pitch = get_pitch(audiobuffer, pDetection)
+        pitches.append(pitch)
+        # print("Detected pitch: %.2f Hz" % pitch)
+        # dynamic = calculate_dynamics(low_volumes, mid_volumes, high_volumes)
+        # print(dynamic)
+        category = categorize_song(np.max(signal_input), low_volumes, mid_volumes, high_volumes, pitches)
+        # print(category)
+
+        # Speichern Sie count_over für die nächste Iteration
+        previous_count_over = count_over
+
+        red = int(energy*10)
+        if red > 255:
+            red = 255
+
+        print(red)
+
+        # theater_chase(Color(127, 127, 127), 50)
+
+        done_chase.append(0)
+
+        if heavy:
+
+            music_visualizer(np.max(signal_input))
+            drop = False
+            # Überprüfen, ob ein Beat erkannt wurde
+            if is_beat:
+                drop_history.clear()
+                # print("**************************************************************")
+                # print("*************************** Beat! ****************************")
+                # print("**************************************************************")
+                set_eurolite_t36(5, 255, 0, 50, 255, 0)
+            else:
+                # print("**************************************************************")
+                # print("*************************** Heavy! ***************************")
+                # print("**************************************************************")
+                set_eurolite_t36(5, red, 0, 255, 255, 0)
+
+            if heavy_counter > 0:
+                heavy_counter -= 1  # Reduzieren Sie heavy_counter um 1
+        else:
+
+            if np.max(signal_input) > 0.007:
+                input_history.append(1.0)
+                # if not heavy and not drop:
+                #     print("** ? **", np.max(signal_input))
+
+                if 0 < sum(drop_history) < 128 and drop:
+                    color_wipe(Color(0, 0, 0), 0)
+                    # print("**************************************************************")
+                    # print("*********************** Drop detected. ***********************")
+                    # print("**************************************************************")
+                    set_eurolite_t36(5, invert(sum(drop_history)-128, 256), 0, 100, 255, 0)
+
+                if 128 <= sum(drop_history) < 256 and drop:
+                    color_wipe(Color(0, 0, 0), 0)
+                    # print("**************************************************************")
+                    # print("*********************** Drop rises... ************************")
+                    # print("**************************************************************")
+                    set_eurolite_t36(5, 0, 0, invert(sum(drop_history), 256), 255, 0)
+
+                if sum(drop_history) >= 256 and drop:
+                    heaviness_history.clear()
+                    if 1 not in done_chase:
+                        set_eurolite_t36(5, 0, 0, 0, 255, 0)
+                        theater_chase(Color(127, 127, 127), 50)
+                    done_chase.append(1)
+                    # print("**************************************************************")
+                    # print("********************** Drop persistent! **********************")
+                    # print("**************************************************************")
+            else:
+                set_eurolite_t36(5, 0, 0, 0, 255, 0)
+                input_history.append(0.0)
+                if np.mean(input_history) < 0.5:
+                    drop = False
+                    heavy = False
+                    low_volumes.clear()
+                    mid_volumes.clear()
+                    high_volumes.clear()
+                    pitches.clear()
+                    drop_history.clear()
+                    heaviness_history.clear()
+                    print("** no input **", np.max(signal_input))
+
+except KeyboardInterrupt:
+    color_wipe(Color(0, 0, 0), 0)
+    set_eurolite_t36(5, 0, 0, 0, 0, 0)
+    line_in.close()
+    p.terminate()
+    print("\nStop.")
