@@ -24,6 +24,7 @@ from eurolite_t36 import *
 from scanner import *
 from led_strip import *
 
+
 # Filter-Einstellungen
 thx_band = (1, 120)
 low_band = (1, 300)
@@ -35,32 +36,34 @@ buffer_size = 4096
 hop_size = buffer_size // 2
 pyaudio_format = pyaudio.paFloat32
 n_channels = 1
-samplerate = 44100
+sample_rate = 44100
+device_index = 0
 
 # Create a new pitch detection object
-pDetection = aubio.pitch("default", buffer_size, hop_size, samplerate)
+pDetection = aubio.pitch("default", buffer_size, hop_size, sample_rate)
 pDetection.set_unit("Hz")  # We want the result as frequency in Hz
 pDetection.set_tolerance(0.8)
 
 # Erstellen Sie Aubio-Beat-Detection-Objekt
-aubio_onset = aubio.onset("complex", buffer_size, hop_size, samplerate)
+aubio_onset = aubio.onset("complex", buffer_size, hop_size, sample_rate)
 
 # Design the elliptic filter
-thx_sos, thx_zi = design_filter(thx_band[0], thx_band[1], samplerate)
-low_sos, low_zi = design_filter(low_band[0], low_band[1], samplerate)
-mid_sos, mid_zi = design_filter(mid_band[0], mid_band[1], samplerate)
-high_sos, high_zi = design_filter(high_band[0], high_band[1], samplerate)
+thx_sos, thx_zi = design_filter(thx_band[0], thx_band[1], sample_rate)
+low_sos, low_zi = design_filter(low_band[0], low_band[1], sample_rate)
+mid_sos, mid_zi = design_filter(mid_band[0], mid_band[1], sample_rate)
+high_sos, high_zi = design_filter(high_band[0], high_band[1], sample_rate)
 # PyAudio Objekt
 p = pyaudio.PyAudio()
 line_in = p.open(format=pyaudio_format,
                  channels=n_channels,
-                 rate=samplerate,
+                 rate=sample_rate,
                  input=True,
+                 input_device_index=device_index,
                  frames_per_buffer=buffer_size)
 
 # Setzen Sie die Anzahl der Proben für die Durchschnittsberechnung
-average_samples = int(5 * samplerate / buffer_size)  # average over ~5 seconds
-average_heavy_samples = int(samplerate / buffer_size)  # average over ~1 second
+average_samples = int(5 * sample_rate / buffer_size)  # average over ~5 seconds
+average_heavy_samples = int(sample_rate / buffer_size)  # average over ~1 second
 
 # Initialisieren Sie eine deque (double-ended queue) mit einer festen Länge
 volumes = collections.deque(maxlen=average_samples)
@@ -179,7 +182,7 @@ try:
         heaviness = calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter)
         heaviness_values.append(heaviness)  # Sammeln der aktuellen Heaviness-Werte
 
-        dominant_freq = dominant_frequency(signal, samplerate)
+        dominant_freq = dominant_frequency(signal, sample_rate)
         dominant_frequencies.append(dominant_freq)
         heaviness_history.append(heavy)
 

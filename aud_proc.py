@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
+import os
 import pyaudio
 import collections
 import math
@@ -19,6 +21,8 @@ import numpy as np
 import aubio
 from scipy.signal import ellip, sosfilt, sos2zpk, lfilter_zi
 from helpers import *
+
+os.environ['ALSA_LOG_LEVEL'] = 'error'
 
 
 def get_second_highest(values):
@@ -51,8 +55,8 @@ def adjust_gain(volumes, signal, target_volume=0.1, max_gain=5):
     return signal * gain_factor, gain_factor
 
 
-def design_filter(lowcut, highcut, samplerate, ripple_db=0.5, stop_atten_db=40, order=3):
-    nyquist = 0.5 * samplerate
+def design_filter(lowcut, highcut, sample_rate, ripple_db=0.5, stop_atten_db=40, order=3):
+    nyquist = 0.5 * sample_rate
     low = lowcut / nyquist
     high = highcut / nyquist
     sos = ellip(order, ripple_db, stop_atten_db, [low, high], btype='band', output='sos')
