@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="worked here and there">
-      <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
-      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
-      <change beforePath="M:/scanner.py" beforeDir="false" afterPath="M:/scanner.py" afterDir="false" />
-    </list>
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added threading so that the scanner can rest between color changes" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -86,11 +80,20 @@
       <option name="project" value="LOCAL" />
       <updated>1690719010941</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="added threading so that the scanner can rest between color changes">
+      <option name="closed" value="true" />
+      <created>1690729590412</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1690729590412</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="worked here and there" />
-    <option name="LAST_COMMIT_MESSAGE" value="worked here and there" />
+    <MESSAGE value="added threading so that the scanner can rest between color changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="added threading so that the scanner can rest between color changes" />
   </component>
 </project>
