@@ -113,9 +113,6 @@ print("")
 
 try:
     while True:
-        scan_opened(2)
-        run_in_thread(scan_color, (2, runtime_bit))
-
         runtime_bit += 1
 
         if runtime_bit > 255:
@@ -139,23 +136,23 @@ try:
         signal, gain_factor = adjust_gain(volumes, signal_input)
 
         # Calculate the volume of the current signal
-        volume = np.sqrt(np.mean(signal ** 2))
+        volume = np.sqrt(safe_mean(signal ** 2))
         # Add the current volume to the list of previous volumes
         volumes.append(volume)
 
         # apply low frequency filter to signal
         low_signal, low_zi = sosfilt(low_sos, signal, zi=low_zi)
-        low_volume = np.sqrt(np.mean(low_signal ** 2))
+        low_volume = np.sqrt(safe_mean(low_signal ** 2))
         low_volumes.append(low_volume)
 
         # apply mid frequency filter to signal
         mid_signal, mid_zi = sosfilt(mid_sos, signal, zi=mid_zi)
-        mid_volume = np.sqrt(np.mean(mid_signal ** 2))
+        mid_volume = np.sqrt(safe_mean(mid_signal ** 2))
         mid_volumes.append(mid_volume)
 
         # apply high frequency filter to signal
         high_signal, high_zi = sosfilt(high_sos, signal, zi=high_zi)
-        high_volume = np.sqrt(np.mean(high_signal ** 2))
+        high_volume = np.sqrt(safe_mean(high_signal ** 2))
         high_volumes.append(high_volume)
 
         # Calculate energies
@@ -168,7 +165,7 @@ try:
         thx_signal = thx_signal.astype(np.float32)
 
         heavyvols.append(np.max(thx_signal))
-        heavyvol = np.mean(heavyvols)
+        heavyvol = safe_mean(heavyvols)
         max_value = np.max(thx_signal)
         min_value = np.min(thx_signal)
         delta_value = max_value - min_value
@@ -186,7 +183,7 @@ try:
         dominant_frequencies.append(dominant_freq)
         heaviness_history.append(heavy)
 
-        drop = detect_drop(np.mean(volumes), heavy, dominant_frequencies, heaviness_history, drop_history)
+        drop = detect_drop(safe_mean(volumes), heavy, dominant_frequencies, heaviness_history, drop_history)
         drop_history.append(drop)
 
         previous_heavy = heavy
@@ -209,12 +206,13 @@ try:
         if red > 255:
             red = 255
 
-        # print(red)
+        # scanner operates here
+        scan_opened(2)
+        run_in_thread(scan_color, (2, "purple"))
+        run_in_thread(scan_axis, (2, 100, 200))
 
-        # theater_chase(Color(127, 127, 127), 50)
-
+        # DMX lamps and LED strip operate here
         done_chase.append(0)
-
         if heavy:
 
             music_visualizer(np.max(signal_input))
@@ -224,12 +222,12 @@ try:
             if is_beat:
                 drop_history.clear()
                 # print("**************************************************************")
-                print("*************************** Beat! ****************************")
+                # print("*************************** Beat! ****************************")
                 # print("**************************************************************")
                 set_eurolite_t36(5, 255, 0, 50, 255, 0)
             else:
                 # print("**************************************************************")
-                print("*************************** Heavy! ***************************")
+                # print("*************************** Heavy! ***************************")
                 # print("**************************************************************")
                 set_eurolite_t36(5, red, 0, 255, 255, 0)
 
@@ -241,12 +239,12 @@ try:
                 input_history.append(1.0)
                 if not heavy and not drop:
                     color_flow(runtime_bit, np.max(signal_input))
-                    print("** ? **", np.max(signal_input))
+                    # print("** ? **", np.max(signal_input))
 
                 if 0 < sum(drop_history) < 128 and drop:
                     # color_wipe(Color(0, 0, 0), 0)
                     # print("**************************************************************")
-                    print("*********************** Drop detected. ***********************")
+                    # print("*********************** Drop detected. ***********************")
                     # print("**************************************************************")
                     color_flow(runtime_bit, np.max(signal_input))
                     set_eurolite_t36(5, invert(sum(drop_history) - 128, 256), 0, 100, 255, 0)
@@ -254,7 +252,7 @@ try:
                 if 128 <= sum(drop_history) < 256 and drop:
                     # color_wipe(Color(0, 0, 0), 0)
                     # print("**************************************************************")
-                    print("*********************** Drop rises... ************************")
+                    # print("*********************** Drop rises... ************************")
                     # print("**************************************************************")
                     color_flow(runtime_bit, np.max(signal_input))
                     set_eurolite_t36(5, 0, 0, invert(sum(drop_history), 256), 255, 0)
@@ -266,12 +264,12 @@ try:
                         theater_chase(Color(127, 127, 127), 50)
                     done_chase.append(1)
                     # print("**************************************************************")
-                    print("********************** Drop persistent! **********************")
+                    # print("********************** Drop persistent! **********************")
                     # print("**************************************************************")
             else:
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
                 input_history.append(0.0)
-                if np.mean(input_history) < 0.5:
+                if safe_mean(input_history) < 0.5:
                     drop = False
                     heavy = False
                     low_volumes.clear()
@@ -281,7 +279,7 @@ try:
                     drop_history.clear()
                     heaviness_history.clear()
                     color_flow(runtime_bit, np.max(signal_input), 20)  # last arg is brightness divider
-                    print("** no input **")
+                    # print("** no input **")
 
 except KeyboardInterrupt:
     color_wipe(Color(0, 0, 0), 0)

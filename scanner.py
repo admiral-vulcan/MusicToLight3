@@ -22,6 +22,7 @@ FIRST_Y_HOME = 0
 SECOND_X_HOME = 0
 SECOND_Y_HOME = 0
 
+
 def scan_closed(num, sec=None):
     """
     Close the scanner shutter.

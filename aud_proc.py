@@ -44,7 +44,7 @@ def get_second_highest(values):
 
 
 def adjust_gain(volumes, signal, target_volume=0.1, max_gain=5):
-    average_volume = np.mean(volumes)
+    average_volume = safe_mean(volumes)
     gain_factor = target_volume / average_volume if average_volume > 0 else 1.0
     if gain_factor > max_gain:
         gain_factor = max_gain
@@ -89,7 +89,7 @@ def calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter):
 
 def dominant_frequency(signal, sample_rate):
     # Zentrierung des Signals
-    signal_centered = signal - np.mean(signal)
+    signal_centered = signal - safe_mean(signal)
 
     # Überprüfung, ob das Signal nahe Null ist
     if np.max(np.abs(signal_centered)) < 0.01:  # 0.01 ist ein kleiner Schwellenwert, den Sie anpassen können
@@ -115,7 +115,7 @@ def detect_drop(volume_mean, heavy, dominant_frequencies, heaviness_history, dro
                 drop_threshold=1, heavy_return_threshold=2):
     # Check that we have enough data
     if len(dominant_frequencies) < drop_length or len(heaviness_history) < drop_length:
-        # print("Not enough data. Average dominant frequency: {:.3f}".format(np.mean(dominant_frequencies)))
+        # print("Not enough data. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
         return False
 
     if volume_mean > volume_rise_threshold:
@@ -123,7 +123,7 @@ def detect_drop(volume_mean, heavy, dominant_frequencies, heaviness_history, dro
 
     # If there have been enough drops, stay in drop state until it's over
     if sum(drop_history) >= drop_threshold and not heavy:
-        # print("In drop state due to previous drops. Average dominant frequency: {:.3f}".format(np.mean(dominant_frequencies)))
+        # print("In drop state due to previous drops. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
         return True
 
     if sum(drop_history) > 0 and not heavy:
@@ -137,22 +137,22 @@ def detect_drop(volume_mean, heavy, dominant_frequencies, heaviness_history, dro
 
     # Check if the drop is over: heavy is True twice in a row
     if heavy_history[-heavy_return_threshold:] == [True] * heavy_return_threshold:
-        # print("No drop/drop ended. Average dominant frequency: {:.3f}".format(np.mean(dominant_frequencies)))
+        # print("No drop/drop ended. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
         return False
 
     # Check for the start of the drop: heavy becomes False and there was at least one True in heavy_history
     if heavy or True not in heavy_history:
-        # print("No transition from heavy to non-heavy. Average dominant frequency: {:.3f}".format(np.mean(dominant_frequencies)))
+        # print("No transition from heavy to non-heavy. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
         return False
 
     # Check that there were enough heavies before the drop
     if sum(heavy_history) < heavy_threshold:
-        # print("Not enough heaviness before the drop. Average dominant frequency: {:.3f}".format(np.mean(dominant_frequencies)))
+        # print("Not enough heaviness before the drop. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
         return False
 
     # Check that the average dominant frequency during the drop is above 400 Hz/dominant_frequencies_threshold
-    if np.mean(drop_dominant_frequencies) <= dominant_frequencies_threshold:
-        # print("Average dominant frequency during the drop is below 350 Hz. Average dominant frequency: {:.3f}".format(np.mean(dominant_frequencies)))
+    if safe_mean(drop_dominant_frequencies) <= dominant_frequencies_threshold:
+        # print("Average dominant frequency during the drop is below 350 Hz. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
         return False
 
     # Calculate the rise in dominant frequencies
@@ -160,19 +160,19 @@ def detect_drop(volume_mean, heavy, dominant_frequencies, heaviness_history, dro
 
     # Check that the rise in dominant frequencies is above the threshold
     if frequency_rise < rise_threshold:
-        # print("Rise in dominant frequencies is below the threshold. Average dominant frequency: {:.3f}".format(np.mean(dominant_frequencies)))
+        # print("Rise in dominant frequencies is below the threshold. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
         return False
 
     # If all conditions are met, return True
-    # print("Drop detected! Average dominant frequency: {:.3f}".format(np.mean(dominant_frequencies)))
+    # print("Drop detected! Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
     return True
 
 
 def calculate_dynamics(low_volumes, mid_volumes, high_volumes):
     # calculate mean volumes
-    mean_low = np.mean(low_volumes)
-    mean_mid = np.mean(mid_volumes)
-    mean_high = np.mean(high_volumes)
+    mean_low = safe_mean(low_volumes)
+    mean_mid = safe_mean(mid_volumes)
+    mean_high = safe_mean(high_volumes)
 
     # calculate standard deviation of volumes
     std_low = np.std(low_volumes)
@@ -196,9 +196,9 @@ def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, pitches):
     global this_category
     if raw_mean > 0.007:
         # Calculate mean volume in each frequency band
-        low_mean_volume = np.mean(low_volumes)
-        mid_mean_volume = np.mean(mid_volumes)
-        high_mean_volume = np.mean(high_volumes)
+        low_mean_volume = safe_mean(low_volumes)
+        mid_mean_volume = safe_mean(mid_volumes)
+        high_mean_volume = safe_mean(high_volumes)
 
         # Calculate volume standard deviation in each frequency band
         low_std_volume = np.std(low_volumes)

@@ -67,7 +67,7 @@ def theater_chase(c, wait_ms):
 # Define function to visualize music on LED strip
 def music_visualizer(audio_input):
     recent_audio_inputs.append(audio_input)
-    mean_vol = np.mean(recent_audio_inputs)
+    mean_vol = safe_mean(recent_audio_inputs)
     if mean_vol > 0:
         to_mean_factor = 1/mean_vol
     else:
@@ -118,7 +118,7 @@ def color_wipe(color, wait_ms=50):
 def color_flow(pos, audio_input, reduce=2):
     """Draw a color flow that moves across display."""
     recent_audio_inputs.append(audio_input)
-    mean_vol = np.mean(recent_audio_inputs)
+    mean_vol = safe_mean(recent_audio_inputs)
     # print(mean_vol)
 
     for i in range(strip.numPixels()):

@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import numpy as np
 import math
 import threading
 
@@ -79,3 +80,13 @@ def invert(current_value, upper_limit):
     """
     new_value = (current_value * -1) + upper_limit
     return min(new_value, upper_limit)
+
+
+def safe_mean(array):
+    """
+    Calculate the mean of a list or numpy array, safely handling empty inputs.
+    """
+    if np.size(array) > 0:
+        return np.mean(array)
+    else:
+        return 0
