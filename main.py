@@ -1,3 +1,17 @@
+# MusicToLight3  Copyright (C) 2023  Felix Rau.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import pyaudio
 import collections
 import time
@@ -79,13 +93,23 @@ runtime_mb = 0
 
 previous_heavy = True
 
+print("")
+print("        MusicToLight3  Copyright (C) 2023  Felix Rau")
+print("        This program comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
+print("        This is free software, and you are welcome to redistribute it")
+print("        under certain conditions; see LICENSE.md.")
+print("")
+print("        Initialising devices.")
+print("")
+
 # initialise devices
 scan_reset(1)
 scan_reset(2)
 set_eurolite_t36(5, 0, 0, 0, 0, 0)
 set_eurolite_t36(5, 0, 0, 0, 255, 0)
 color_wipe(Color(0, 0, 0), 0)
-print("Listening... Press Ctrl+C to stop.")
+print("        Listening... Press Ctrl+C to stop.")
+print("")
 
 try:
     while True:
@@ -181,7 +205,7 @@ try:
         # Speichern Sie count_over für die nächste Iteration
         previous_count_over = count_over
 
-        red = int(energy*10)
+        red = int(energy * 10)
         if red > 255:
             red = 255
 
@@ -225,7 +249,7 @@ try:
                     print("*********************** Drop detected. ***********************")
                     # print("**************************************************************")
                     color_flow(runtime_bit, np.max(signal_input))
-                    set_eurolite_t36(5, invert(sum(drop_history)-128, 256), 0, 100, 255, 0)
+                    set_eurolite_t36(5, invert(sum(drop_history) - 128, 256), 0, 100, 255, 0)
 
                 if 128 <= sum(drop_history) < 256 and drop:
                     # color_wipe(Color(0, 0, 0), 0)
@@ -264,4 +288,12 @@ except KeyboardInterrupt:
     set_eurolite_t36(5, 0, 0, 0, 0, 0)
     line_in.close()
     p.terminate()
-    print("\nStop.")
+
+    print("")
+    print("\n        Program stopped.")
+    print("")
+    print("        MusicToLight3  Copyright (C) 2023  Felix Rau")
+    print("        This program comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
+    print("        This is free software, and you are welcome to redistribute it")
+    print("        under certain conditions; see LICENSE.md.")
+    print("")
