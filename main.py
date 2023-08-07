@@ -24,7 +24,6 @@ from eurolite_t36 import *
 from scanner import *
 from led_strip import *
 
-
 # Filter-Einstellungen
 thx_band = (1, 120)
 low_band = (1, 300)
@@ -32,7 +31,7 @@ mid_band = (300, 2000)
 high_band = (2000, 16000)
 
 # PyAudio Konfiguration
-buffer_size = 4096
+buffer_size = 1024
 hop_size = buffer_size // 2
 pyaudio_format = pyaudio.paFloat32
 n_channels = 1
@@ -199,7 +198,7 @@ try:
         # print("Detected pitch: %.2f Hz" % pitch)
         # dynamic = calculate_dynamics(low_volumes, mid_volumes, high_volumes)
         # print(dynamic)
-        category = categorize_song(np.max(signal_input), low_volumes, mid_volumes, high_volumes, pitches)
+        # category = categorize_song(np.max(signal_input), low_volumes, mid_volumes, high_volumes, pitches)
         # print(category)
 
         # Speichern Sie count_over für die nächste Iteration
@@ -210,14 +209,21 @@ try:
             red = 255
 
         # scanner operates here
-        scan_opened(2)
-        run_in_thread(scan_color, (2, "purple"))
-        run_in_thread(scan_axis, (2, 100, 200))
+        x = int(exponential_decrease(red))
+
+        # print(x)
 
         # DMX lamps and LED strip operate here
         done_chase.append(0)
         if heavy:
-
+            scan_opened(1)
+            scan_opened(2)
+            scan_gobo(1, 7, 255)
+            scan_gobo(2, 7, 255)
+            run_in_thread(scan_color, (1, "purple"))
+            run_in_thread(scan_color, (2, "orange"))
+            run_in_thread(scan_axis, (1, x, red))
+            run_in_thread(scan_axis, (2, x, red))
             music_visualizer(np.max(signal_input))
             # color_flow(runtime_bit, np.max(signal_input))
             drop = False
@@ -237,14 +243,17 @@ try:
             if heavy_counter > 0:
                 heavy_counter -= 1  # Reduzieren Sie heavy_counter um 1
         else:
-
+            scan_closed(1)
+            scan_closed(2)
+            run_in_thread(scan_axis, (1, 255, 255))
+            run_in_thread(scan_axis, (2, 255, 255))
             if np.max(signal_input) > 0.007:
                 input_history.append(1.0)
                 if not heavy and not drop:
                     color_flow(runtime_bit, np.max(signal_input))
                     # print("** ? **", np.max(signal_input))
 
-                if 0 < sum(drop_history) < 128 and drop:
+                if 0 < sum(drop_history) < 16 and drop:
                     # color_wipe(Color(0, 0, 0), 0)
                     # print("**************************************************************")
                     # print("*********************** Drop detected. ***********************")
@@ -252,7 +261,7 @@ try:
                     color_flow(runtime_bit, np.max(signal_input))
                     set_eurolite_t36(5, invert(sum(drop_history) - 128, 256), 0, 100, 255, 0)
 
-                if 128 <= sum(drop_history) < 256 and drop:
+                if 16 <= sum(drop_history) < 32 and drop:
                     # color_wipe(Color(0, 0, 0), 0)
                     # print("**************************************************************")
                     # print("*********************** Drop rises... ************************")
@@ -260,7 +269,7 @@ try:
                     color_flow(runtime_bit, np.max(signal_input))
                     set_eurolite_t36(5, 0, 0, invert(sum(drop_history), 256), 255, 0)
 
-                if sum(drop_history) >= 256 and drop:
+                if sum(drop_history) >= 32 and drop:  # not if too often!
                     heaviness_history.clear()
                     if 1 not in done_chase:
                         set_eurolite_t36(5, 0, 0, 0, 255, 0)
@@ -285,8 +294,14 @@ try:
                     # print("** no input **")
 
 except KeyboardInterrupt:
+    print("")
+    print("\n        Stopping program...")
     color_wipe(Color(0, 0, 0), 0)
-    set_eurolite_t36(5, 0, 0, 0, 0, 0)
+    # scan_reset(1)
+    # scan_reset(2)
+    scan_closed(1)
+    scan_closed(2)
+    # set_eurolite_t36(5, 0, 0, 0, 0, 0)
     line_in.close()
     p.terminate()
 

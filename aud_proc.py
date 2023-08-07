@@ -193,7 +193,7 @@ def calculate_dynamics(low_volumes, mid_volumes, high_volumes):
     return dynamics
 
 
-this_category = 'Unknown'
+this_category = -1  # unknown
 
 
 def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, pitches):
@@ -228,12 +228,12 @@ def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, pitches):
 
         # If the mid volume is higher than high volume, and high volume standard deviation is relatively low, then classify as 'Melancholic'
         if mid_mean_volume > high_mean_volume and high_std_volume < 0.01 and min_pitch > 0 and max_pitch < 2000:
-            this_category = '                   Relaxed'
+            this_category = 1  # relaxed music
             return this_category
 
         # If low volume is significantly higher than mid and high volumes and the standard deviation of the low volumes is high, then classify as 'Techno'
         elif (min_pitch == 0 and max_pitch > 4000) or (low_mean_volume > mid_mean_volume * 3 and low_mean_volume > high_mean_volume * 3 and low_std_volume > mid_std_volume):
-            this_category = '                   Energetic'
+            this_category = 2  # energetic music
             return this_category
 
         # If none of the above conditions are met, classify as 'Mixed'
@@ -241,7 +241,7 @@ def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, pitches):
             # this_category = 'Mixed'
             return this_category
     else:
-        return 'no audio'
+        return 0  # no audio
 
 
 def get_pitch(audiobuffer, p_detection):

@@ -21,7 +21,7 @@ import numpy as np
 from helpers import *
 
 # LED-Streifen Konfiguration:
-LED_COUNT = 180  # Anzahl der LED-Pixel.
+LED_COUNT = 135  # Anzahl der LED-Pixel.
 LED_PIN = 18  # GPIO-Pin, der mit dem Datenpin des LED-Streifens verbunden ist.
 LED_FREQ_HZ = 800000  # LED-Signalfrequenz in Hz (normalerweise 800khz)
 LED_DMA = 10  # DMA-Kanal, der für die Signalgenerierung verwendet wird (kann 0-14 sein).

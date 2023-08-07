@@ -32,26 +32,34 @@ def run_in_thread(function, args):
     function -- the function to run
     args -- tuple of arguments to pass to the function
 
-    If a thread with the same function name is already running,
-    no new thread is started.
+    If a thread with the same function name and the first argument is already running,
+    no new thread is started. The first argument is considered only if it's an integer between 0 and 255.
     """
     global active_threads
 
-    # Check if a thread with the desired function is already running
+    # Check if the first argument is an integer between 0 and 255
+    arg_str = ''
+    if args and isinstance(args[0], int) and 0 <= args[0] <= 255:
+        arg_str = f"-{args[0]}"
+
+    # Construct the thread name
+    thread_name = f"{function.__name__}{arg_str}"
+
+    # Check if a thread with the desired function and the first argument is already running
     for thread in active_threads:
-        if thread.is_alive() and thread.name == function.__name__:
+        if thread.is_alive() and thread.name == thread_name:
             # If thread is already running, don't start a new one
             return
 
     # If not, create and start a new thread
-    thread = threading.Thread(target=function, args=args, name=function.__name__)
+    thread = threading.Thread(target=function, args=args, name=thread_name)
     thread.start()
 
     # Add the new thread to the list of active threads
     active_threads.append(thread)
 
 
-def exponential_decrease(current_value, upper_limit):
+def exponential_decrease(current_value, upper_limit=255):
     """
     Decrease the provided value exponentially.
 

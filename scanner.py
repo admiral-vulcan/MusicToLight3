@@ -77,6 +77,7 @@ def scan_axis(num, x, y):
         x = 5  # Limit to avoid sound
     set_dmx_value(address + 1, x)
     set_dmx_value(address + 2, y)
+    time.sleep(0.01)
 
 
 def scan_gobo(num, go, rotation):
@@ -125,7 +126,7 @@ def scan_reset(num):
     address = calc_address(num)
     set_dmx_value(address + 1, 255)
     set_dmx_value(address + 2, 255)
-    set_dmx_value(address + 3, 255)
+    scan_color(num, 255)
     set_dmx_value(address + 4, 255)
     set_dmx_value(address + 5, 255)
     set_dmx_value(address + 6, 255)
@@ -133,7 +134,7 @@ def scan_reset(num):
 
     set_dmx_value(address + 1, x_home)
     set_dmx_value(address + 2, y_home)
-    set_dmx_value(address + 3, 30)
+    scan_color(num, 0)
     set_dmx_value(address + 4, 30)
     set_dmx_value(address + 5, 29)
     set_dmx_value(address + 6, 4)
