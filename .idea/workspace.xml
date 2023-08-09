@@ -4,12 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="tried to make it more responsive, changed sample rate, changed thread handling...">
-      <change beforePath="M:/.idea/misc.xml" beforeDir="false" afterPath="M:/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later.">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
       <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
       <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
-      <change beforePath="M:/scanner.py" beforeDir="false" afterPath="M:/scanner.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -153,7 +151,15 @@
       <option name="project" value="LOCAL" />
       <updated>1691441140209</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later.">
+      <option name="closed" value="true" />
+      <created>1691611136322</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1691611136322</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -164,6 +170,7 @@
     <MESSAGE value="added safe mean" />
     <MESSAGE value="refactored samplerate to sample_rate" />
     <MESSAGE value="tried to make it more responsive, changed sample rate, changed thread handling..." />
-    <option name="LAST_COMMIT_MESSAGE" value="tried to make it more responsive, changed sample rate, changed thread handling..." />
+    <MESSAGE value="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later." />
+    <option name="LAST_COMMIT_MESSAGE" value="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later." />
   </component>
 </project>

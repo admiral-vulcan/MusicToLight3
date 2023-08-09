@@ -221,11 +221,13 @@ try:
         run_in_thread(scan_color, (2, "blue"))
 
         if heavy:
+            if 1 in list(done_chase)[-10:]:
+                print("strobe")
             scan_opened(1)
             scan_opened(2)
             run_in_thread(scan_axis, (1, x, red))
             run_in_thread(scan_axis, (2, x, red))
-            music_visualizer(np.max(signal_input))
+            led_music_visualizer(np.max(signal_input))
             # color_flow(runtime_bit, np.max(signal_input))
             drop = False
             # Überprüfen, ob ein Beat erkannt wurde
@@ -279,6 +281,8 @@ try:
                         scan_closed(2)
                         set_eurolite_t36(5, 0, 0, 0, 255, 0)
                         theater_chase(Color(127, 127, 127), 50)
+                        scan_opened(1)
+                        scan_opened(2)
                     done_chase.append(1)
                     # print("**************************************************************")
                     # print("********************** Drop persistent! **********************")

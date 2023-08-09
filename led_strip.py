@@ -69,7 +69,7 @@ def theater_chase(c, wait_ms):
 
 
 # Define function to visualize music on LED strip
-def music_visualizer(audio_input):
+def led_music_visualizer(audio_input):
     recent_audio_inputs.append(audio_input)
     mean_vol = safe_mean(recent_audio_inputs)
     if mean_vol > 0:
@@ -157,7 +157,7 @@ while True:
     signal_input = np.frombuffer(audiobuffer, dtype=np.float32)
 
     # Calculate LED strip visualization based on audio energy
-    music_visualizer(np.max(signal_input))
+    led_music_visualizer(np.max(signal_input))
 
     time.sleep(0.05)
 """
