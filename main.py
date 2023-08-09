@@ -107,8 +107,8 @@ print("")
 # initialise devices
 scan_reset(1)
 scan_reset(2)
-set_eurolite_t36(5, 0, 0, 0, 0, 0)
-set_eurolite_t36(5, 0, 0, 0, 255, 0)
+# set_eurolite_t36(5, 0, 0, 0, 0, 0)
+# set_eurolite_t36(5, 0, 0, 0, 255, 0)
 color_wipe(Color(0, 0, 0), 0)
 print("        Listening... Press Ctrl+C to stop.")
 print("")
@@ -215,13 +215,14 @@ try:
 
         # DMX lamps and LED strip operate here
         done_chase.append(0)
+        scan_gobo(1, 7, 17)
+        scan_gobo(2, 7, 17)
+        run_in_thread(scan_color, (1, "red"))
+        run_in_thread(scan_color, (2, "blue"))
+
         if heavy:
             scan_opened(1)
             scan_opened(2)
-            scan_gobo(1, 7, 255)
-            scan_gobo(2, 7, 255)
-            run_in_thread(scan_color, (1, "purple"))
-            run_in_thread(scan_color, (2, "orange"))
             run_in_thread(scan_axis, (1, x, red))
             run_in_thread(scan_axis, (2, x, red))
             music_visualizer(np.max(signal_input))
@@ -243,10 +244,12 @@ try:
             if heavy_counter > 0:
                 heavy_counter -= 1  # Reduzieren Sie heavy_counter um 1
         else:
-            scan_closed(1)
-            scan_closed(2)
-            run_in_thread(scan_axis, (1, 255, 255))
-            run_in_thread(scan_axis, (2, 255, 255))
+            # scan_closed(1)
+            # scan_closed(2)
+            scan_go_home(1)
+            scan_go_home(2)
+            # run_in_thread(scan_axis, (1, 255, 255))
+            # run_in_thread(scan_axis, (2, 255, 255))
             if np.max(signal_input) > 0.007:
                 input_history.append(1.0)
                 if not heavy and not drop:
@@ -272,6 +275,8 @@ try:
                 if sum(drop_history) >= 32 and drop:  # not if too often!
                     heaviness_history.clear()
                     if 1 not in done_chase:
+                        scan_closed(1)
+                        scan_closed(2)
                         set_eurolite_t36(5, 0, 0, 0, 255, 0)
                         theater_chase(Color(127, 127, 127), 50)
                     done_chase.append(1)

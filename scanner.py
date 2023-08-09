@@ -17,10 +17,10 @@ from helpers import *
 from dmx import *
 
 # Define constants for scanner home positions
-FIRST_X_HOME = 0
-FIRST_Y_HOME = 0
-SECOND_X_HOME = 0
-SECOND_Y_HOME = 0
+FIRST_X_HOME = 128
+FIRST_Y_HOME = 128
+SECOND_X_HOME = 12
+SECOND_Y_HOME = 145
 
 
 def scan_closed(num, sec=None):
@@ -120,8 +120,14 @@ def scan_reset(num):
     Arguments:
     num -- the scanner number
     """
-    x_home = FIRST_X_HOME if num == 1 else SECOND_X_HOME
-    y_home = FIRST_Y_HOME if num == 1 else SECOND_Y_HOME
+    x_home = 0
+    y_home = 0
+    if num == 1:
+        x_home = FIRST_X_HOME
+        y_home = FIRST_Y_HOME
+    elif num == 2:
+        x_home = SECOND_X_HOME
+        y_home = SECOND_Y_HOME
 
     address = calc_address(num)
     set_dmx_value(address + 1, 255)
@@ -130,7 +136,7 @@ def scan_reset(num):
     set_dmx_value(address + 4, 255)
     set_dmx_value(address + 5, 255)
     set_dmx_value(address + 6, 255)
-    time.sleep(1.5)
+    time.sleep(0.25)
 
     set_dmx_value(address + 1, x_home)
     set_dmx_value(address + 2, y_home)
@@ -138,7 +144,7 @@ def scan_reset(num):
     set_dmx_value(address + 4, 30)
     set_dmx_value(address + 5, 29)
     set_dmx_value(address + 6, 4)
-    time.sleep(1.5)
+    time.sleep(0.25)
 
 
 def scan_go_home(num):
