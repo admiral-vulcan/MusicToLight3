@@ -69,11 +69,12 @@ def theater_chase(c, wait_ms):
 
 
 # Define function to visualize music on LED strip
+@led_in_thread
 def led_music_visualizer(audio_input):
     recent_audio_inputs.append(audio_input)
     mean_vol = safe_mean(recent_audio_inputs)
     if mean_vol > 0:
-        to_mean_factor = 1/mean_vol
+        to_mean_factor = 1 / mean_vol
     else:
         to_mean_factor = 1
 

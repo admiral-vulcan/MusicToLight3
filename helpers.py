@@ -16,15 +16,62 @@ import numpy as np
 import math
 import threading
 
-# Global list to store active threads
-active_threads = []
+# Global list to store active scanner threads
+active_scan_threads = []
+
+# Globale Variable zum Speichern des aktuellen hdmi Threads
+current_hdmi_thread = None
+
+# Globale Variable zum Speichern des aktuellen hdmi Threads
+current_led_thread = None
 
 
 def calc_address(num):
     return (num * 6) - 6
 
+def map_value(value, in_min, in_max, out_min, out_max):
+    """
+    Map a value from one range to another.
+    """
+    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
-def run_in_thread(function, args):
+def hdmi_in_thread(func):
+    global current_hdmi_thread
+
+    def wrapped_function(*args, **kwargs):
+        global current_hdmi_thread
+
+        # Überprüfe, ob der aktuelle Thread läuft
+        if current_hdmi_thread and current_hdmi_thread.is_alive():
+            # print(f"{func.__name__} wurde übersprungen, da bereits ein Thread läuft.")
+            return
+
+        # Funktion in einem neuen Thread ausführen
+        current_hdmi_thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        current_hdmi_thread.start()
+
+    return wrapped_function
+
+
+def led_in_thread(func):
+    global current_led_thread
+
+    def wrapped_function(*args, **kwargs):
+        global current_led_thread
+
+        # Überprüfe, ob der aktuelle Thread läuft
+        if current_led_thread and current_led_thread.is_alive():
+            # print(f"{func.__name__} wurde übersprungen, da bereits ein Thread läuft.")
+            return
+
+        # Funktion in einem neuen Thread ausführen
+        current_led_thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        current_led_thread.start()
+
+    return wrapped_function
+
+
+def scan_in_thread(function, args):
     """
     Run the provided function in a new thread.
 
@@ -35,7 +82,7 @@ def run_in_thread(function, args):
     If a thread with the same function name and the first argument is already running,
     no new thread is started. The first argument is considered only if it's an integer between 0 and 255.
     """
-    global active_threads
+    global active_scan_threads
 
     # Check if the first argument is an integer between 0 and 255
     arg_str = ''
@@ -46,7 +93,7 @@ def run_in_thread(function, args):
     thread_name = f"{function.__name__}{arg_str}"
 
     # Check if a thread with the desired function and the first argument is already running
-    for thread in active_threads:
+    for thread in active_scan_threads:
         if thread.is_alive() and thread.name == thread_name:
             # If thread is already running, don't start a new one
             return
@@ -56,7 +103,7 @@ def run_in_thread(function, args):
     thread.start()
 
     # Add the new thread to the list of active threads
-    active_threads.append(thread)
+    active_scan_threads.append(thread)
 
 
 def exponential_decrease(current_value, upper_limit=255):
@@ -98,3 +145,35 @@ def safe_mean(array):
         return np.mean(array)
     else:
         return 0
+
+
+def compute_mean_volume(volumes):
+    return sum(volumes) / len(volumes)
+
+
+def reduce_signal(signal, target_length=15):
+    step_size = len(signal) // target_length
+    reduced_signal = [safe_mean(signal[i:i + step_size]) for i in range(0, len(signal), step_size)]
+    return reduced_signal[:target_length]
+
+
+def generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean):
+    matrix = []
+
+    value_booster = 2
+
+    # Werte unter 0,01 zu 0 ändern und auf 2 Nachkommastellen runden
+    def process_signal(signal):
+        return [0 if value < 0.01 else round(value, 2) for value in signal]
+
+    low_signal = process_signal(low_signal)
+    mid_signal = process_signal(mid_signal)
+    high_signal = process_signal(high_signal)
+
+    # Für jedes Signal: reduziere auf 15 Werte und bestimme für jeden Wert, ob er über (1) oder unter (0) dem Mittelwert liegt.
+    for signal, mean in [(low_signal, low_mean), (mid_signal, mid_mean), (high_signal, high_mean)]:
+        reduced_signal = reduce_signal(signal)
+        for i in range(3):  # für jede der drei Reihen für ein bestimmtes Signal
+            matrix.append([1 if (value * value_booster) > mean else 0 for value in reduced_signal])
+
+    return matrix
