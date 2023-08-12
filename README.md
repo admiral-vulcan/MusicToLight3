@@ -1,15 +1,15 @@
 # MusicToLight3
-MusicToLight3 is a project that converts audio input into visual output on various DMX devices, LED strip(s), and more. It's designed to run on a Raspberry Pi 4 with Raspbian OS 64-bit.
+MusicToLight3 is a project that converts audio input into visual output on various DMX devices, LED strip(s), and more using the power of Pygame for graphics display. It's designed to run on a Raspberry Pi 4 with Raspbian OS 64-bit.
 
 ## Features
-- Visualizes audio input on DMX devices and LED strips.
+- Visualizes audio input on DMX devices, LED strips, and on-screen with Pygame.
 - Provides adjustable color transitions and mappings based on the audio input.
 - Optimized to run on Raspberry Pi 4.
 
 ## Prerequisites
 - Raspberry Pi 4 with Raspbian OS 64-bit.
 - Python 3.8 or newer.
-- The following Python libraries: PyAudio, collections, time, math, numpy, Aubio, rpi_ws281x, random, scipy.
+- The following Python libraries: PyAudio, collections, time, math, numpy, Aubio, rpi_ws281x, random, scipy, and pygame.
 - Open Lighting Architecture (OLA) for DMX communication.
 
 The project has dependencies that are distributed under various licenses:
@@ -18,12 +18,13 @@ The project has dependencies that are distributed under various licenses:
 - aubio: GNU General Public License (GPL)
 - rpi_ws281x: MIT License
 - scipy: BSD License
+- pygame: LGPL License (Lesser General Public License)
 - OLA: GNU Lesser General Public License (LGPL)
 
 ## Installation
 1. Ensure that Python 3.8 or newer is installed.
 2. Install the necessary Python libraries with pip:
-```pip install pyaudio numpy aubio rpi_ws281x scipy```
+```pip install pyaudio numpy aubio rpi_ws281x scipy pygame```
 3. Clone this repository to your local machine.
 4. Set up your DMX devices and LED strips as needed.
 5. Install and configure [OLA](https://www.openlighting.org/ola/).
