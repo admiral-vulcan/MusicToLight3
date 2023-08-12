@@ -23,6 +23,7 @@ from aud_proc import *
 from eurolite_t36 import *
 from scanner import *
 from led_strip import *
+from hdmi import *
 
 # Filter-Einstellungen
 thx_band = (1, 120)
@@ -53,12 +54,27 @@ mid_sos, mid_zi = design_filter(mid_band[0], mid_band[1], sample_rate)
 high_sos, high_zi = design_filter(high_band[0], high_band[1], sample_rate)
 # PyAudio Objekt
 p = pyaudio.PyAudio()
-line_in = p.open(format=pyaudio_format,
-                 channels=n_channels,
-                 rate=sample_rate,
-                 input=True,
-                 input_device_index=device_index,
-                 frames_per_buffer=buffer_size)
+
+# Geräte-Index basierend auf dem Gerätenamen ermitteln
+desired_device_index = None
+for i in range(p.get_device_count()):
+    info = p.get_device_info_by_index(i)
+    if 'ICUSBAUDIO7D: USB Audio' in info["name"]:
+        desired_device_index = i
+        break
+
+# Das gewünschte Gerät in Ihrem `open`-Aufruf verwenden
+if desired_device_index is not None:
+    line_in = p.open(format=pyaudio_format,
+                     channels=n_channels,
+                     rate=sample_rate,
+                     input=True,
+                     input_device_index=desired_device_index,
+                     frames_per_buffer=buffer_size)
+else:
+    print("Kein passendes Audiogerät gefunden!")
+    exit()
+
 
 # Setzen Sie die Anzahl der Proben für die Durchschnittsberechnung
 average_samples = int(5 * sample_rate / buffer_size)  # average over ~5 seconds
@@ -105,8 +121,12 @@ print("        Initialising devices.")
 print("")
 
 # initialise devices
+init_hdmi()
 scan_reset(1)
 scan_reset(2)
+hdmi_intro_animation()
+# scan_in_thread(scan_reset, (1,))
+# scan_in_thread(scan_reset, (2,))
 # set_eurolite_t36(5, 0, 0, 0, 0, 0)
 # set_eurolite_t36(5, 0, 0, 0, 255, 0)
 color_wipe(Color(0, 0, 0), 0)
@@ -156,6 +176,15 @@ try:
         high_signal, high_zi = sosfilt(high_sos, signal, zi=high_zi)
         high_volume = np.sqrt(safe_mean(high_signal ** 2))
         high_volumes.append(high_volume)
+
+        low_mean = compute_mean_volume(low_volumes)
+        mid_mean = compute_mean_volume(mid_volumes)
+        high_mean = compute_mean_volume(high_volumes)
+
+        hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
+        transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
+
+        hdmi_draw_matrix(transposed_hdmi_matrix)
 
         # Calculate energies
         energy = np.sum(signal ** 2)
@@ -217,16 +246,16 @@ try:
         done_chase.append(0)
         scan_gobo(1, 7, 17)
         scan_gobo(2, 7, 17)
-        run_in_thread(scan_color, (1, "red"))
-        run_in_thread(scan_color, (2, "blue"))
+        scan_in_thread(scan_color, (1, "red"))
+        scan_in_thread(scan_color, (2, "blue"))
 
         if heavy:
             if 1 in list(done_chase)[-10:]:
                 print("strobe")
             scan_opened(1)
             scan_opened(2)
-            run_in_thread(scan_axis, (1, x, red))
-            run_in_thread(scan_axis, (2, x, red))
+            scan_in_thread(scan_axis, (1, x * x, red * red))
+            scan_in_thread(scan_axis, (2, x, red))
             led_music_visualizer(np.max(signal_input))
             # color_flow(runtime_bit, np.max(signal_input))
             drop = False
@@ -250,8 +279,8 @@ try:
             # scan_closed(2)
             scan_go_home(1)
             scan_go_home(2)
-            # run_in_thread(scan_axis, (1, 255, 255))
-            # run_in_thread(scan_axis, (2, 255, 255))
+            # scan_in_thread(scan_axis, (1, 255, 255))
+            # scan_in_thread(scan_axis, (2, 255, 255))
             if np.max(signal_input) > 0.007:
                 input_history.append(1.0)
                 if not heavy and not drop:
@@ -277,10 +306,12 @@ try:
                 if sum(drop_history) >= 32 and drop:  # not if too often!
                     heaviness_history.clear()
                     if 1 not in done_chase:
+                        hdmi_outro_animation()
                         scan_closed(1)
                         scan_closed(2)
                         set_eurolite_t36(5, 0, 0, 0, 255, 0)
                         theater_chase(Color(127, 127, 127), 50)
+                        hdmi_intro_animation()
                         scan_opened(1)
                         scan_opened(2)
                     done_chase.append(1)
@@ -305,14 +336,17 @@ try:
 except KeyboardInterrupt:
     print("")
     print("\n        Stopping program...")
+    hdmi_outro_animation()
     color_wipe(Color(0, 0, 0), 0)
     # scan_reset(1)
     # scan_reset(2)
     scan_closed(1)
     scan_closed(2)
-    # set_eurolite_t36(5, 0, 0, 0, 0, 0)
+    set_eurolite_t36(5, 0, 0, 0, 0, 0)
     line_in.close()
     p.terminate()
+    if current_hdmi_thread and current_hdmi_thread.is_alive():
+        current_hdmi_thread.join()
 
     print("")
     print("\n        Program stopped.")
