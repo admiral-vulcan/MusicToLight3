@@ -17,10 +17,19 @@ from helpers import *
 from dmx import *
 
 # Define constants for scanner home positions
-FIRST_X_HOME = 128
-FIRST_Y_HOME = 128
+FIRST_X_HOME = 155
+FIRST_Y_HOME = 30
+FIRST_X_MIN = 110
+FIRST_X_MAX = 155
+FIRST_Y_MIN = 0
+FIRST_Y_MAX = 90
+
 SECOND_X_HOME = 12
 SECOND_Y_HOME = 145
+SECOND_X_MIN = 5
+SECOND_X_MAX = 250
+SECOND_Y_MIN = 5
+SECOND_Y_MAX = 250
 
 
 def scan_closed(num, sec=None):
@@ -64,21 +73,42 @@ def scan_strobe(num, sec=None):
         set_dmx_value(address + 5, 20)
 
 
+
 def scan_axis(num, x, y):
     """
     Move the scanner to the given position.
+    We map the values to stay inside the predefined borders.
 
     Arguments:
     num -- the scanner number
     x, y -- the desired position
     """
+
+    if x < 0:
+        x = 0
+
+    if x > 255:
+        x = 255
+
+    if y < 0:
+        y = 0
+
+    if y > 255:
+        y = 255
+
+    if num == 1:
+        x = map_value(x, 0, 255, FIRST_X_MIN, FIRST_X_MAX)
+        y = map_value(y, 0, 255, FIRST_Y_MIN, FIRST_Y_MAX)
+    elif num == 2:
+        x = map_value(x, 0, 255, SECOND_X_MIN, SECOND_X_MAX)
+        y = map_value(y, 0, 255, SECOND_Y_MIN, SECOND_Y_MAX)
+
     address = calc_address(num)
     if x < 5:
         x = 5  # Limit to avoid sound
     set_dmx_value(address + 1, x)
     set_dmx_value(address + 2, y)
     time.sleep(0.01)
-
 
 def scan_gobo(num, go, rotation):
     """
@@ -130,18 +160,26 @@ def scan_reset(num):
         y_home = SECOND_Y_HOME
 
     address = calc_address(num)
+
     set_dmx_value(address + 1, 255)
     set_dmx_value(address + 2, 255)
+    time.sleep(0.25)
     scan_color(num, 255)
     set_dmx_value(address + 4, 255)
+    time.sleep(0.25)
     set_dmx_value(address + 5, 255)
     set_dmx_value(address + 6, 255)
     time.sleep(0.25)
 
+    set_dmx_value(address + 1, 0)
+    set_dmx_value(address + 2, 0)
+    time.sleep(0.25)
     set_dmx_value(address + 1, x_home)
     set_dmx_value(address + 2, y_home)
+    time.sleep(0.25)
     scan_color(num, 0)
     set_dmx_value(address + 4, 30)
+    time.sleep(0.25)
     set_dmx_value(address + 5, 29)
     set_dmx_value(address + 6, 4)
     time.sleep(0.25)
