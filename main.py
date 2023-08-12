@@ -75,7 +75,6 @@ else:
     print("Kein passendes Audiogerät gefunden!")
     exit()
 
-
 # Setzen Sie die Anzahl der Proben für die Durchschnittsberechnung
 average_samples = int(5 * sample_rate / buffer_size)  # average over ~5 seconds
 average_heavy_samples = int(sample_rate / buffer_size)  # average over ~1 second
@@ -123,7 +122,8 @@ print("")
 
 # initialise devices
 init_hdmi()
-hdmi_draw_centered_text("MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\nThis program is licensed under the terms of the \nGNU General Public License version 3.\nIt is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\nInitialising devices...")
+hdmi_draw_centered_text(
+    "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\nThis program is licensed under the terms of the \nGNU General Public License version 3.\nIt is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\nInitialising devices...")
 scan_reset(1)
 scan_reset(2)
 hdmi_intro_animation()
@@ -187,8 +187,6 @@ try:
         hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
         transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
 
-        hdmi_draw_matrix(transposed_hdmi_matrix)
-
         # Calculate energies
         energy = np.sum(signal ** 2)
         db_energy = 10 * np.log10(energy)
@@ -236,11 +234,25 @@ try:
         # Speichern Sie count_over für die nächste Iteration
         previous_count_over = count_over
 
+        if heavy and 1 in list(done_chase)[-10:]:
+            # strobe here
+            kill_current_hdmi()
+            # make all dark!
+            scan_closed(1)
+            scan_closed(2)
+            hdmi_draw_black()
+            led_strobe_effect(10, 75)
+            hdmi_intro_animation()
+            done_chase.clear()
+
+        # hdmi numbers here
+        hdmi_draw_matrix(transposed_hdmi_matrix)
+
         red = int(energy * 10)
         if red > 255:
             red = 255
 
-        y = ((int(energy * 10) - 60)*1.75)
+        y = ((int(energy * 10) - 60) * 1.75)
         if y < 0:
             y = 0
         if y > 255:
@@ -261,21 +273,10 @@ try:
         scan_in_thread(scan_color, (2, "blue"))
 
         if heavy:
-            if 1 in list(done_chase)[-10:]:
-                # strobe here
-                kill_current_hdmi()
-                # make all dark!
-                scan_closed(1)
-                scan_closed(2)
-                hdmi_draw_black()
-                led_strobe_effect(10, 75)
-                hdmi_intro_animation()
-                done_chase.clear()
-
             scan_opened(1)
             scan_opened(2)
-            scan_in_thread(scan_axis, (1, y, x))  #der vordere
-            scan_in_thread(scan_axis, (2, x, y))  #der hintere
+            scan_in_thread(scan_axis, (1, y, x))  # der vordere
+            scan_in_thread(scan_axis, (2, x, y))  # der hintere
             led_music_visualizer(np.max(signal_input))
             # color_flow(runtime_bit, np.max(signal_input))
             drop = False

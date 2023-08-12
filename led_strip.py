@@ -150,6 +150,9 @@ def led_strobe_effect(duration_seconds, frequency_ms):
     global strip
 
     end_time = time.time() + duration_seconds
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, Color(0, 0, 0))
+    strip.show()
 
     while time.time() < end_time:
         # Alle LEDs auf Weiß setzen
