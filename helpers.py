@@ -15,6 +15,7 @@
 import numpy as np
 import math
 import threading
+import ctypes
 
 # Global list to store active scanner threads
 active_scan_threads = []
@@ -29,11 +30,13 @@ current_led_thread = None
 def calc_address(num):
     return (num * 6) - 6
 
+
 def map_value(value, in_min, in_max, out_min, out_max):
     """
     Map a value from one range to another.
     """
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
 
 def hdmi_in_thread(func):
     global current_hdmi_thread
@@ -177,3 +180,23 @@ def generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, hig
             matrix.append([1 if (value * value_booster) > mean else 0 for value in reduced_signal])
 
     return matrix
+
+
+def terminate_thread(thread):
+    if not thread:
+        return
+
+    exc = ctypes.py_object(SystemExit)
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+        ctypes.c_long(thread.ident), exc)
+
+    if res == 0:
+        raise ValueError("Nonexistent thread id")
+    elif res != 1:
+        # Wenn es Probleme gibt, setze es zurück
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(thread.ident, None)
+        raise SystemError("Failed to forcefully kill the thread")
+
+
+def kill_current_hdmi():
+    terminate_thread(current_hdmi_thread)
