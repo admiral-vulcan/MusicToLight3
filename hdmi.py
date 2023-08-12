@@ -7,9 +7,9 @@ screen_width = 1920
 screen_height = 1080
 screen = pygame.display.set_mode((screen_width, screen_height))
 
-colors = [(0, 0, 255), (255, 0, 0), (255, 255, 0)]
+colors = [(255, 0, 0), (255, 0, 255), (0, 0, 255)]
 font = 0
-zero_color = (64, 64, 64)
+zero_color = (8, 8, 8)
 
 
 # Pygame Initialisierung
@@ -36,6 +36,39 @@ def adjust_color(color):
 
 def hdmi_draw_black():
     screen.fill((0, 0, 0))
+    pygame.display.flip()
+
+
+def hdmi_draw_centered_text(text):
+    global screen, font
+
+    # Textzeilen erstellen, indem man den übergebenen Text beim Newline-Zeichen teilt
+    lines = text.split('\n')
+
+    # Gesamthöhe aller Zeilen berechnen
+    total_height = sum([font.size(line)[1] for line in lines])
+
+    # Start-Y-Position berechnen, um den Text zentriert zu halten
+    start_y = (screen.get_height() - total_height) // 2
+
+    # Bildschirm leeren (optional, falls benötigt)
+    screen.fill((0, 0, 0))  # Schwarz
+
+    for line in lines:
+        # Text rendern
+        text_surface = font.render(line, True, (255, 255, 255))  # Weißer Text
+
+        # Mittige Position in X-Richtung berechnen
+        center_x = (screen.get_width() - text_surface.get_width()) // 2
+
+        # Text auf den Bildschirm blitten
+        screen.blit(text_surface, (center_x, start_y))
+
+        # Y-Position für die nächste Zeile aktualisieren
+        start_y += font.size(line)[1]
+
+    # Änderungen anzeigen
+    pygame.display.flip()
 
 
 @hdmi_in_thread
@@ -43,7 +76,7 @@ def hdmi_draw_matrix(matrix):
     global screen, font, colors, zero_color
     # Sicherstellen, dass das Matrix-Format korrekt ist
     if len(matrix) != 15 or any(len(row) != 9 for row in matrix):
-        print(f"Debug: Matrix hat Größe {len(matrix)}x{len(matrix[0])}")  # Debug-Print
+        # print(f"Debug: Matrix hat Größe {len(matrix)}x{len(matrix[0])}")  # Debug-Print
         raise ValueError("Matrix muss 15x9 sein.")
 
     # Ränder, um den abgeschnittenen Bereich des TVs zu berücksichtigen
