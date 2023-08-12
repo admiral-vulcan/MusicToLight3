@@ -190,12 +190,12 @@ def terminate_thread(thread):
     res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
         ctypes.c_long(thread.ident), exc)
 
-    if res == 0:
-        raise ValueError("Nonexistent thread id")
-    elif res != 1:
+    # if res == 0:
+    #    raise ValueError("Nonexistent thread id")
+    if res != 1:
         # Wenn es Probleme gibt, setze es zurück
         ctypes.pythonapi.PyThreadState_SetAsyncExc(thread.ident, None)
-        raise SystemError("Failed to forcefully kill the thread")
+        # raise SystemError("Failed to forcefully kill the thread")
 
 
 def kill_current_hdmi():
