@@ -163,8 +163,6 @@ def reduce_signal(signal, target_length=15):
 def generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean):
     matrix = []
 
-    value_booster = 2
-
     # Werte unter 0,01 zu 0 ändern und auf 2 Nachkommastellen runden
     def process_signal(signal):
         return [0 if value < 0.01 else round(value, 2) for value in signal]
@@ -177,6 +175,13 @@ def generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, hig
     for signal, mean in [(low_signal, low_mean), (mid_signal, mid_mean), (high_signal, high_mean)]:
         reduced_signal = reduce_signal(signal)
         for i in range(3):  # für jede der drei Reihen für ein bestimmtes Signal
+            if i == 0:  # obere Zeile
+                value_booster = 2.5
+            elif i == 1:  # mittlere Zeile
+                value_booster = 1.25
+            else:  # untere Zeile
+                value_booster = 0.5
+
             matrix.append([1 if (value * value_booster) > mean else 0 for value in reduced_signal])
 
     return matrix
