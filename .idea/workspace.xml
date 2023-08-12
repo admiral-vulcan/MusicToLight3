@@ -4,12 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later.">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="changed position of strobe and added blackness at the beginning">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
-      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
-      <change beforePath="M:/scanner.py" beforeDir="false" afterPath="M:/scanner.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,7 +58,7 @@
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;M:/&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PythonContentEntriesConfigurable&quot;
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
   <component name="RunManager">
@@ -161,7 +157,95 @@
       <option name="project" value="LOCAL" />
       <updated>1691611136322</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="added hdmi-output">
+      <option name="closed" value="true" />
+      <created>1691870099254</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1691870099254</updated>
+    </task>
+    <task id="LOCAL-00010" summary="added more threading">
+      <option name="closed" value="true" />
+      <created>1691870207386</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1691870207386</updated>
+    </task>
+    <task id="LOCAL-00011" summary="added more threading &amp; hdmi-output">
+      <option name="closed" value="true" />
+      <created>1691870240603</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1691870240603</updated>
+    </task>
+    <task id="LOCAL-00012" summary="added borders for scanner movement">
+      <option name="closed" value="true" />
+      <created>1691870261871</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1691870261871</updated>
+    </task>
+    <task id="LOCAL-00013" summary="added thread killer for strobe">
+      <option name="closed" value="true" />
+      <created>1691881843384</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1691881843384</updated>
+    </task>
+    <task id="LOCAL-00014" summary="added thread killer for strobe">
+      <option name="closed" value="true" />
+      <created>1691881862252</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1691881862252</updated>
+    </task>
+    <task id="LOCAL-00015" summary="added strobe">
+      <option name="closed" value="true" />
+      <created>1691881892563</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1691881892563</updated>
+    </task>
+    <task id="LOCAL-00016" summary="deleted error in thread killer">
+      <option name="closed" value="true" />
+      <created>1691882014372</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1691882014372</updated>
+    </task>
+    <task id="LOCAL-00017" summary="changed borders">
+      <option name="closed" value="true" />
+      <created>1691882044043</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1691882044043</updated>
+    </task>
+    <task id="LOCAL-00018" summary="added more dynamic to hdmi numbers">
+      <option name="closed" value="true" />
+      <created>1691882848462</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1691882848462</updated>
+    </task>
+    <task id="LOCAL-00019" summary="changed position of strobe and added blackness at the beginning">
+      <option name="closed" value="true" />
+      <created>1691883402426</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1691883402426</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -173,6 +257,16 @@
     <MESSAGE value="refactored samplerate to sample_rate" />
     <MESSAGE value="tried to make it more responsive, changed sample rate, changed thread handling..." />
     <MESSAGE value="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later." />
-    <option name="LAST_COMMIT_MESSAGE" value="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later." />
+    <MESSAGE value="added hdmi-output" />
+    <MESSAGE value="added more threading" />
+    <MESSAGE value="added more threading &amp; hdmi-output" />
+    <MESSAGE value="added borders for scanner movement" />
+    <MESSAGE value="added thread killer for strobe" />
+    <MESSAGE value="added strobe" />
+    <MESSAGE value="deleted error in thread killer" />
+    <MESSAGE value="changed borders" />
+    <MESSAGE value="added more dynamic to hdmi numbers" />
+    <MESSAGE value="changed position of strobe and added blackness at the beginning" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed position of strobe and added blackness at the beginning" />
   </component>
 </project>
