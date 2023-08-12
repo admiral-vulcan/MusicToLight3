@@ -113,7 +113,8 @@ previous_heavy = True
 
 print("")
 print("        MusicToLight3  Copyright (C) 2023  Felix Rau")
-print("        This program comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
+print("        This program is licensed under the terms of the GNU General Public License version 3.")
+print("        It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
 print("        This is free software, and you are welcome to redistribute it")
 print("        under certain conditions; see LICENSE.md.")
 print("")
@@ -122,6 +123,7 @@ print("")
 
 # initialise devices
 init_hdmi()
+hdmi_draw_centered_text("MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\nThis program is licensed under the terms of the \nGNU General Public License version 3.\nIt is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\nInitialising devices...")
 scan_reset(1)
 scan_reset(2)
 hdmi_intro_animation()
@@ -132,6 +134,7 @@ hdmi_intro_animation()
 color_wipe(Color(0, 0, 0), 0)
 print("        Listening... Press Ctrl+C to stop.")
 print("")
+hdmi_draw_black()
 
 try:
     while True:
@@ -237,6 +240,14 @@ try:
         if red > 255:
             red = 255
 
+        y = ((int(energy * 10) - 60)*1.75)
+        if y < 0:
+            y = 0
+        if y > 255:
+            y = 255
+
+        # print(y)
+
         # scanner operates here
         x = int(exponential_decrease(red))
 
@@ -246,16 +257,25 @@ try:
         done_chase.append(0)
         scan_gobo(1, 7, 17)
         scan_gobo(2, 7, 17)
-        scan_in_thread(scan_color, (1, "red"))
+        scan_in_thread(scan_color, (1, "purple"))
         scan_in_thread(scan_color, (2, "blue"))
 
         if heavy:
             if 1 in list(done_chase)[-10:]:
-                print("strobe")
+                # strobe here
+                kill_current_hdmi()
+                # make all dark!
+                scan_closed(1)
+                scan_closed(2)
+                hdmi_draw_black()
+                led_strobe_effect(10, 75)
+                hdmi_intro_animation()
+                done_chase.clear()
+
             scan_opened(1)
             scan_opened(2)
-            scan_in_thread(scan_axis, (1, x * x, red * red))
-            scan_in_thread(scan_axis, (2, x, red))
+            scan_in_thread(scan_axis, (1, y, x))  #der vordere
+            scan_in_thread(scan_axis, (2, x, y))  #der hintere
             led_music_visualizer(np.max(signal_input))
             # color_flow(runtime_bit, np.max(signal_input))
             drop = False
@@ -310,7 +330,7 @@ try:
                         scan_closed(1)
                         scan_closed(2)
                         set_eurolite_t36(5, 0, 0, 0, 255, 0)
-                        theater_chase(Color(127, 127, 127), 50)
+                        theater_chase(Color(127, 127, 127), 52)
                         hdmi_intro_animation()
                         scan_opened(1)
                         scan_opened(2)
@@ -334,9 +354,9 @@ try:
                     # print("** no input **")
 
 except KeyboardInterrupt:
-    print("")
-    print("\n        Stopping program...")
     hdmi_outro_animation()
+    print("")
+    print("\n        Ending program...")
     color_wipe(Color(0, 0, 0), 0)
     # scan_reset(1)
     # scan_reset(2)
@@ -345,14 +365,21 @@ except KeyboardInterrupt:
     set_eurolite_t36(5, 0, 0, 0, 0, 0)
     line_in.close()
     p.terminate()
+
     if current_hdmi_thread and current_hdmi_thread.is_alive():
         current_hdmi_thread.join()
 
+    time.sleep(2)
+    hdmi_draw_centered_text(
+        "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\nThis program is licensed under the terms of the \nGNU General Public License version 3.\nIt is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\nProgram ended gracefully.")
+    time.sleep(5)
+
     print("")
-    print("\n        Program stopped.")
+    print("\n        Program ended gracefully.")
     print("")
     print("        MusicToLight3  Copyright (C) 2023  Felix Rau")
-    print("        This program comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
+    print("        This program is licensed under the terms of the GNU General Public License version 3.")
+    print("        It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
     print("        This is free software, and you are welcome to redistribute it")
     print("        under certain conditions; see LICENSE.md.")
     print("")

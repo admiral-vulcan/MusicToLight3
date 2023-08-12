@@ -146,6 +146,28 @@ def wheel(pos, reduce=2):
         return (255 - pos * 2) // reduce, (pos * 2) // reduce  # divide by 4 for reduced brightness
 
 
+def led_strobe_effect(duration_seconds, frequency_ms):
+    global strip
+
+    end_time = time.time() + duration_seconds
+
+    while time.time() < end_time:
+        # Alle LEDs auf Weiß setzen
+        for i in range(strip.numPixels()):
+            strip.setPixelColor(i, Color(220, 220, 255))
+        strip.show()
+
+        # Kurze Pause entsprechend der Frequenz
+        time.sleep(frequency_ms / 1000.0)
+
+        # Alle LEDs ausschalten
+        for i in range(strip.numPixels()):
+            strip.setPixelColor(i, Color(0, 0, 0))
+        strip.show()
+
+        # Kurze Pause entsprechend der Frequenz
+        time.sleep(frequency_ms / 1000.0)
+
 # Rot einfärben
 # color_wipe(Color(255, 0, 0))
 
