@@ -205,3 +205,13 @@ def terminate_thread(thread):
 
 def kill_current_hdmi():
     terminate_thread(current_hdmi_thread)
+
+
+def string_to_int(s):
+    """Konvertiert einen String in eine Ganzzahl."""
+    return int.from_bytes(s.encode(), 'big')
+
+
+def int_to_string(i):
+    """Konvertiert eine Ganzzahl zurück in einen String."""
+    return i.to_bytes((i.bit_length() + 7) // 8, 'big').decode()
