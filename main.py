@@ -18,20 +18,35 @@ import time
 import math
 import numpy as np
 import aubio
+import RPi.GPIO as GPIO
+import redis
 from scipy.signal import ellip, sosfilt, sos2zpk, lfilter_zi
 from aud_proc import *
 from eurolite_t36 import *
 from scanner import *
 from led_strip import *
 from hdmi import *
+from smoker import *
 
-# Filter-Einstellungen
+# Set the GPIO mode to BCM and disable warnings
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+
+# Configure GPIO 23 as an output (For Fog Machine)
+GPIO.setup(23, GPIO.OUT)
+
+# Setting up communication with web server via Redis
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+redis_client.set('strobe_mode', 'auto')
+redis_client.set('smoke_mode', 'auto')
+
+# Filter configurations
 thx_band = (1, 120)
 low_band = (1, 300)
 mid_band = (300, 2000)
 high_band = (2000, 16000)
 
-# PyAudio Konfiguration
+# PyAudio settings
 buffer_size = 1024
 hop_size = buffer_size // 2
 pyaudio_format = pyaudio.paFloat32
@@ -39,23 +54,24 @@ n_channels = 1
 sample_rate = 44100
 device_index = 0
 
-# Create a new pitch detection object
+# Initialize pitch detection
 pDetection = aubio.pitch("default", buffer_size, hop_size, sample_rate)
-pDetection.set_unit("Hz")  # We want the result as frequency in Hz
+pDetection.set_unit("Hz")
 pDetection.set_tolerance(0.8)
 
-# Erstellen Sie Aubio-Beat-Detection-Objekt
+# Initialize Aubio beat detection
 aubio_onset = aubio.onset("complex", buffer_size, hop_size, sample_rate)
 
-# Design the elliptic filter
+# Design the audio filters
 thx_sos, thx_zi = design_filter(thx_band[0], thx_band[1], sample_rate)
 low_sos, low_zi = design_filter(low_band[0], low_band[1], sample_rate)
 mid_sos, mid_zi = design_filter(mid_band[0], mid_band[1], sample_rate)
 high_sos, high_zi = design_filter(high_band[0], high_band[1], sample_rate)
-# PyAudio Objekt
+
+# Initialize PyAudio
 p = pyaudio.PyAudio()
 
-# Geräte-Index basierend auf dem Gerätenamen ermitteln
+# Retrieve device index based on device name
 desired_device_index = None
 for i in range(p.get_device_count()):
     info = p.get_device_info_by_index(i)
@@ -63,7 +79,7 @@ for i in range(p.get_device_count()):
         desired_device_index = i
         break
 
-# Das gewünschte Gerät in Ihrem `open`-Aufruf verwenden
+# Use the desired device to open audio stream
 if desired_device_index is not None:
     line_in = p.open(format=pyaudio_format,
                      channels=n_channels,
@@ -72,24 +88,23 @@ if desired_device_index is not None:
                      input_device_index=desired_device_index,
                      frames_per_buffer=buffer_size)
 else:
-    print("Kein passendes Audiogerät gefunden!")
+    print("No suitable audio device found!")
     exit()
 
-# Setzen Sie die Anzahl der Proben für die Durchschnittsberechnung
-average_samples = int(5 * sample_rate / buffer_size)  # average over ~5 seconds
-average_heavy_samples = int(sample_rate / buffer_size)  # average over ~1 second
+# Define the number of samples for average calculations
+average_samples = int(5 * sample_rate / buffer_size)
+average_heavy_samples = int(sample_rate / buffer_size)
 
-# Initialisieren Sie eine deque (double-ended queue) mit einer festen Länge
+# Initialize data collections
 volumes = collections.deque(maxlen=average_samples)
 heavyvols = collections.deque(maxlen=20)
-max_values = collections.deque(maxlen=20)  # store the maximum values for ~2 seconds
-heaviness_values = collections.deque(maxlen=average_samples)  # Sammeln der Heaviness-Werte
+max_values = collections.deque(maxlen=20)
+heaviness_values = collections.deque(maxlen=average_samples)
 
 low_volumes = collections.deque(maxlen=average_samples)
 mid_volumes = collections.deque(maxlen=average_samples)
 high_volumes = collections.deque(maxlen=average_samples)
 
-# Initialisieren Sie last_counts, previous_count_over und heavy_counter vor der Schleife
 last_counts = collections.deque(maxlen=5)
 previous_count_over = 0
 heavy_counter = 0
@@ -101,7 +116,7 @@ drop_history = collections.deque(maxlen=512)
 input_history = collections.deque(maxlen=average_samples)
 pitches = collections.deque(maxlen=average_samples)
 
-done_chase = deque(maxlen=int(250))  # adjust as needed
+done_chase = deque(maxlen=int(250))
 
 runtime_bit = 0
 runtime_byte = 0
@@ -117,7 +132,7 @@ print("        It comes with ABSOLUTELY NO WARRANTY; for details see README.md."
 print("        This is free software, and you are welcome to redistribute it")
 print("        under certain conditions; see LICENSE.md.")
 print("")
-print("        Initialising devices.")
+print("        Initializing devices.")
 print("")
 
 # initialise devices
@@ -136,108 +151,114 @@ print("        Listening... Press Ctrl+C to stop.")
 print("")
 hdmi_draw_black()
 
+# Start main loop
 try:
     while True:
-        runtime_bit += 1
+        # Check for user commands regarding strobe and smoke effects via Redis
+        strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
+        smoke_mode = (redis_client.get('smoke_mode') or b'').decode('utf-8')
 
+        # Handle smoke mode
+        if smoke_mode == 'on':
+            smoke_on()
+        else:
+            smoke_off()
+
+        # Handle strobe mode when explicitly set to "on"
+        if strobe_mode == 'on':
+            # Stop any ongoing HDMI display
+            kill_current_hdmi()
+            # Prepare for strobing by turning off other lights
+            scan_closed(1)
+            scan_closed(2)
+            # Unnecessary line as turning off lights is handled above, consider removal
+            hdmi_draw_black()  # Consider removal
+            while strobe_mode == 'on':
+                led_strobe_effect(1, 75)
+                strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
+            # Restore default display after strobing
+            hdmi_intro_animation()
+            scan_opened(1)
+            scan_opened(2)
+
+        # Increment and manage runtime counters (consider refactoring if not needed)
+        runtime_bit += 1
         if runtime_bit > 255:
             runtime_bit = 0
             runtime_byte += 1
-
         if runtime_byte > 1024:
             runtime_byte = 0
             runtime_kb += 1
-
         if runtime_kb > 1024:
             runtime_kb = 0
             runtime_mb += 1
-
+        # Uncomment below for debugging runtime counters
         # print(runtime_mb, runtime_kb, runtime_byte, runtime_bit)
 
+        # Read audio buffer
         audiobuffer = line_in.read(int(buffer_size / 2), exception_on_overflow=False)
         signal_input = np.frombuffer(audiobuffer, dtype=np.float32)
 
-        # Adjust gain
+        # Adjust signal gain if necessary (comment suggests it's not working properly)
         signal, gain_factor = adjust_gain(volumes, signal_input)
 
-        # Calculate the volume of the current signal
+        # Compute and store volume values
         volume = np.sqrt(safe_mean(signal ** 2))
-        # Add the current volume to the list of previous volumes
         volumes.append(volume)
 
-        # apply low frequency filter to signal
+        # Filter and store values for low, mid, and high frequency signals
         low_signal, low_zi = sosfilt(low_sos, signal, zi=low_zi)
-        low_volume = np.sqrt(safe_mean(low_signal ** 2))
-        low_volumes.append(low_volume)
+        low_volumes.append(np.sqrt(safe_mean(low_signal ** 2)))
 
-        # apply mid frequency filter to signal
         mid_signal, mid_zi = sosfilt(mid_sos, signal, zi=mid_zi)
-        mid_volume = np.sqrt(safe_mean(mid_signal ** 2))
-        mid_volumes.append(mid_volume)
+        mid_volumes.append(np.sqrt(safe_mean(mid_signal ** 2)))
 
-        # apply high frequency filter to signal
         high_signal, high_zi = sosfilt(high_sos, signal, zi=high_zi)
-        high_volume = np.sqrt(safe_mean(high_signal ** 2))
-        high_volumes.append(high_volume)
+        high_volumes.append(np.sqrt(safe_mean(high_signal ** 2)))
 
+        # Compute average volumes for frequency bands
         low_mean = compute_mean_volume(low_volumes)
         mid_mean = compute_mean_volume(mid_volumes)
         high_mean = compute_mean_volume(high_volumes)
 
+        # Generate visualization matrix based on signal
         hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
         transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
 
-        # Calculate energies
+        # Energy calculations
         energy = np.sum(signal ** 2)
-        db_energy = 10 * np.log10(energy)
         relative_energy = energy / len(signal)
-        db_relative_energy = 10 * np.log10(relative_energy)
 
-        thx_signal, zi = sosfilt(thx_sos, signal, zi=thx_zi)  # Apply the filter with the previous final state
+        # THX signal filtering
+        thx_signal, zi = sosfilt(thx_sos, signal, zi=thx_zi)
         thx_signal = thx_signal.astype(np.float32)
 
+        # Metrics related to "heaviness" of signal
         heavyvols.append(np.max(thx_signal))
-        heavyvol = safe_mean(heavyvols)
-        max_value = np.max(thx_signal)
-        min_value = np.min(thx_signal)
-        delta_value = max_value - min_value
-        max_values.append(max_value)
+        delta_value = np.max(thx_signal) - np.min(thx_signal)
+        max_values.append(np.max(thx_signal))
         delta_values.append(delta_value)
         count_over = sum(1 for value in max_values if value > 0.08)
         last_counts.append(count_over)
-
-        # Check if signal is heavy
         heavy, heavy_counter = is_heavy(signal, delta_values, count_over, max_values, last_counts, heavy_counter)
         heaviness = calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter)
-        heaviness_values.append(heaviness)  # Sammeln der aktuellen Heaviness-Werte
+        heaviness_values.append(heaviness)
 
+        # Dominant frequency analysis
         dominant_freq = dominant_frequency(signal, sample_rate)
         dominant_frequencies.append(dominant_freq)
         heaviness_history.append(heavy)
-
         drop = detect_drop(safe_mean(volumes), heavy, dominant_frequencies, heaviness_history, drop_history)
         drop_history.append(drop)
 
-        previous_heavy = heavy
-
-        # Beat erkennen
+        # Beat detection
         is_beat = aubio_onset(thx_signal)
-
         pitch = get_pitch(audiobuffer, pDetection)
         pitches.append(pitch)
-        # print("Detected pitch: %.2f Hz" % pitch)
-        # dynamic = calculate_dynamics(low_volumes, mid_volumes, high_volumes)
-        # print(dynamic)
-        # category = categorize_song(np.max(signal_input), low_volumes, mid_volumes, high_volumes, pitches)
-        # print(category)
 
-        # Speichern Sie count_over für die nächste Iteration
-        previous_count_over = count_over
-
-        if heavy and 1 in list(done_chase)[-10:]:
-            # strobe here
+        # Check for auto-strobe conditions and execute strobe if criteria met
+        if strobe_mode == 'auto' and heavy and 1 in list(done_chase)[-10:]:
             kill_current_hdmi()
-            # make all dark!
             scan_closed(1)
             scan_closed(2)
             hdmi_draw_black()
@@ -245,88 +266,64 @@ try:
             hdmi_intro_animation()
             done_chase.clear()
 
-        # hdmi numbers here
+        # Update HDMI display with computed matrix
         hdmi_draw_matrix(transposed_hdmi_matrix)
 
-        red = int(energy * 10)
-        if red > 255:
-            red = 255
-
-        y = ((int(energy * 10) - 60) * 1.75)
-        if y < 0:
-            y = 0
-        if y > 255:
-            y = 255
-
-        # print(y)
-
-        # scanner operates here
+        # Color transformations based on signal energy
+        red = min(int(energy * 10), 255)
+        y = max(min(((int(energy * 10) - 60) * 1.75), 255), 0)
         x = int(exponential_decrease(red))
 
-        # print(x)
-
-        # DMX lamps and LED strip operate here
+        # DMX and LED operations
         done_chase.append(0)
         scan_gobo(1, 7, 17)
         scan_gobo(2, 7, 17)
         scan_in_thread(scan_color, (1, "purple"))
         scan_in_thread(scan_color, (2, "blue"))
-
+        # Handle actions for heavy signal
         if heavy:
             scan_opened(1)
             scan_opened(2)
-            scan_in_thread(scan_axis, (1, y, x))  # der vordere
-            scan_in_thread(scan_axis, (2, x, y))  # der hintere
+            scan_in_thread(scan_axis, (1, y, x))  # Front scanner
+            scan_in_thread(scan_axis, (2, x, y))  # Rear scanner
             led_music_visualizer(np.max(signal_input))
-            # color_flow(runtime_bit, np.max(signal_input))
             drop = False
-            # Überprüfen, ob ein Beat erkannt wurde
+
+            # Check if a beat is detected
             if is_beat:
                 drop_history.clear()
-                # print("**************************************************************")
-                # print("*************************** Beat! ****************************")
-                # print("**************************************************************")
                 set_eurolite_t36(5, 255, 0, 50, 255, 0)
             else:
-                # print("**************************************************************")
-                # print("*************************** Heavy! ***************************")
-                # print("**************************************************************")
                 set_eurolite_t36(5, red, 0, 255, 255, 0)
 
+            # Decrement heavy counter if it's greater than 0
             if heavy_counter > 0:
-                heavy_counter -= 1  # Reduzieren Sie heavy_counter um 1
+                heavy_counter -= 1
         else:
-            # scan_closed(1)
-            # scan_closed(2)
             scan_go_home(1)
             scan_go_home(2)
-            # scan_in_thread(scan_axis, (1, 255, 255))
-            # scan_in_thread(scan_axis, (2, 255, 255))
+
+            # Handle light actions based on signal strength and history
             if np.max(signal_input) > 0.007:
                 input_history.append(1.0)
+
                 if not heavy and not drop:
                     color_flow(runtime_bit, np.max(signal_input))
-                    # print("** ? **", np.max(signal_input))
 
                 if 0 < sum(drop_history) < 16 and drop:
-                    # color_wipe(Color(0, 0, 0), 0)
-                    # print("**************************************************************")
-                    # print("*********************** Drop detected. ***********************")
-                    # print("**************************************************************")
                     color_flow(runtime_bit, np.max(signal_input))
                     set_eurolite_t36(5, invert(sum(drop_history) - 128, 256), 0, 100, 255, 0)
 
                 if 16 <= sum(drop_history) < 32 and drop:
-                    # color_wipe(Color(0, 0, 0), 0)
-                    # print("**************************************************************")
-                    # print("*********************** Drop rises... ************************")
-                    # print("**************************************************************")
                     color_flow(runtime_bit, np.max(signal_input))
                     set_eurolite_t36(5, 0, 0, invert(sum(drop_history), 256), 255, 0)
 
-                if sum(drop_history) >= 32 and drop:  # not if too often!
+                # Manage animations and lights for persistent drops
+                if sum(drop_history) >= 32 and drop:
                     heaviness_history.clear()
                     if 1 not in done_chase:
+                        if smoke_mode == 'auto':
+                            smoke_on()
                         hdmi_outro_animation()
                         scan_closed(1)
                         scan_closed(2)
@@ -336,12 +333,12 @@ try:
                         scan_opened(1)
                         scan_opened(2)
                     done_chase.append(1)
-                    # print("**************************************************************")
-                    # print("********************** Drop persistent! **********************")
-                    # print("**************************************************************")
+                    smoke_off()
             else:
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
                 input_history.append(0.0)
+
+                # Reset state when average input is low
                 if safe_mean(input_history) < 0.5:
                     drop = False
                     heavy = False
@@ -351,36 +348,40 @@ try:
                     pitches.clear()
                     drop_history.clear()
                     heaviness_history.clear()
-                    color_flow(runtime_bit, np.max(signal_input), 20)  # last arg is brightness divider
-                    # print("** no input **")
+                    color_flow(runtime_bit, np.max(signal_input), 20)  # Adjust brightness
 
+# Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
+    # Cleanup functions to ensure a safe shutdown
+    cleanup_smoke()
     hdmi_outro_animation()
-    print("")
-    print("\n        Ending program...")
-    color_wipe(Color(0, 0, 0), 0)
-    # scan_reset(1)
-    # scan_reset(2)
+    print("\nEnding program...")
+    color_wipe(Color(0, 0, 0), 0)  # Clear any existing colors
     scan_closed(1)
     scan_closed(2)
-    set_eurolite_t36(5, 0, 0, 0, 0, 0)
+    set_eurolite_t36(5, 0, 0, 0, 0, 0)  # Reset the eurolite device
     line_in.close()
     p.terminate()
 
+    # Ensure any HDMI thread finishes before program exit
     if current_hdmi_thread and current_hdmi_thread.is_alive():
         current_hdmi_thread.join()
 
-    time.sleep(2)
-    hdmi_draw_centered_text(
-        "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\nThis program is licensed under the terms of the \nGNU General Public License version 3.\nIt is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\nProgram ended gracefully.")
-    time.sleep(5)
+    time.sleep(2)  # Pause for 2 seconds
 
-    print("")
-    print("\n        Program ended gracefully.")
-    print("")
-    print("        MusicToLight3  Copyright (C) 2023  Felix Rau")
-    print("        This program is licensed under the terms of the GNU General Public License version 3.")
-    print("        It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
-    print("        This is free software, and you are welcome to redistribute it")
-    print("        under certain conditions; see LICENSE.md.")
-    print("")
+    # Display the license and copyright information on HDMI
+    hdmi_draw_centered_text(
+        "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\n"
+        "This program is licensed under the terms of the \n"
+        "GNU General Public License version 3.\n"
+        "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n"
+        "\n\nProgram ended gracefully.")
+    time.sleep(5)  # Pause for 5 seconds
+
+    # Print the license and copyright information to the console
+    print("\nProgram ended gracefully.\n")
+    print("MusicToLight3  Copyright (C) 2023  Felix Rau")
+    print("This program is licensed under the terms of the GNU General Public License version 3.")
+    print("It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
+    print("This is free software, and you are welcome to redistribute it")
+    print("under certain conditions; see LICENSE.md.\n")
