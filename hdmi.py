@@ -24,7 +24,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 
 colors = [(255, 0, 0), (255, 0, 255), (0, 0, 255)]
 font = 0
-zero_color = (16, 16, 16)
+zero_color = (64, 64, 64)
 
 
 def init_hdmi():
