@@ -20,6 +20,7 @@ import numpy as np
 import aubio
 import RPi.GPIO as GPIO
 import redis
+import json
 from scipy.signal import ellip, sosfilt, sos2zpk, lfilter_zi
 from aud_proc import *
 from eurolite_t36 import *
@@ -27,6 +28,77 @@ from scanner import *
 from led_strip import *
 from hdmi import *
 from smoker import *
+import os
+import sys
+from com_udp import *
+import argparse
+
+UDP_LED_COUNT = 45
+UDP_IP_ADDRESS = "192.168.1.111"
+UDP_PORT = 4210
+
+parser = argparse.ArgumentParser(description='MusicToLight3')
+parser.add_argument('--fastboot', action='store_true', help='Activates Fastboot-Mode. Deactivates calibrating.')
+args = parser.parse_args()
+
+# Define the path for the lock file  TODO DES LÄUFT NO NED
+lock_file_path = "/tmp/musictolight.lock"
+
+# Check if the lock file exists
+if os.path.exists(lock_file_path):
+    print("Das Programm läuft bereits. Beende das Programm.")
+    sys.exit(1)
+
+# Create a lock file to indicate that the program is running
+try:
+    with open(lock_file_path, 'w') as lock_file:
+        lock_file.write("LOCKED")
+except Exception as e:
+    print(f"Fehler beim Erstellen der Lock-Datei: {e}")
+    sys.exit(1)
+
+# Setting up communication with web server via Redis
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+redis_client.set('strobe_mode', 'auto')
+redis_client.set('smoke_mode', 'auto')
+redis_client.set('panic_mode', 'off')
+
+# Set master colors (TODO should later be changeable via web interface)
+st_prim_color = (0, 0, 255)  # blue
+nd_prim_color = (255, 0, 0)  # red
+
+# Calculate the average of the two colors
+average_color = tuple((a + b) // 2 for a, b in zip(st_prim_color, nd_prim_color))
+
+# Find the highest value in the average
+max_val = max(average_color)
+
+# Calculate the factor to scale the highest value to 255
+if max_val != 0:  # Prevent division by zero
+    factor = 255 / max_val
+else:
+    factor = 0
+
+# Multiply each color value in the average by the factor
+secondary_color = tuple(int(val * factor) for val in average_color)
+
+redis_client.set('st_prim_color', json.dumps(st_prim_color))
+redis_client.set('nd_prim_color', json.dumps(nd_prim_color))
+redis_client.set('secondary_color', json.dumps(secondary_color))
+
+
+def redis_get_colors():
+    """
+    Retrieve the color values from Redis and assign them to the global variables.
+    """
+    global st_prim_color
+    global nd_prim_color
+    global secondary_color
+
+    st_prim_color = tuple(json.loads(redis_client.get('st_prim_color')))
+    nd_prim_color = tuple(json.loads(redis_client.get('nd_prim_color')))
+    secondary_color = tuple(json.loads(redis_client.get('secondary_color')))
+
 
 # Set the GPIO mode to BCM and disable warnings
 GPIO.setmode(GPIO.BCM)
@@ -34,11 +106,6 @@ GPIO.setwarnings(False)
 
 # Configure GPIO 23 as an output (For Fog Machine)
 GPIO.setup(23, GPIO.OUT)
-
-# Setting up communication with web server via Redis
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
-redis_client.set('strobe_mode', 'auto')
-redis_client.set('smoke_mode', 'auto')
 
 # Filter configurations
 thx_band = (1, 120)
@@ -126,11 +193,13 @@ runtime_mb = 0
 previous_heavy = True
 
 print("")
-print("        MusicToLight3  Copyright (C) 2023  Felix Rau")
-print("        This program is licensed under the terms of the GNU General Public License version 3.")
-print("        It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
-print("        This is free software, and you are welcome to redistribute it")
-print("        under certain conditions; see LICENSE.md.")
+print("\nProgram ended gracefully.\n")
+print("MusicToLight3  Copyright (C) 2023  Felix Rau")
+print("This program is licensed under the terms of the ")
+print("GNU General Public License version 3.")
+print("It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
+print("This is free software, and you are welcome to redistribute it")
+print("under certain conditions; see LICENSE.md.\n")
 print("")
 print("        Initializing devices.")
 print("")
@@ -138,15 +207,24 @@ print("")
 # initialise devices
 init_hdmi()
 hdmi_draw_centered_text(
-    "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\nThis program is licensed under the terms of the \nGNU General Public License version 3.\nIt is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\nInitialising devices...")
-scan_reset(1)
-scan_reset(2)
-hdmi_intro_animation()
+    "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\n"
+    "This program is licensed under the terms of the \n"
+    "GNU General Public License version 3.\n"
+    "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\n"
+    "Initialising devices...")
+
+if args.fastboot:
+    print('        Fastboot-Mode on. Devices are not calibrating.')
+    print(' ')
+else:
+    scan_reset(1)
+    scan_reset(2)
+    hdmi_intro_animation()
 # scan_in_thread(scan_reset, (1,))
 # scan_in_thread(scan_reset, (2,))
 # set_eurolite_t36(5, 0, 0, 0, 0, 0)
 # set_eurolite_t36(5, 0, 0, 0, 255, 0)
-color_wipe(Color(0, 0, 0), 0)
+set_all_pixels_color(0, 0, 0)
 print("        Listening... Press Ctrl+C to stop.")
 print("")
 hdmi_draw_black()
@@ -154,9 +232,34 @@ hdmi_draw_black()
 # Start main loop
 try:
     while True:
-        # Check for user commands regarding strobe and smoke effects via Redis
+        # Check for user commands regarding colors, strobe and smoke effects via Redis
+        redis_get_colors()
         strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
         smoke_mode = (redis_client.get('smoke_mode') or b'').decode('utf-8')
+        panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
+
+        # Handle panic mode
+        if panic_mode == 'on':
+            # Turn on led strip, eurolite (floor) set on all white
+            set_all_pixels_color(255, 255, 255)
+            set_eurolite_t36(5, 255, 255, 255, 255, 0)
+            # Blacken HDMI display
+            hdmi_draw_black()
+            # Turn off other lights
+            scan_closed(1)
+            scan_closed(2)
+            while panic_mode == 'on':
+                # Refresh state of panic mode
+                panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
+                send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_45_255_255_255_255_255_255_255")
+                time.sleep(0.105)
+            # Restore default display after panicking
+            set_all_pixels_color(0, 0, 0)
+            set_eurolite_t36(5, 0, 0, 0, 255, 0)
+            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+            hdmi_intro_animation()
+            scan_opened(1)
+            scan_opened(2)
 
         # Handle smoke mode
         if smoke_mode == 'on':
@@ -171,6 +274,7 @@ try:
             # Prepare for strobing by turning off other lights
             scan_closed(1)
             scan_closed(2)
+            set_eurolite_t36(5, 0, 0, 0, 255, 0)
             # Unnecessary line as turning off lights is handled above, consider removal
             hdmi_draw_black()  # Consider removal
             while strobe_mode == 'on':
@@ -278,8 +382,13 @@ try:
         done_chase.append(0)
         scan_gobo(1, 7, 17)
         scan_gobo(2, 7, 17)
-        scan_in_thread(scan_color, (1, "purple"))
-        scan_in_thread(scan_color, (2, "blue"))
+        scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
+        scan_in_thread(scan_color, (2, interpret_color(secondary_color)))
+        udp_led = int(x/5.6)
+        # num_led, brightness, startRGB,,, endRGB,,
+        # 45, 255, 255, 0, 0, 0, 0, 255
+        udp_message = f"led_{udp_led}_255_0_0_255_255_0_0"
+        send_udp_message(UDP_IP_ADDRESS, UDP_PORT, udp_message)
         # Handle actions for heavy signal
         if heavy:
             scan_opened(1)
@@ -292,9 +401,6 @@ try:
             # Check if a beat is detected
             if is_beat:
                 drop_history.clear()
-                set_eurolite_t36(5, 255, 0, 50, 255, 0)
-            else:
-                set_eurolite_t36(5, red, 0, 255, 255, 0)
 
             # Decrement heavy counter if it's greater than 0
             if heavy_counter > 0:
@@ -310,13 +416,8 @@ try:
                 if not heavy and not drop:
                     color_flow(runtime_bit, np.max(signal_input))
 
-                if 0 < sum(drop_history) < 16 and drop:
+                if 0 < sum(drop_history) < 32 and drop:
                     color_flow(runtime_bit, np.max(signal_input))
-                    set_eurolite_t36(5, invert(sum(drop_history) - 128, 256), 0, 100, 255, 0)
-
-                if 16 <= sum(drop_history) < 32 and drop:
-                    color_flow(runtime_bit, np.max(signal_input))
-                    set_eurolite_t36(5, 0, 0, invert(sum(drop_history), 256), 255, 0)
 
                 # Manage animations and lights for persistent drops
                 if sum(drop_history) >= 32 and drop:
@@ -327,7 +428,6 @@ try:
                         hdmi_outro_animation()
                         scan_closed(1)
                         scan_closed(2)
-                        set_eurolite_t36(5, 0, 0, 0, 255, 0)
                         theater_chase(Color(127, 127, 127), 52)
                         hdmi_intro_animation()
                         scan_opened(1)
@@ -335,7 +435,6 @@ try:
                     done_chase.append(1)
                     smoke_off()
             else:
-                set_eurolite_t36(5, 0, 0, 0, 255, 0)
                 input_history.append(0.0)
 
                 # Reset state when average input is low
@@ -352,11 +451,17 @@ try:
 
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
+    # Remove the lock file when the program is done
+    try:
+        os.remove(lock_file_path)
+    except Exception as e:
+        print(f"Fehler beim Entfernen der Lock-Datei: {e}")
+
     # Cleanup functions to ensure a safe shutdown
     cleanup_smoke()
     hdmi_outro_animation()
     print("\nEnding program...")
-    color_wipe(Color(0, 0, 0), 0)  # Clear any existing colors
+    set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     scan_closed(1)
     scan_closed(2)
     set_eurolite_t36(5, 0, 0, 0, 0, 0)  # Reset the eurolite device
@@ -376,12 +481,15 @@ except KeyboardInterrupt:
         "GNU General Public License version 3.\n"
         "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n"
         "\n\nProgram ended gracefully.")
-    time.sleep(5)  # Pause for 5 seconds
+
+    if not args.fastboot:
+        time.sleep(5)  # Pause for 5 seconds
 
     # Print the license and copyright information to the console
     print("\nProgram ended gracefully.\n")
     print("MusicToLight3  Copyright (C) 2023  Felix Rau")
-    print("This program is licensed under the terms of the GNU General Public License version 3.")
+    print("This program is licensed under the terms of the ")
+    print("GNU General Public License version 3.")
     print("It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
     print("This is free software, and you are welcome to redistribute it")
     print("under certain conditions; see LICENSE.md.\n")
