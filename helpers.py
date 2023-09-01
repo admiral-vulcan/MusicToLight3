@@ -209,9 +209,65 @@ def kill_current_hdmi():
 
 def string_to_int(s):
     """Konvertiert einen String in eine Ganzzahl."""
-    return int.from_bytes(s.encode(), 'big')
+    result = 0
+    for char in s:
+        result = (result << 8) | ord(char)
+    return result
 
 
-def int_to_string(i):
-    """Konvertiert eine Ganzzahl zurück in einen String."""
-    return i.to_bytes((i.bit_length() + 7) // 8, 'big').decode()
+def interpret_color(color):
+    """
+    Interpret a given RGB color and return the closest known color name.
+    :param color: A tuple of RGB values (R, G, B)
+    :return: A string representing the color name
+    """
+    r, g, b = color
+
+    # RGB definitions for known colors
+    colors = {
+        "white": (255, 255, 255),
+        "red": (255, 0, 0),
+        "yellow": (255, 255, 0),
+        "purple": (128, 0, 128),
+        "green": (0, 128, 0),
+        "orange": (255, 165, 0),
+        "blue": (0, 0, 255),
+        "pink": (255, 192, 203)
+    }
+
+    # Find the closest known color
+    min_distance = float('inf')
+    closest_color = None
+
+    for color_name, rgb in colors.items():
+        distance = sum([(a - b) ** 2 for a, b in zip(color, rgb)])  # Euclidean distance in RGB space
+        if distance < min_distance:
+            min_distance = distance
+            closest_color = color_name
+
+    return closest_color
+
+
+def drop_color(drop_sum, red, green, blue):
+    """
+    Adjust the color based on the drop_sum.
+
+    Args:
+    - drop_sum: An integer between 1 and 32 inclusive.
+    - red, green, blue: Integers representing color values.
+
+    Returns:
+    - A tuple (new_red, new_green, new_blue) representing the adjusted color.
+    """
+
+    # Erweitere die Range der drop_sum
+    expanded_red = int(drop_sum * (red / 32))
+    expanded_green = int(drop_sum * (green / 32))
+    expanded_blue = int(drop_sum * (blue / 32))
+
+    # Subtrahiere die erweiterte drop_sum von red, green und blue
+    new_red = max(0, red - expanded_red)
+    new_green = max(0, green - expanded_green)
+    new_blue = max(0, blue - expanded_blue)
+
+    return new_red, new_green, new_blue
