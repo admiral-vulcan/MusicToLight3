@@ -6,13 +6,7 @@ last_sent_time = {}
 
 
 def send_udp_message(ip_address, port, message):
-    """Sends a UDP message to the given IP address and port.
-
-    Args:
-        ip_address (str): The recipient's IP address.
-        port (int): The recipient's port.
-        message (str): The message to send.
-    """
+    """Sends a UDP message to the given IP address and port."""
     global last_sent_time
 
     # Extract the first 4 characters to identify the message type
@@ -23,12 +17,15 @@ def send_udp_message(ip_address, port, message):
 
     # Check if we can send this message now
     if message_prefix not in last_sent_time or (current_time - last_sent_time.get(message_prefix, 0)) >= 0.1:
-        # print(message)
         # Create a UDP socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-        # Send the message
-        sock.sendto(bytes(message, "utf-8"), (ip_address, port))
+        try:
+            # Send the message
+            sock.sendto(bytes(message, "utf-8"), (ip_address, port))
+        except OSError as e:
+            # print error message and continue
+            print(f"Could not send the message: {e}")
 
         # Close the socket
         sock.close()

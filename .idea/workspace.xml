@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="changed count of Arduino-LEDs to 30">
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
-    </list>
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added red light near smoke machine" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -365,11 +363,18 @@
       <option name="project" value="LOCAL" />
       <updated>1693604374649</updated>
     </task>
-    <option name="localTasksCounter" value="35" />
+    <task id="LOCAL-00035" summary="added red light near smoke machine">
+      <option name="closed" value="true" />
+      <created>1693605058412</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1693605058412</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="tried to make it more responsive, changed sample rate, changed thread handling..." />
     <MESSAGE value="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later." />
     <MESSAGE value="added hdmi-output" />
     <MESSAGE value="added more threading" />
@@ -394,6 +399,7 @@
     <MESSAGE value="added fastboot mode and panic mode, implemented UDP communication, color calculation, and other small things" />
     <MESSAGE value="performance optimizations" />
     <MESSAGE value="changed count of Arduino-LEDs to 30" />
-    <option name="LAST_COMMIT_MESSAGE" value="changed count of Arduino-LEDs to 30" />
+    <MESSAGE value="added red light near smoke machine" />
+    <option name="LAST_COMMIT_MESSAGE" value="added red light near smoke machine" />
   </component>
 </project>
