@@ -4,8 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="changed position of strobe and added blackness at the beginning">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added string - int - conversion">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
+      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
+      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
+      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -245,7 +249,55 @@
       <option name="project" value="LOCAL" />
       <updated>1691883402426</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="added pygame to README.md">
+      <option name="closed" value="true" />
+      <created>1691883597379</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1691883597379</updated>
+    </task>
+    <task id="LOCAL-00021" summary="changed stuff">
+      <option name="closed" value="true" />
+      <created>1691883618288</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1691883618288</updated>
+    </task>
+    <task id="LOCAL-00022" summary="cleaned comments">
+      <option name="closed" value="true" />
+      <created>1692460706293</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1692460706293</updated>
+    </task>
+    <task id="LOCAL-00023" summary="added smoke machine py-file">
+      <option name="closed" value="true" />
+      <created>1692461877930</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1692461877930</updated>
+    </task>
+    <task id="LOCAL-00024" summary="cleaned comments and added smoke machine">
+      <option name="closed" value="true" />
+      <created>1692461897470</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1692461897470</updated>
+    </task>
+    <task id="LOCAL-00025" summary="added string - int - conversion">
+      <option name="closed" value="true" />
+      <created>1692463931229</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1692463931229</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -267,6 +319,12 @@
     <MESSAGE value="changed borders" />
     <MESSAGE value="added more dynamic to hdmi numbers" />
     <MESSAGE value="changed position of strobe and added blackness at the beginning" />
-    <option name="LAST_COMMIT_MESSAGE" value="changed position of strobe and added blackness at the beginning" />
+    <MESSAGE value="added pygame to README.md" />
+    <MESSAGE value="changed stuff" />
+    <MESSAGE value="cleaned comments" />
+    <MESSAGE value="added smoke machine py-file" />
+    <MESSAGE value="cleaned comments and added smoke machine" />
+    <MESSAGE value="added string - int - conversion" />
+    <option name="LAST_COMMIT_MESSAGE" value="added string - int - conversion" />
   </component>
 </project>
