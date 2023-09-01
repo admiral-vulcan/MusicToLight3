@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added string - int - conversion">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added fastboot mode and panic mode, implemented UDP communication, color calculation, and other small things">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
-      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
       <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
       <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
@@ -297,14 +295,58 @@
       <option name="project" value="LOCAL" />
       <updated>1692463931229</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="added UDP communication to Arduino-led-strip">
+      <option name="closed" value="true" />
+      <created>1693601723671</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1693601723671</updated>
+    </task>
+    <task id="LOCAL-00027" summary="changed brightness of hdmi zeros">
+      <option name="closed" value="true" />
+      <created>1693601803358</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1693601803358</updated>
+    </task>
+    <task id="LOCAL-00028" summary="added color selection, translation, and (drop-color-) calculation">
+      <option name="closed" value="true" />
+      <created>1693601942072</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1693601942072</updated>
+    </task>
+    <task id="LOCAL-00029" summary="added lamp near smoke machine and a set all pixels color function">
+      <option name="closed" value="true" />
+      <created>1693602031738</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1693602031738</updated>
+    </task>
+    <task id="LOCAL-00030" summary="added fastboot mode and panic mode, implemented UDP communication, color calculation, and other small things">
+      <option name="closed" value="true" />
+      <created>1693602153364</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1693602153364</updated>
+    </task>
+    <task id="LOCAL-00031" summary="added fastboot mode and panic mode, implemented UDP communication, color calculation, and other small things">
+      <option name="closed" value="true" />
+      <created>1693602163710</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1693602163710</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="worked here and there" />
-    <MESSAGE value="added threading so that the scanner can rest between color changes" />
-    <MESSAGE value="added comments to scanner.py" />
-    <MESSAGE value="added GNU license" />
     <MESSAGE value="added safe mean" />
     <MESSAGE value="refactored samplerate to sample_rate" />
     <MESSAGE value="tried to make it more responsive, changed sample rate, changed thread handling..." />
@@ -325,6 +367,11 @@
     <MESSAGE value="added smoke machine py-file" />
     <MESSAGE value="cleaned comments and added smoke machine" />
     <MESSAGE value="added string - int - conversion" />
-    <option name="LAST_COMMIT_MESSAGE" value="added string - int - conversion" />
+    <MESSAGE value="added UDP communication to Arduino-led-strip" />
+    <MESSAGE value="changed brightness of hdmi zeros" />
+    <MESSAGE value="added color selection, translation, and (drop-color-) calculation" />
+    <MESSAGE value="added lamp near smoke machine and a set all pixels color function" />
+    <MESSAGE value="added fastboot mode and panic mode, implemented UDP communication, color calculation, and other small things" />
+    <option name="LAST_COMMIT_MESSAGE" value="added fastboot mode and panic mode, implemented UDP communication, color calculation, and other small things" />
   </component>
 </project>
