@@ -384,7 +384,9 @@ try:
         scan_gobo(2, 7, 17)
         scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
         scan_in_thread(scan_color, (2, interpret_color(secondary_color)))
-        udp_led = int(y/5.6)
+
+        # send to Arduino
+        udp_led = int(y/8.5) # for 30 LEDs
         # num_led, brightness, startRGB,,, endRGB,,
         # 45, 255, 255, 0, 0, 0, 0, 255
         udp_message = f"led_{udp_led}_255_0_0_255_255_0_0"
