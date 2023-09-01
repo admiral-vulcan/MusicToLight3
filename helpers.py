@@ -144,7 +144,7 @@ def safe_mean(array):
     """
     Calculate the mean of a list or numpy array, safely handling empty inputs.
     """
-    if np.size(array) > 0:
+    if len(array) > 0:
         return np.mean(array)
     else:
         return 0

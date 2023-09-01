@@ -384,7 +384,7 @@ try:
         scan_gobo(2, 7, 17)
         scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
         scan_in_thread(scan_color, (2, interpret_color(secondary_color)))
-        udp_led = int(x/5.6)
+        udp_led = int(y/5.6)
         # num_led, brightness, startRGB,,, endRGB,,
         # 45, 255, 255, 0, 0, 0, 0, 255
         udp_message = f"led_{udp_led}_255_0_0_255_255_0_0"
