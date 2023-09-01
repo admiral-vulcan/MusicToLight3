@@ -19,6 +19,8 @@ import random
 import pyaudio
 import numpy as np
 from helpers import *
+from eurolite_t36 import *
+
 
 # LED-Streifen Konfiguration:
 LED_COUNT = 270  # Anzahl der LED-Pixel.
@@ -38,6 +40,7 @@ recent_audio_inputs = deque(maxlen=int(50))  # adjust as needed
 
 
 def theater_chase(c, wait_ms):
+    set_eurolite_t36(5, 0, 0, 255, 255, 0)
     NUMCHASE = 30
     NUMPIX = int(strip.numPixels() / 2)
     for j in range(NUMCHASE):
@@ -66,6 +69,7 @@ def theater_chase(c, wait_ms):
         for i in range(int(strip.numPixels() / 2)):
             strip.setPixelColor(i, 0)  # Schalte alle LEDs aus
         strip.show()  # Sende die Farbänderungen an den Streifen
+    set_eurolite_t36(5, 0, 0, 0, 255, 0)
 
 
 # Define function to visualize music on LED strip
@@ -99,6 +103,7 @@ def led_music_visualizer(audio_input):
         blue = int(((1 - distance_from_mid) ** 2) * mean_vol * 255)
         blue = min(blue, 255)  # Ensure blue is not more than 255
         # print(f"mean_vol: {mean_vol}, distance_from_mid: {distance_from_mid}, red: {red}, blue: {blue}")
+
         if mid_point - num_leds <= i <= mid_point + num_leds:
             strip.setPixelColor(i, Color(red, 0, blue))
         else:
@@ -118,6 +123,26 @@ def color_wipe(color, wait_ms=50):
             time.sleep(wait_ms / 1000.0)
     if wait_ms == 0:
         strip.show()
+
+
+def set_all_pixels_color(red, green, blue):
+    """
+    Set the color of all pixels on the strip.
+
+    Args:
+    - strip: The LED strip object.
+    - red, green, blue: Integers representing the color values.
+    """
+
+    # Konvertiere die RGB-Werte in eine 32-Bit-Farbe
+    color = (red << 16) | (green << 8) | blue
+
+    # Gehe durch alle Pixel und setze ihre Farbe
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, color)
+
+    # Aktualisiere den LED-Streifen, um die Änderungen anzuzeigen
+    strip.show()
 
 
 def color_flow(pos, audio_input, reduce=2):
@@ -170,6 +195,7 @@ def led_strobe_effect(duration_seconds, frequency_ms):
 
         # Kurze Pause entsprechend der Frequenz
         time.sleep(frequency_ms / 1000.0)
+
 
 # Rot einfärben
 # color_wipe(Color(255, 0, 0))
