@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added red light near smoke machine" />
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added error catching while sending UDP packages">
+      <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -371,11 +374,18 @@
       <option name="project" value="LOCAL" />
       <updated>1693605058412</updated>
     </task>
-    <option name="localTasksCounter" value="36" />
+    <task id="LOCAL-00036" summary="added error catching while sending UDP packages">
+      <option name="closed" value="true" />
+      <created>1693605285057</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1693605285057</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later." />
     <MESSAGE value="added hdmi-output" />
     <MESSAGE value="added more threading" />
     <MESSAGE value="added more threading &amp; hdmi-output" />
@@ -400,6 +410,7 @@
     <MESSAGE value="performance optimizations" />
     <MESSAGE value="changed count of Arduino-LEDs to 30" />
     <MESSAGE value="added red light near smoke machine" />
-    <option name="LAST_COMMIT_MESSAGE" value="added red light near smoke machine" />
+    <MESSAGE value="added error catching while sending UDP packages" />
+    <option name="LAST_COMMIT_MESSAGE" value="added error catching while sending UDP packages" />
   </component>
 </project>

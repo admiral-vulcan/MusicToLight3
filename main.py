@@ -346,6 +346,7 @@ try:
 
         # Check for auto-strobe conditions and execute strobe if criteria met
         if strobe_mode == 'auto' and heavy and 1 in list(done_chase)[-10:]:
+            set_eurolite_t36(5, 0, 0, 0, 255, 0)
             kill_current_hdmi()
             scan_closed(1)
             scan_closed(2)
@@ -364,8 +365,8 @@ try:
 
         # DMX and LED operations
         done_chase.append(0)
-        scan_gobo(1, 7, 17)
-        scan_gobo(2, 7, 17)
+        scan_gobo(1, 7, 150)
+        scan_gobo(2, 7, 150)
         scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
         scan_in_thread(scan_color, (2, interpret_color(secondary_color)))
         set_eurolite_t36(5, x, 0, 0, 255, 0)  # TODO color calculation
