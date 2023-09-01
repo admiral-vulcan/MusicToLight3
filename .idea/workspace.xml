@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="performance optimizations" />
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="changed count of Arduino-LEDs to 30">
+      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -355,11 +357,18 @@
       <option name="project" value="LOCAL" />
       <updated>1693603457780</updated>
     </task>
-    <option name="localTasksCounter" value="34" />
+    <task id="LOCAL-00034" summary="changed count of Arduino-LEDs to 30">
+      <option name="closed" value="true" />
+      <created>1693604374649</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1693604374649</updated>
+    </task>
+    <option name="localTasksCounter" value="35" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="refactored samplerate to sample_rate" />
     <MESSAGE value="tried to make it more responsive, changed sample rate, changed thread handling..." />
     <MESSAGE value="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later." />
     <MESSAGE value="added hdmi-output" />
@@ -384,6 +393,7 @@
     <MESSAGE value="added lamp near smoke machine and a set all pixels color function" />
     <MESSAGE value="added fastboot mode and panic mode, implemented UDP communication, color calculation, and other small things" />
     <MESSAGE value="performance optimizations" />
-    <option name="LAST_COMMIT_MESSAGE" value="performance optimizations" />
+    <MESSAGE value="changed count of Arduino-LEDs to 30" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed count of Arduino-LEDs to 30" />
   </component>
 </project>

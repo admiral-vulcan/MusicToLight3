@@ -41,22 +41,6 @@ parser = argparse.ArgumentParser(description='MusicToLight3')
 parser.add_argument('--fastboot', action='store_true', help='Activates Fastboot-Mode. Deactivates calibrating.')
 args = parser.parse_args()
 
-# Define the path for the lock file  TODO DES LÄUFT NO NED
-lock_file_path = "/tmp/musictolight.lock"
-
-# Check if the lock file exists
-if os.path.exists(lock_file_path):
-    print("Das Programm läuft bereits. Beende das Programm.")
-    sys.exit(1)
-
-# Create a lock file to indicate that the program is running
-try:
-    with open(lock_file_path, 'w') as lock_file:
-        lock_file.write("LOCKED")
-except Exception as e:
-    print(f"Fehler beim Erstellen der Lock-Datei: {e}")
-    sys.exit(1)
-
 # Setting up communication with web server via Redis
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 redis_client.set('strobe_mode', 'auto')
@@ -384,6 +368,7 @@ try:
         scan_gobo(2, 7, 17)
         scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
         scan_in_thread(scan_color, (2, interpret_color(secondary_color)))
+        set_eurolite_t36(5, x, 0, 0, 255, 0)  # TODO color calculation
 
         # send to Arduino
         udp_led = int(y/8.5) # for 30 LEDs
@@ -453,12 +438,6 @@ try:
 
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
-    # Remove the lock file when the program is done
-    try:
-        os.remove(lock_file_path)
-    except Exception as e:
-        print(f"Fehler beim Entfernen der Lock-Datei: {e}")
-
     # Cleanup functions to ensure a safe shutdown
     cleanup_smoke()
     hdmi_outro_animation()
