@@ -169,11 +169,6 @@ pitches = collections.deque(maxlen=average_samples)
 
 done_chase = deque(maxlen=int(250))
 
-runtime_bit = 0
-runtime_byte = 0
-runtime_kb = 0
-runtime_mb = 0
-
 previous_heavy = True
 
 print("")
@@ -268,20 +263,6 @@ try:
             hdmi_intro_animation()
             scan_opened(1)
             scan_opened(2)
-
-        # Increment and manage runtime counters (consider refactoring if not needed)
-        runtime_bit += 1
-        if runtime_bit > 255:
-            runtime_bit = 0
-            runtime_byte += 1
-        if runtime_byte > 1024:
-            runtime_byte = 0
-            runtime_kb += 1
-        if runtime_kb > 1024:
-            runtime_kb = 0
-            runtime_mb += 1
-        # Uncomment below for debugging runtime counters
-        # print(runtime_mb, runtime_kb, runtime_byte, runtime_bit)
 
         # Read audio buffer
         audiobuffer = line_in.read(int(buffer_size / 2), exception_on_overflow=False)
