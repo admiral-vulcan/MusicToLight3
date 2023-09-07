@@ -16,6 +16,7 @@ import numpy as np
 import math
 import threading
 import ctypes
+from queue import Queue
 
 # Global list to store active scanner threads
 active_scan_threads = []
@@ -288,57 +289,78 @@ def drop_color(drop_sum, red, green, blue):
     return new_red, new_green, new_blue
 
 
-def perform_fft(signal, sample_rate):
-    fft_output = np.fft.fft(signal)
+# Perform FFT with zero padding to improve frequency resolution
+def perform_fft_with_zero_padding(signal, sample_rate, zero_padding_factor=2):
+    """Perform Fast Fourier Transform (FFT) with zero padding."""
+
+    # Pad the signal for better frequency resolution
+    padded_signal = np.pad(signal, (0, len(signal) * (zero_padding_factor - 1)), 'constant')
+
+    # Perform FFT and split into magnitude and frequencies
+    fft_output = np.fft.fft(padded_signal)
     fft_magnitude = np.abs(fft_output)[:len(fft_output) // 2]
     fft_frequencies = np.fft.fftfreq(len(fft_output), 1 / sample_rate)[:len(fft_output) // 2]
+
     return fft_magnitude, fft_frequencies
 
 
-# Psycho acoustic analysis based on Fletcher-Munson
-def apply_fletcher_munson_curve(fft_magnitude, fft_frequencies):
-    fletcher_munson_weights = np.interp(
-        fft_frequencies,
-        [20, 50, 100, 200, 500, 1000, 2000, 4000, 6000, 8000, 10000, 15000, 20000],
-        [0.2, 0.3, 0.5, 0.6, 0.8, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.2]
-    )
+# Psychoacoustic analysis
+def equal_loudness_curve(frequency):
+    """Calculate the equal loudness curve weight based on a simplified ISO 226 model."""
 
-    # Use of the curvature weighting on the FFT amplitudes
-    weighted_fft_magnitude = fft_magnitude * fletcher_munson_weights
+    # ISO 226:2003 frequency and curve points
+    freq_points = np.array([20, 100, 500, 1000, 5000, 10000, 20000])
+    curve_points = np.array([29.8, 30.4, 33.0, 35.2, 41.5, 44.4, 45.4])
+
+    # Interpolate to find the weight at the given frequency
+    weight = np.interp(frequency, freq_points, curve_points)
+
+    return weight
+
+
+def apply_psycho_loudness_curve(fft_magnitude, fft_frequencies):
+    """Apply the psychoacoustic loudness curve to the FFT magnitudes."""
+
+    # Calculate the weight for each frequency and apply it
+    weights = np.array([equal_loudness_curve(f) for f in fft_frequencies])
+    weighted_fft_magnitude = fft_magnitude * weights
 
     return weighted_fft_magnitude
 
 
-# Global buffer for storing incoming samples
-sample_buffer = np.array([])
+# Thread management for finding dominant harmonies
+def harmony_thread(func):
+    """Decorator to manage thread execution of the function."""
+
+    func.thread = None
+    func.queue = Queue()
+
+    def wrapper(*args, **kwargs):
+        # Start a new thread if none exists or the existing one has completed
+        if func.thread is None or not func.thread.is_alive():
+            func.thread = threading.Thread(target=func, args=(func.queue, *args), kwargs=kwargs)
+            func.thread.start()
+
+        # Retrieve and return result from queue if available
+        if not func.queue.empty():
+            return func.queue.get()
+
+    return wrapper
 
 
-def find_dominant_harmony_in_timeframe(signal, sample_rate, timeframe=0.1, hop_size=512):
-    global sample_buffer
-    n_samples_in_timeframe = int(timeframe * sample_rate)
-    dominant_harmonies = []
+@harmony_thread
+def find_dominant_harmony_in_timeframe(queue, signal, sample_rate):
+    """Find and return the dominant frequency in a given timeframe."""
 
-    # Add new samples to the buffer
-    sample_buffer = np.concatenate([sample_buffer, signal])
+    # Perform FFT and apply psychoacoustic weighting
+    fft_magnitude, fft_frequencies = perform_fft_with_zero_padding(signal, sample_rate, 2)
+    weighted_fft_magnitude = apply_psycho_loudness_curve(fft_magnitude, fft_frequencies)
 
-    # If we have enough samples in the buffer for a full timeframe...
-    if len(sample_buffer) >= n_samples_in_timeframe:
-        # Take the first 'n_samples_in_timeframe' samples from the buffer
-        slice_signal = sample_buffer[:n_samples_in_timeframe]
+    # Filter out frequencies below 20 Hz
+    valid_indices = np.where(fft_frequencies >= 20)
 
-        # Perform FFT and weighting
-        fft_magnitude, fft_frequencies = perform_fft(slice_signal, sample_rate)
-        weighted_fft_magnitude = apply_fletcher_munson_curve(fft_magnitude, fft_frequencies)
+    # Find the dominant frequency within the valid range
+    dominant_harmony = int(fft_frequencies[valid_indices][np.argmax(weighted_fft_magnitude[valid_indices])])
 
-        # Find the frequency with the highest weighted amplitude
-        # dominant_freq = fft_frequencies[np.argmax(weighted_fft_magnitude)]
-        dominant_freq = fft_frequencies[np.argmax(fft_magnitude)]
-        dominant_harmonies.append(dominant_freq)
-
-        # Remove 'hop_size' samples from the buffer
-        sample_buffer = sample_buffer[hop_size:]
-
-    # Calculate the average dominant harmony
-    avg_dominant_harmony = np.mean(dominant_harmonies) if dominant_harmonies else None
-
-    return dominant_harmonies, avg_dominant_harmony
+    # Put the result into the queue
+    queue.put(dominant_harmony)

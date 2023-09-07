@@ -17,7 +17,6 @@ import collections
 import time
 import math
 import numpy as np
-
 from pyloudnorm import Meter
 from scipy.fft import fft
 import aubio
@@ -52,8 +51,8 @@ redis_client.set('smoke_mode', 'auto')
 redis_client.set('panic_mode', 'off')
 
 # Set master colors (TODO should later be changeable via web interface)
-st_color_name = "red"
-nd_color_name = "green"
+st_color_name = "blue"
+nd_color_name = "red"
 st_prim_color = get_rgb_from_color_name(st_color_name)
 nd_prim_color = get_rgb_from_color_name(nd_color_name)
 
@@ -360,10 +359,11 @@ try:
         # Psycho acoustic weighting based on Fletcher-Munson
         # weighted_fft_magnitude = apply_fletcher_munson_curve(fft_magnitude, fft_frequencies)
 
-        # Find dominant harmony by Fast Fourier Transformation and Psycho acoustic weighting based on Fletcher-Munson
-        dominant_harmonies, avg_dominant_harmony = find_dominant_harmony_in_timeframe(signal, sample_rate)
+        # Find dominant harmony by Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003
+        dominant_harmony = find_dominant_harmony_in_timeframe(signal, sample_rate)
 
-        # print(avg_dominant_harmony)
+        # debug
+        print(dominant_harmony)
 
         # Dominant frequency analysis
         dominant_freq = dominant_frequency(signal, sample_rate)
