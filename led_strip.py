@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# import cProfile
 from rpi_ws281x import *
 from collections import deque
 import time
@@ -40,7 +41,6 @@ recent_audio_inputs = deque(maxlen=int(20))  # adjust as needed
 
 
 def theater_chase(c, wait_ms):
-    set_eurolite_t36(5, 0, 0, 255, 255, 0)
     NUMCHASE = 30
     NUMPIX = int(strip.numPixels() / 2)
     for j in range(NUMCHASE):
@@ -74,7 +74,7 @@ def theater_chase(c, wait_ms):
 
 # Define function to visualize music on LED strip
 @led_in_thread
-def led_music_visualizer(audio_input):
+def led_music_visualizer_old(audio_input):
     recent_audio_inputs.append(audio_input)
     mean_vol = safe_mean(recent_audio_inputs)
     if mean_vol > 0:
@@ -114,6 +114,46 @@ def led_music_visualizer(audio_input):
     strip.show()
 
 
+@led_in_thread
+def led_music_visualizer(audio_input, first_color="blue", second_color="red"):
+    recent_audio_inputs.append(audio_input)
+    mean_vol = safe_mean(recent_audio_inputs)
+    if mean_vol > 0:
+        to_mean_factor = 1 / mean_vol
+    else:
+        to_mean_factor = 1
+
+    first_rgb = get_rgb_from_color_name(first_color)
+    second_rgb = get_rgb_from_color_name(second_color)
+
+    num_leds = int(to_mean_factor * audio_input * (int(strip.numPixels() / 2) // 2))
+    num_leds = exponential_decrease(num_leds, 128)
+
+    mid_point = int(strip.numPixels() / 2) // 2
+    mean_vol = min(mean_vol, 1)
+
+    for i in range(int(strip.numPixels() / 2)):
+        distance_from_mid = abs(i - mid_point) / (int(strip.numPixels() / 2) / 2)
+        distance_from_mid = min(distance_from_mid, 1)
+
+        # Calculate the new RGB values based on the ratios
+        r = int((second_rgb[0] * (distance_from_mid ** 2) + first_rgb[0] * ((1 - distance_from_mid) ** 2)) * mean_vol)
+        g = int((second_rgb[1] * (distance_from_mid ** 2) + first_rgb[1] * ((1 - distance_from_mid) ** 2)) * mean_vol)
+        b = int((second_rgb[2] * (distance_from_mid ** 2) + first_rgb[2] * ((1 - distance_from_mid) ** 2)) * mean_vol)
+
+        # Clip values to 0-4095 range to prevent overflows
+        r = min(max(r, 0), 4095)
+        g = min(max(g, 0), 4095)
+        b = min(max(b, 0), 4095)
+
+        if mid_point - num_leds <= i <= mid_point + num_leds:
+            strip.setPixelColor(i, Color(r, g, b))
+        else:
+            strip.setPixelColor(i, Color(0, 0, 0))
+
+    strip.show()
+
+
 def color_wipe(color, wait_ms=50):
     """Füllen Sie den Streifen nacheinander mit einer Farbe aus. Wartezeit in ms zwischen den Pixeln."""
     for i in range(int(strip.numPixels())):
@@ -145,8 +185,9 @@ def set_all_pixels_color(red, green, blue):
     strip.show()
 
 
-def color_flow(pos, audio_input, reduce=2):
+def color_flow_old(pos, audio_input, reduce=2):
     """Draw a color flow that moves across display."""
+    """Old version. Can be deleted in later revisions."""
     recent_audio_inputs.append(audio_input)
     mean_vol = safe_mean(recent_audio_inputs)
     # print(mean_vol)
@@ -156,9 +197,48 @@ def color_flow(pos, audio_input, reduce=2):
         # (int(strip.numPixels() / 2) steps) % 96 to make the wheel progress
         wheel_pos = ((i * 256 // int(strip.numPixels() / 2)) + pos) % 256
         r, b = wheel(wheel_pos, reduce)
-        r = int(r * 50 * mean_vol)
-        b = int(b * 50 * mean_vol)
+
+        # Clip values to 0-4095 range to prevent overflows
+        r = min(max(int(r * 50 * mean_vol), 0), 4095)
+        b = min(max(int(b * 50 * mean_vol), 0), 4095)
+
+        # Set the pixel color
         strip.setPixelColor(i, Color(r, 0, b))
+    strip.show()
+
+
+def color_flow(pos, audio_input, reduce=2, first_color="blue", second_color="red"):
+    """Draw a color flow that moves across display."""
+    recent_audio_inputs.append(audio_input)
+    mean_vol = safe_mean(recent_audio_inputs)
+
+    first_rgb = get_rgb_from_color_name(first_color)
+    second_rgb = get_rgb_from_color_name(second_color)
+
+    for i in range(int(strip.numPixels() / 2)):
+        wheel_pos = ((i * 256 // int(strip.numPixels() / 2)) + pos) % 256
+        first, second = wheel(wheel_pos, reduce)
+
+        # Calculate first and second color
+        first = (int(first * 50 * mean_vol))
+        second = (int(second * 50 * mean_vol))
+
+        # Find divider
+        divider = min(np.max(first_rgb) + np.max(second_rgb), 255)
+
+        # Calculate the new RGB values based on the ratios
+        r = int((first_rgb[0] * first + second_rgb[0] * second)/divider)
+        g = int((first_rgb[1] * first + second_rgb[1] * second)/divider)
+        b = int((first_rgb[2] * first + second_rgb[2] * second)/divider)
+
+        # Clip values to 0-4095 range to prevent overflows
+        r = min(max(r, 0), 4095)
+        g = min(max(g, 0), 4095)
+        b = min(max(b, 0), 4095)
+
+        # Set the pixel color
+        strip.setPixelColor(i, Color(r, g, b))
+
     strip.show()
 
 

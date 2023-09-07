@@ -248,6 +248,21 @@ def interpret_color(color):
     return closest_color
 
 
+def get_rgb_from_color_name(color_name):
+    """Get RGB tuple from color name."""
+    colors = {
+        "white": (255, 255, 255),
+        "red": (255, 0, 0),
+        "yellow": (255, 255, 0),
+        "purple": (128, 0, 128),
+        "green": (0, 128, 0),
+        "orange": (255, 165, 0),
+        "blue": (0, 0, 255),
+        "pink": (255, 192, 203)
+    }
+    return colors.get(color_name.lower(), (255, 255, 255))  # Default to white if color name is not found
+
+
 def drop_color(drop_sum, red, green, blue):
     """
     Adjust the color based on the drop_sum.
@@ -271,3 +286,59 @@ def drop_color(drop_sum, red, green, blue):
     new_blue = max(0, blue - expanded_blue)
 
     return new_red, new_green, new_blue
+
+
+def perform_fft(signal, sample_rate):
+    fft_output = np.fft.fft(signal)
+    fft_magnitude = np.abs(fft_output)[:len(fft_output) // 2]
+    fft_frequencies = np.fft.fftfreq(len(fft_output), 1 / sample_rate)[:len(fft_output) // 2]
+    return fft_magnitude, fft_frequencies
+
+
+# Psycho acoustic analysis based on Fletcher-Munson
+def apply_fletcher_munson_curve(fft_magnitude, fft_frequencies):
+    fletcher_munson_weights = np.interp(
+        fft_frequencies,
+        [20, 50, 100, 200, 500, 1000, 2000, 4000, 6000, 8000, 10000, 15000, 20000],
+        [0.2, 0.3, 0.5, 0.6, 0.8, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.2]
+    )
+
+    # Use of the curvature weighting on the FFT amplitudes
+    weighted_fft_magnitude = fft_magnitude * fletcher_munson_weights
+
+    return weighted_fft_magnitude
+
+
+# Global buffer for storing incoming samples
+sample_buffer = np.array([])
+
+
+def find_dominant_harmony_in_timeframe(signal, sample_rate, timeframe=0.1, hop_size=512):
+    global sample_buffer
+    n_samples_in_timeframe = int(timeframe * sample_rate)
+    dominant_harmonies = []
+
+    # Add new samples to the buffer
+    sample_buffer = np.concatenate([sample_buffer, signal])
+
+    # If we have enough samples in the buffer for a full timeframe...
+    if len(sample_buffer) >= n_samples_in_timeframe:
+        # Take the first 'n_samples_in_timeframe' samples from the buffer
+        slice_signal = sample_buffer[:n_samples_in_timeframe]
+
+        # Perform FFT and weighting
+        fft_magnitude, fft_frequencies = perform_fft(slice_signal, sample_rate)
+        weighted_fft_magnitude = apply_fletcher_munson_curve(fft_magnitude, fft_frequencies)
+
+        # Find the frequency with the highest weighted amplitude
+        # dominant_freq = fft_frequencies[np.argmax(weighted_fft_magnitude)]
+        dominant_freq = fft_frequencies[np.argmax(fft_magnitude)]
+        dominant_harmonies.append(dominant_freq)
+
+        # Remove 'hop_size' samples from the buffer
+        sample_buffer = sample_buffer[hop_size:]
+
+    # Calculate the average dominant harmony
+    avg_dominant_harmony = np.mean(dominant_harmonies) if dominant_harmonies else None
+
+    return dominant_harmonies, avg_dominant_harmony

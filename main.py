@@ -17,7 +17,11 @@ import collections
 import time
 import math
 import numpy as np
+
+from pyloudnorm import Meter
+from scipy.fft import fft
 import aubio
+
 import RPi.GPIO as GPIO
 import redis
 import json
@@ -48,8 +52,14 @@ redis_client.set('smoke_mode', 'auto')
 redis_client.set('panic_mode', 'off')
 
 # Set master colors (TODO should later be changeable via web interface)
-st_prim_color = (0, 0, 255)  # blue
-nd_prim_color = (255, 0, 0)  # red
+st_color_name = "red"
+nd_color_name = "green"
+st_prim_color = get_rgb_from_color_name(st_color_name)
+nd_prim_color = get_rgb_from_color_name(nd_color_name)
+
+# Translate to RGB-Bytes
+st_r, st_g, st_b = st_prim_color
+nd_r, nd_g, nd_b = nd_prim_color
 
 # Calculate the average of the two colors
 average_color = tuple((a + b) // 2 for a, b in zip(st_prim_color, nd_prim_color))
@@ -78,10 +88,16 @@ def redis_get_colors():
     global st_prim_color
     global nd_prim_color
     global secondary_color
+    global st_r, st_g, st_b
+    global nd_r, nd_g, nd_b
 
     st_prim_color = tuple(json.loads(redis_client.get('st_prim_color')))
     nd_prim_color = tuple(json.loads(redis_client.get('nd_prim_color')))
     secondary_color = tuple(json.loads(redis_client.get('secondary_color')))
+
+    # Translate to RGB-Bytes
+    st_r, st_g, st_b = st_prim_color
+    nd_r, nd_g, nd_b = nd_prim_color
 
 
 # Set the GPIO mode to BCM and disable warnings
@@ -104,6 +120,9 @@ pyaudio_format = pyaudio.paFloat32
 n_channels = 1
 sample_rate = 44100
 device_index = 0
+
+# Initialize LUFS-loudness recognition
+meter = Meter(sample_rate)
 
 # Initialize pitch detection
 pDetection = aubio.pitch("default", buffer_size, hop_size, sample_rate)
@@ -332,6 +351,20 @@ try:
         heaviness = calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter)
         heaviness_values.append(heaviness)
 
+        # LUFS-loudness-analysis
+        # loudness = meter.integrated_loudness(signal)
+
+        # Fast Fourier Transformation
+        # fft_magnitude, fft_frequencies = perform_fft(signal, sample_rate)
+
+        # Psycho acoustic weighting based on Fletcher-Munson
+        # weighted_fft_magnitude = apply_fletcher_munson_curve(fft_magnitude, fft_frequencies)
+
+        # Find dominant harmony by Fast Fourier Transformation and Psycho acoustic weighting based on Fletcher-Munson
+        dominant_harmonies, avg_dominant_harmony = find_dominant_harmony_in_timeframe(signal, sample_rate)
+
+        # print(avg_dominant_harmony)
+
         # Dominant frequency analysis
         dominant_freq = dominant_frequency(signal, sample_rate)
         dominant_frequencies.append(dominant_freq)
@@ -369,21 +402,21 @@ try:
         scan_gobo(2, 7, 150)
         scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
         scan_in_thread(scan_color, (2, interpret_color(secondary_color)))
-        set_eurolite_t36(5, x, 0, 0, 255, 0)  # TODO color calculation
+
+        set_eurolite_t36(5, x*nd_r/255, x*nd_g/255, x*nd_b/255, 255, 0)  # TODO color calculation
 
         # send to Arduino
-        udp_led = int(y/8.5) # for 30 LEDs
-        # num_led, brightness, startRGB,,, endRGB,,
-        # 45, 255, 255, 0, 0, 0, 0, 255
-        udp_message = f"led_{udp_led}_255_0_0_255_255_0_0"
+        udp_led = int(y / 8.5)  # for 30 LEDs
+        # num_led, brightness, startR, startG, startB, endR, endG, endB
+        udp_message = f"led_{udp_led}_255_{st_r}_{st_g}_{st_b}_{nd_r}_{nd_g}_{nd_b}"
         send_udp_message(UDP_IP_ADDRESS, UDP_PORT, udp_message)
         # Handle actions for heavy signal
         if heavy:
+            led_music_visualizer(np.max(signal_input), st_color_name, nd_color_name)
             scan_opened(1)
             scan_opened(2)
             scan_in_thread(scan_axis, (1, y, x))  # Front scanner
             scan_in_thread(scan_axis, (2, x, y))  # Rear scanner
-            led_music_visualizer(np.max(signal_input))
             drop = False
 
             # Check if a beat is detected
@@ -401,11 +434,8 @@ try:
             if np.max(signal_input) > 0.007:
                 input_history.append(1.0)
 
-                if not heavy and not drop:
-                    color_flow(runtime_bit, np.max(signal_input))
-
-                if 0 < sum(drop_history) < 32 and drop:
-                    color_flow(runtime_bit, np.max(signal_input))
+                if (not heavy and not drop) or (0 < sum(drop_history) < 32 and drop):
+                    color_flow(runtime_bit, np.max(signal_input), 2, st_color_name, nd_color_name)
 
                 # Manage animations and lights for persistent drops
                 if sum(drop_history) >= 32 and drop:
@@ -416,7 +446,9 @@ try:
                         hdmi_outro_animation()
                         scan_closed(1)
                         scan_closed(2)
+                        set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
                         theater_chase(Color(127, 127, 127), 52)
+                        set_eurolite_t36(5, 0, 0, 0, 255, 0)
                         hdmi_intro_animation()
                         scan_opened(1)
                         scan_opened(2)
@@ -435,7 +467,7 @@ try:
                     pitches.clear()
                     drop_history.clear()
                     heaviness_history.clear()
-                    color_flow(runtime_bit, np.max(signal_input), 20)  # Adjust brightness
+                    color_flow(runtime_bit, np.max(signal_input), 20, st_color_name, nd_color_name)  # Adjust brightness
 
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
