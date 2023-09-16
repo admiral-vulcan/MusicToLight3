@@ -265,7 +265,9 @@ try:
 
         # Handle smoke mode
         if smoke_mode == 'on':
+            set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
             smoke_on()
+            # set_eurolite_t36(5, 0, 0, 0, 255, 0)
         else:
             smoke_off()
 
@@ -276,7 +278,8 @@ try:
             # Prepare for strobing by turning off other lights
             scan_closed(1)
             scan_closed(2)
-            set_eurolite_t36(5, 0, 0, 0, 255, 0)
+            if smoke_mode != 'on':
+                set_eurolite_t36(5, 0, 0, 0, 255, 0)
             # Unnecessary line as turning off lights is handled above, consider removal
             hdmi_draw_black()  # Consider removal
             while strobe_mode == 'on':
@@ -350,6 +353,7 @@ try:
         heaviness = calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter)
         heaviness_values.append(heaviness)
 
+        """ New Psyco-Acoustic-Analysis """
         # LUFS-loudness-analysis
         # loudness = meter.integrated_loudness(signal)
 
@@ -360,11 +364,13 @@ try:
         # weighted_fft_magnitude = apply_fletcher_munson_curve(fft_magnitude, fft_frequencies)
 
         # Find dominant harmony by Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003
-        dominant_harmony = find_dominant_harmony_in_timeframe(signal, sample_rate)
+        """ shit happens here """
+        # dominant_harmony = find_dominant_harmony_in_timeframe(signal, sample_rate)
 
         # debug
-        print(dominant_harmony)
+        # print(dominant_harmony)
 
+        """ Old Acoustic Calculations """
         # Dominant frequency analysis
         dominant_freq = dominant_frequency(signal, sample_rate)
         dominant_frequencies.append(dominant_freq)
@@ -379,7 +385,8 @@ try:
 
         # Check for auto-strobe conditions and execute strobe if criteria met
         if strobe_mode == 'auto' and heavy and 1 in list(done_chase)[-10:]:
-            set_eurolite_t36(5, 0, 0, 0, 255, 0)
+            if smoke_mode != 'on':
+                set_eurolite_t36(5, 0, 0, 0, 255, 0)
             kill_current_hdmi()
             scan_closed(1)
             scan_closed(2)
@@ -403,7 +410,8 @@ try:
         scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
         scan_in_thread(scan_color, (2, interpret_color(secondary_color)))
 
-        set_eurolite_t36(5, x*nd_r/255, x*nd_g/255, x*nd_b/255, 255, 0)  # TODO color calculation
+        if smoke_mode != 'on':
+            set_eurolite_t36(5, x*nd_r/255, x*nd_g/255, x*nd_b/255, 255, 0)  # TODO color calculation
 
         # send to Arduino
         udp_led = int(y / 8.5)  # for 30 LEDs
@@ -446,9 +454,12 @@ try:
                         hdmi_outro_animation()
                         scan_closed(1)
                         scan_closed(2)
-                        set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
+                        if smoke_mode != 'on':
+                            set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
                         theater_chase(Color(127, 127, 127), 52)
-                        set_eurolite_t36(5, 0, 0, 0, 255, 0)
+
+                        if smoke_mode != 'on':
+                            set_eurolite_t36(5, 0, 0, 0, 255, 0)
                         hdmi_intro_animation()
                         scan_opened(1)
                         scan_opened(2)
