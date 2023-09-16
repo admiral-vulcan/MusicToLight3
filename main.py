@@ -396,7 +396,7 @@ try:
             done_chase.clear()
 
         # Update HDMI display with computed matrix
-        hdmi_draw_matrix(transposed_hdmi_matrix)
+        hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
 
         # Color transformations based on signal energy
         red = min(int(energy * 10), 255)

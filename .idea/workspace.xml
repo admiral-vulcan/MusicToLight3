@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added feature: dominant harmony based on Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
+      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -436,7 +436,15 @@
       <option name="project" value="LOCAL" />
       <updated>1694128012886</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color">
+      <option name="closed" value="true" />
+      <created>1694866905344</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1694866905344</updated>
+    </task>
+    <option name="localTasksCounter" value="43" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -451,7 +459,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added strobe" />
     <MESSAGE value="deleted error in thread killer" />
     <MESSAGE value="changed borders" />
     <MESSAGE value="added more dynamic to hdmi numbers" />
@@ -476,6 +483,7 @@
     <MESSAGE value="deleted runtime counters" />
     <MESSAGE value="added feature: settable colors" />
     <MESSAGE value="added feature: dominant harmony based on Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003" />
-    <option name="LAST_COMMIT_MESSAGE" value="added feature: dominant harmony based on Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003" />
+    <MESSAGE value="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color" />
+    <option name="LAST_COMMIT_MESSAGE" value="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color" />
   </component>
 </project>

@@ -22,7 +22,7 @@ screen_width = 1920
 screen_height = 1080
 screen = pygame.display.set_mode((screen_width, screen_height))
 
-colors = [(255, 0, 0), (255, 0, 255), (0, 0, 255)]
+# colors = [(255, 0, 0), (255, 0, 255), (0, 0, 255)]
 font = 0
 zero_color = (64, 64, 64)
 
@@ -72,9 +72,10 @@ def hdmi_draw_centered_text(text):
 
 
 @hdmi_in_thread
-def hdmi_draw_matrix(matrix):
+def hdmi_draw_matrix(matrix, low=(0, 0, 255), top=(255, 0, 0), mid=(255, 0, 255)):
     """Draw a matrix of numbers with various colors and effects."""
-    global screen, font, colors, zero_color
+    colors = [low, mid, top]
+    global screen, font, zero_color
     if len(matrix) != 15 or any(len(row) != 9 for row in matrix):
         raise ValueError("Matrix must be 15x9.")
 
@@ -101,9 +102,9 @@ def hdmi_draw_matrix(matrix):
 @hdmi_in_thread
 def hdmi_intro_animation():
     """Play a screen animation simulating a matrix bootup."""
-    global screen, font, colors, zero_color
+    global screen, font, zero_color
 
-    n = 4 # frequency
+    n = 4  # frequency
     current_cycle = 0
     last_randoms = [[(0, 0) for _ in range(9)] for _ in range(15)]
     border_x = screen_width * 0.09
@@ -152,7 +153,7 @@ def hdmi_intro_animation():
 @hdmi_in_thread
 def hdmi_outro_animation():
     """Play a screen animation simulating a matrix shutdown."""
-    global screen, font, colors, zero_color
+    global screen, font, zero_color
 
     n = 4  # frequency
     current_cycle = 0
