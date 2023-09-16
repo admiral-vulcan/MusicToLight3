@@ -456,7 +456,7 @@ try:
                         scan_closed(2)
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
-                        theater_chase(Color(127, 127, 127), 52)
+                        star_chase(Color(127, 127, 127), 52)
 
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, 0, 0, 0, 255, 0)

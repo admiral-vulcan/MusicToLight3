@@ -40,7 +40,7 @@ strip.begin()
 recent_audio_inputs = deque(maxlen=int(20))  # adjust as needed
 
 
-def theater_chase(c, wait_ms):
+def star_chase(c, wait_ms):
     NUMCHASE = 30
     NUMPIX = int(strip.numPixels() / 2)
     for j in range(NUMCHASE):
@@ -280,7 +280,7 @@ def led_strobe_effect(duration_seconds, frequency_ms):
 # Rot einfärben
 # color_wipe(Color(255, 0, 0))
 
-# theater_chase(Color(127, 127, 127), 50)
+# star_chase(Color(127, 127, 127), 50)
 
 """
 while True:
