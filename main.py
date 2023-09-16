@@ -192,6 +192,8 @@ runtime_byte = 0
 runtime_kb = 0
 runtime_mb = 0
 
+no_drop_count = 0
+
 previous_heavy = True
 
 print("")
@@ -421,7 +423,9 @@ try:
         udp_message = f"led_{udp_led}_255_{st_r}_{st_g}_{st_b}_{nd_r}_{nd_g}_{nd_b}"
         send_udp_message(UDP_IP_ADDRESS, UDP_PORT, udp_message)
         # Handle actions for heavy signal
+
         if heavy:
+            no_drop_count = 0
             led_music_visualizer(signal_max, st_color_name, nd_color_name)
             scan_opened(1)
             scan_opened(2)
@@ -444,8 +448,17 @@ try:
             if signal_max > 0.007:
                 input_history.append(1.0)
 
-                if (not heavy and not drop) or (0 < sum(drop_history) < 32 and drop):
+                if not heavy and (0 < sum(drop_history) < 32 and drop):
+                    # () or (0 < sum(drop_history) < 32 and drop)
                     color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
+                elif not heavy:
+                    no_drop_count += 1
+                    if no_drop_count < 500:
+                        set_all_pixels_color(0, 0, 0)  # Clear any existing colors
+                        scan_closed(1)
+                        scan_closed(2)
+                    else:
+                        color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
 
                 # Manage animations and lights for persistent drops
                 if sum(drop_history) >= 32 and drop:
