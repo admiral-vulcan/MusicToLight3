@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="renamed theater chase to star chase">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
+      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
+      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -444,7 +445,23 @@
       <option name="project" value="LOCAL" />
       <updated>1694866905344</updated>
     </task>
-    <option name="localTasksCounter" value="43" />
+    <task id="LOCAL-00043" summary="bugfix: hdmi didn't take custom colors">
+      <option name="closed" value="true" />
+      <created>1694867904635</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1694867904635</updated>
+    </task>
+    <task id="LOCAL-00044" summary="renamed theater chase to star chase">
+      <option name="closed" value="true" />
+      <created>1694867985598</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1694867985598</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -459,8 +476,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="deleted error in thread killer" />
-    <MESSAGE value="changed borders" />
     <MESSAGE value="added more dynamic to hdmi numbers" />
     <MESSAGE value="changed position of strobe and added blackness at the beginning" />
     <MESSAGE value="added pygame to README.md" />
@@ -484,6 +499,8 @@
     <MESSAGE value="added feature: settable colors" />
     <MESSAGE value="added feature: dominant harmony based on Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003" />
     <MESSAGE value="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color" />
-    <option name="LAST_COMMIT_MESSAGE" value="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color" />
+    <MESSAGE value="bugfix: hdmi didn't take custom colors" />
+    <MESSAGE value="renamed theater chase to star chase" />
+    <option name="LAST_COMMIT_MESSAGE" value="renamed theater chase to star chase" />
   </component>
 </project>

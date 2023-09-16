@@ -37,7 +37,7 @@ strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, 
 # Intialize the library (must be called once before other functions).
 strip.begin()
 
-recent_audio_inputs = deque(maxlen=int(20))  # adjust as needed
+recent_audio_inputs = deque(maxlen=int(3))  # adjust as needed, originally 20
 
 
 def star_chase(c, wait_ms):

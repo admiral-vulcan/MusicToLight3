@@ -307,6 +307,8 @@ try:
         # Read audio buffer
         audiobuffer = line_in.read(int(buffer_size / 2), exception_on_overflow=False)
         signal_input = np.frombuffer(audiobuffer, dtype=np.float32)
+        signal_max = np.max(signal_input)
+        # signal_mean = safe_mean(signal_input)
 
         # Adjust signal gain if necessary (comment suggests it's not working properly)
         signal, gain_factor = adjust_gain(volumes, signal_input)
@@ -420,7 +422,7 @@ try:
         send_udp_message(UDP_IP_ADDRESS, UDP_PORT, udp_message)
         # Handle actions for heavy signal
         if heavy:
-            led_music_visualizer(np.max(signal_input), st_color_name, nd_color_name)
+            led_music_visualizer(signal_max, st_color_name, nd_color_name)
             scan_opened(1)
             scan_opened(2)
             scan_in_thread(scan_axis, (1, y, x))  # Front scanner
@@ -439,11 +441,11 @@ try:
             scan_go_home(2)
 
             # Handle light actions based on signal strength and history
-            if np.max(signal_input) > 0.007:
+            if signal_max > 0.007:
                 input_history.append(1.0)
 
                 if (not heavy and not drop) or (0 < sum(drop_history) < 32 and drop):
-                    color_flow(runtime_bit, np.max(signal_input), 2, st_color_name, nd_color_name)
+                    color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
 
                 # Manage animations and lights for persistent drops
                 if sum(drop_history) >= 32 and drop:
@@ -478,7 +480,7 @@ try:
                     pitches.clear()
                     drop_history.clear()
                     heaviness_history.clear()
-                    color_flow(runtime_bit, np.max(signal_input), 20, st_color_name, nd_color_name)  # Adjust brightness
+                    color_flow(runtime_bit, signal_max, 20, st_color_name, nd_color_name)  # Adjust brightness
 
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
