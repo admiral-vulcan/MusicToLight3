@@ -72,7 +72,7 @@ def hdmi_draw_centered_text(text):
 
 
 @hdmi_in_thread
-def hdmi_draw_matrix(matrix, low=(0, 0, 255), top=(255, 0, 0), mid=(255, 0, 255)):
+def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255)):
     """Draw a matrix of numbers with various colors and effects."""
     colors = [low, mid, top]
     global screen, font, zero_color
