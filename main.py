@@ -315,9 +315,18 @@ try:
         # Adjust signal gain if necessary (comment suggests it's not working properly)
         signal, gain_factor = adjust_gain(volumes, signal_input)
 
-        # Compute and store volume values
-        volume = np.sqrt(safe_mean(signal ** 2))
-        volumes.append(volume)
+        # Compute and store current volume
+        current_volume = np.sqrt(safe_mean(signal ** 2))
+        volumes.append(current_volume)
+
+        # Compute the mean volume
+        mean_volume = safe_mean(np.array(volumes))
+
+        # Calculate the relative volume
+        relative_volume = 0 if mean_volume == 0 else current_volume / mean_volume
+
+        # Clip the value between 0 and 1
+        relative_volume = min(1, max(0, relative_volume))
 
         # Filter and store values for low, mid, and high frequency signals
         low_signal, low_zi = sosfilt(low_sos, signal, zi=low_zi)
@@ -333,6 +342,9 @@ try:
         low_mean = compute_mean_volume(low_volumes)
         mid_mean = compute_mean_volume(mid_volumes)
         high_mean = compute_mean_volume(high_volumes)
+
+        low_relative = safe_mean(low_signal) / low_mean
+        low_relative = min(1, max(0, low_relative))
 
         # Generate visualization matrix based on signal
         hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
@@ -426,7 +438,8 @@ try:
 
         if heavy:
             no_drop_count = 0
-            led_music_visualizer(signal_max, st_color_name, nd_color_name)
+            # led_music_visualizer_old(signal_max, st_color_name, nd_color_name)
+            led_music_visualizer(low_relative, st_color_name, nd_color_name)
             scan_opened(1)
             scan_opened(2)
             scan_in_thread(scan_axis, (1, y, x))  # Front scanner

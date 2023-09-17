@@ -22,7 +22,6 @@ import numpy as np
 from helpers import *
 from eurolite_t36 import *
 
-
 # LED-Streifen Konfiguration:
 LED_COUNT = 270  # Anzahl der LED-Pixel.
 LED_PIN = 18  # GPIO-Pin, der mit dem Datenpin des LED-Streifens verbunden ist.
@@ -115,7 +114,7 @@ def led_music_visualizer_old(audio_input):
 
 
 @led_in_thread
-def led_music_visualizer(audio_input, first_color="blue", second_color="red"):
+def led_music_visualizer_ols(audio_input, first_color="blue", second_color="red"):
     recent_audio_inputs.append(audio_input)
     mean_vol = safe_mean(recent_audio_inputs)
     if mean_vol > 0:
@@ -227,9 +226,9 @@ def color_flow(pos, audio_input, reduce=2, first_color="blue", second_color="red
         divider = min(np.max(first_rgb) + np.max(second_rgb), 255)
 
         # Calculate the new RGB values based on the ratios
-        r = int((first_rgb[0] * first + second_rgb[0] * second)/divider)
-        g = int((first_rgb[1] * first + second_rgb[1] * second)/divider)
-        b = int((first_rgb[2] * first + second_rgb[2] * second)/divider)
+        r = int((first_rgb[0] * first + second_rgb[0] * second) / divider)
+        g = int((first_rgb[1] * first + second_rgb[1] * second) / divider)
+        b = int((first_rgb[2] * first + second_rgb[2] * second) / divider)
 
         # Clip values to 0-4095 range to prevent overflows
         r = min(max(r, 0), 4095)
@@ -281,15 +280,46 @@ def led_strobe_effect(duration_seconds, frequency_ms):
 # color_wipe(Color(255, 0, 0))
 
 # star_chase(Color(127, 127, 127), 50)
+def lin_lerp(a, b, t):
+    """Linear interpolation between a and b"""
+    return int(a * (1 - t) + b * t)
+
+
+def lerp(a, b, t, exponent=3):
+    """Exponential interpolation between a and b"""
+    return int(a * ((1 - t) ** exponent) + b * (t ** exponent))
+
+
+@led_in_thread
+def led_music_visualizer(data, first_color="blue", second_color="red"):
+    set_all_pixels_color(0, 0, 0)
+    first_r, first_g, first_b = get_rgb_from_color_name(first_color)
+    second_r, second_g, second_b = get_rgb_from_color_name(second_color)
+
+    # num_leds = strip.numPixels()
+    # num_leds_front = int(strip.numPixels() / 2) // 2
+    mid_point = int(strip.numPixels() / 2) // 2
+    data = int(data * mid_point)
+
+    for pos in range(data):
+        t = pos / mid_point
+        strip.setPixelColor(mid_point - pos,
+                            Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
+        strip.setPixelColor(mid_point + pos,
+                            Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
+        if pos % 10 == 0:
+            strip.show()
+    strip.show()
+
 
 """
+test code
+
 while True:
-    # Read some data from audio input
-    audiobuffer = line_in.read(int(buffer_size / 2), exception_on_overflow=False)
-    signal_input = np.frombuffer(audiobuffer, dtype=np.float32)
-
-    # Calculate LED strip visualization based on audio energy
-    led_music_visualizer(np.max(signal_input))
-
-    time.sleep(0.05)
+    led_music_visualizer_new(1)
+    time.sleep(0.1)
+    led_music_visualizer_new(0.1)
+    time.sleep(0.1)
+    led_music_visualizer_new(0.3)
+    time.sleep(0.1)
 """
