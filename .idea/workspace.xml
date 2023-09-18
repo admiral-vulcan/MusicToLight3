@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: hdmi colors mixed up">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="changed the led algo completely">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
       <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -485,7 +484,15 @@
       <option name="project" value="LOCAL" />
       <updated>1694978280411</updated>
     </task>
-    <option name="localTasksCounter" value="48" />
+    <task id="LOCAL-00048" summary="changed the led algo completely">
+      <option name="closed" value="true" />
+      <created>1694984772948</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1694984772948</updated>
+    </task>
+    <option name="localTasksCounter" value="49" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -500,7 +507,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="changed stuff" />
     <MESSAGE value="cleaned comments" />
     <MESSAGE value="added smoke machine py-file" />
     <MESSAGE value="cleaned comments and added smoke machine" />
@@ -525,6 +531,7 @@
     <MESSAGE value="minor performance upgrades" />
     <MESSAGE value="added dark mood if not beat and not drop for 500 loops" />
     <MESSAGE value="bugfix: hdmi colors mixed up" />
-    <option name="LAST_COMMIT_MESSAGE" value="bugfix: hdmi colors mixed up" />
+    <MESSAGE value="changed the led algo completely" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed the led algo completely" />
   </component>
 </project>

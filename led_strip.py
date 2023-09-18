@@ -296,17 +296,28 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
     first_r, first_g, first_b = get_rgb_from_color_name(first_color)
     second_r, second_g, second_b = get_rgb_from_color_name(second_color)
 
-    # num_leds = strip.numPixels()
-    # num_leds_front = int(strip.numPixels() / 2) // 2
-    mid_point = int(strip.numPixels() / 2) // 2
+    num_leds = strip.numPixels()
+    num_leds_front = int(num_leds / 2)
+    mid_point = int(num_leds / 2) // 2
     data = int(data * mid_point)
+    print(num_leds_front)
 
     for pos in range(data):
         t = pos / mid_point
+
+        # front side
         strip.setPixelColor(mid_point - pos,
                             Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
         strip.setPixelColor(mid_point + pos,
                             Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
+
+        # back side
+        strip.setPixelColor(num_leds_front + mid_point - pos,
+                            Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
+        strip.setPixelColor(num_leds_front + mid_point + pos,
+                            Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
+
+        # animate a bit for smoothness
         if pos % 10 == 0:
             strip.show()
     strip.show()
