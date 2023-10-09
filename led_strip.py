@@ -300,7 +300,7 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
     num_leds_front = int(num_leds / 2)
     mid_point = int(num_leds / 2) // 2
     data = int(data * mid_point)
-    print(num_leds_front)
+    # print(num_leds_front)
 
     for pos in range(data):
         t = pos / mid_point
@@ -319,6 +319,10 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
 
         # animate a bit for smoothness
         if pos % 10 == 0:
+            strip.show()
+        if data < 35 and pos % 5 == 0:
+            strip.show()
+        if data < 15 and pos % 2 == 0:
             strip.show()
     strip.show()
 
