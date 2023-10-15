@@ -421,8 +421,8 @@ try:
 
         # DMX and LED operations
         done_chase.append(0)
-        scan_gobo(1, 7, 150)
-        scan_gobo(2, 7, 150)
+        scan_gobo(1, 7, 150)  #TODO - bug: go does nothing!
+        scan_gobo(2, 7, 150)  #same as above
         scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
         scan_in_thread(scan_color, (2, interpret_color(secondary_color)))
 
