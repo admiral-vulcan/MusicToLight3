@@ -35,6 +35,7 @@ import os
 import sys
 from com_udp import *
 import argparse
+# from vid import *
 
 UDP_LED_COUNT = 45
 UDP_IP_ADDRESS = "192.168.1.111"
@@ -49,6 +50,7 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 redis_client.set('strobe_mode', 'auto')
 redis_client.set('smoke_mode', 'auto')
 redis_client.set('panic_mode', 'off')
+redis_client.set('play_videos_mode', 'auto')
 
 # Set master colors (TODO should later be changeable via web interface)
 st_color_name = "blue"
@@ -233,6 +235,7 @@ print("        Listening... Press Ctrl+C to stop.")
 print("")
 hdmi_draw_black()
 
+
 # Start main loop
 try:
     while True:
@@ -241,6 +244,7 @@ try:
         strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
         smoke_mode = (redis_client.get('smoke_mode') or b'').decode('utf-8')
         panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
+        play_videos = (redis_client.get('play_videos_mode') or b'').decode('utf-8')
 
         # Handle panic mode
         if panic_mode == 'on':
@@ -346,10 +350,6 @@ try:
         low_relative = safe_mean(low_signal) / low_mean
         low_relative = min(1, max(0, low_relative))
 
-        # Generate visualization matrix based on signal
-        hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
-        transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
-
         # Energy calculations
         energy = np.sum(signal ** 2)
         relative_energy = energy / len(signal)
@@ -411,9 +411,6 @@ try:
             hdmi_intro_animation()
             done_chase.clear()
 
-        # Update HDMI display with computed matrix
-        hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
-
         # Color transformations based on signal energy
         red = min(int(energy * 10), 255)
         y = max(min(((int(energy * 10) - 60) * 1.75), 255), 0)
@@ -437,6 +434,7 @@ try:
         # Handle actions for heavy signal
 
         if heavy:
+            hdmi_video_stop()
             no_drop_count = 0
             # led_music_visualizer_old(signal_max, st_color_name, nd_color_name)
             led_music_visualizer(low_relative, st_color_name, nd_color_name)
@@ -453,9 +451,37 @@ try:
             # Decrement heavy counter if it's greater than 0
             if heavy_counter > 0:
                 heavy_counter -= 1
+
+            # Generate visualization matrix based on signal
+            hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
+            transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
+
+            # Update HDMI display with computed matrix
+            hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
+
         else:
             scan_go_home(1)
             scan_go_home(2)
+            if play_videos == "auto":
+                video_path = "/mnt/vids/"
+                hdmi_play_video(video_path)
+                if not is_video_playing():
+                    # Generate visualization matrix based on signal
+                    hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
+                    transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
+
+                    # Update HDMI display with computed matrix
+                    hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
+                else:
+                    hdmi_video_start()
+            else:
+                hdmi_video_stop()
+                # Generate visualization matrix based on signal
+                hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
+                transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
+
+                # Update HDMI display with computed matrix
+                hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
 
             # Handle light actions based on signal strength and history
             if signal_max > 0.007:
@@ -479,7 +505,7 @@ try:
                     if 1 not in done_chase:
                         if smoke_mode == 'auto':
                             smoke_on()
-                        hdmi_outro_animation()
+                        #hdmi_outro_animation()
                         scan_closed(1)
                         scan_closed(2)
                         if smoke_mode != 'on':
@@ -488,7 +514,7 @@ try:
 
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, 0, 0, 0, 255, 0)
-                        hdmi_intro_animation()
+                        #hdmi_intro_animation()
                         scan_opened(1)
                         scan_opened(2)
                     done_chase.append(1)
@@ -508,8 +534,10 @@ try:
                     heaviness_history.clear()
                     color_flow(runtime_bit, signal_max, 20, st_color_name, nd_color_name)  # Adjust brightness
 
+
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
+    hdmi_video_stop()
     # Cleanup functions to ensure a safe shutdown
     cleanup_smoke()
     hdmi_outro_animation()
@@ -520,6 +548,7 @@ except KeyboardInterrupt:
     set_eurolite_t36(5, 0, 0, 0, 0, 0)  # Reset the eurolite device
     line_in.close()
     p.terminate()
+    hdmi_video_stop()
 
     # Ensure any HDMI thread finishes before program exit
     if current_hdmi_thread and current_hdmi_thread.is_alive():

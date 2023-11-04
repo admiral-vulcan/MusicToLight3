@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="changed the led algo completely">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="found bug, added comment for later fix">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
+      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
+      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,22 +108,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00001" summary="worked here and there">
-      <option name="closed" value="true" />
-      <created>1690719010941</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1690719010941</updated>
-    </task>
-    <task id="LOCAL-00002" summary="added threading so that the scanner can rest between color changes">
-      <option name="closed" value="true" />
-      <created>1690729590412</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1690729590412</updated>
     </task>
     <task id="LOCAL-00003" summary="added comments to scanner.py">
       <option name="closed" value="true" />
@@ -492,7 +477,31 @@
       <option name="project" value="LOCAL" />
       <updated>1694984772948</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="added led back side">
+      <option name="closed" value="true" />
+      <created>1694996273895</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1694996273895</updated>
+    </task>
+    <task id="LOCAL-00050" summary="added more rolling led effect">
+      <option name="closed" value="true" />
+      <created>1696809772977</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1696809772977</updated>
+    </task>
+    <task id="LOCAL-00051" summary="found bug, added comment for later fix">
+      <option name="closed" value="true" />
+      <created>1697380146690</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1697380146706</updated>
+    </task>
+    <option name="localTasksCounter" value="52" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -507,9 +516,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="cleaned comments" />
-    <MESSAGE value="added smoke machine py-file" />
-    <MESSAGE value="cleaned comments and added smoke machine" />
     <MESSAGE value="added string - int - conversion" />
     <MESSAGE value="added UDP communication to Arduino-led-strip" />
     <MESSAGE value="changed brightness of hdmi zeros" />
@@ -532,6 +538,9 @@
     <MESSAGE value="added dark mood if not beat and not drop for 500 loops" />
     <MESSAGE value="bugfix: hdmi colors mixed up" />
     <MESSAGE value="changed the led algo completely" />
-    <option name="LAST_COMMIT_MESSAGE" value="changed the led algo completely" />
+    <MESSAGE value="added led back side" />
+    <MESSAGE value="added more rolling led effect" />
+    <MESSAGE value="found bug, added comment for later fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="found bug, added comment for later fix" />
   </component>
 </project>
