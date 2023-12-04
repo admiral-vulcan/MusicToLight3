@@ -15,6 +15,7 @@
 import numpy as np
 import math
 import threading
+import time
 import ctypes
 from queue import Queue
 
@@ -26,6 +27,9 @@ current_hdmi_thread = None
 
 # Globale Variable zum Speichern des aktuellen hdmi Threads
 current_led_thread = None
+
+# Globale Variable zum Speichern des aktuellen hdmi Thread-Zeitstempels
+last_run_time = None
 
 
 def calc_address(num):
@@ -41,18 +45,28 @@ def map_value(value, in_min, in_max, out_min, out_max):
 
 def hdmi_in_thread(func):
     global current_hdmi_thread
+    global last_run_time
 
     def wrapped_function(*args, **kwargs):
         global current_hdmi_thread
+        global last_run_time
+
+        current_time = time.time()
+
+        # Überprüfe, ob die Funktion zu oft aufgerufen wird
+        if last_run_time and current_time - last_run_time < 0.2:  # lesser is more stressful
+            return
 
         # Überprüfe, ob der aktuelle Thread läuft
         if current_hdmi_thread and current_hdmi_thread.is_alive():
-            # print(f"{func.__name__} wurde übersprungen, da bereits ein Thread läuft.")
             return
 
         # Funktion in einem neuen Thread ausführen
         current_hdmi_thread = threading.Thread(target=func, args=args, kwargs=kwargs)
         current_hdmi_thread.start()
+
+        # Aktualisiere die letzte Ausführungszeit
+        last_run_time = time.time()
 
     return wrapped_function
 
