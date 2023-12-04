@@ -22,28 +22,48 @@ from queue import Queue
 # Global list to store active scanner threads
 active_scan_threads = []
 
-# Globale Variable zum Speichern des aktuellen hdmi Threads
+# Global variable to store the current HDMI thread
 current_hdmi_thread = None
 
-# Globale Variable zum Speichern des aktuellen hdmi Threads
+# Global variable to store the current LED thread
 current_led_thread = None
 
-# Globale Variable zum Speichern des aktuellen hdmi Thread-Zeitstempels
+# Global variable to store the timestamp of the last run of the HDMI thread
 last_run_time = None
 
 
 def calc_address(num):
+    """
+    Calculate and return the address offset based on the provided number.
+
+    Arguments:
+    num -- the number used to calculate the address offset
+    """
     return (num * 6) - 6
 
 
 def map_value(value, in_min, in_max, out_min, out_max):
     """
     Map a value from one range to another.
+
+    Arguments:
+    value -- the value to be mapped
+    in_min, in_max -- the range of the input value
+    out_min, out_max -- the range of the output value
     """
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
 def hdmi_in_thread(func):
+    """
+    Decorator to run the given function in a separate HDMI thread.
+
+    Arguments:
+    func -- the function to be executed in a thread
+
+    This decorator ensures that the function is not executed more often than once every 0.2 seconds.
+    It also checks if the current HDMI thread is alive and skips the function execution if it is.
+    """
     global current_hdmi_thread
     global last_run_time
 
@@ -53,36 +73,43 @@ def hdmi_in_thread(func):
 
         current_time = time.time()
 
-        # Überprüfe, ob die Funktion zu oft aufgerufen wird
+        # Check if the function is called too frequently
         if last_run_time and current_time - last_run_time < 0.2:  # lesser is more stressful
             return
 
-        # Überprüfe, ob der aktuelle Thread läuft
+        # Check if the current HDMI thread is running
         if current_hdmi_thread and current_hdmi_thread.is_alive():
             return
 
-        # Funktion in einem neuen Thread ausführen
+        # Execute the function in a new thread
         current_hdmi_thread = threading.Thread(target=func, args=args, kwargs=kwargs)
         current_hdmi_thread.start()
 
-        # Aktualisiere die letzte Ausführungszeit
+        # Update the last execution time
         last_run_time = time.time()
 
     return wrapped_function
 
 
 def led_in_thread(func):
+    """
+    Decorator to run the given function in a separate LED thread.
+
+    Arguments:
+    func -- the function to be executed in a thread
+
+    This decorator checks if the current LED thread is alive and skips the function execution if it is.
+    """
     global current_led_thread
 
     def wrapped_function(*args, **kwargs):
         global current_led_thread
 
-        # Überprüfe, ob der aktuelle Thread läuft
+        # Check if the current LED thread is running
         if current_led_thread and current_led_thread.is_alive():
-            # print(f"{func.__name__} wurde übersprungen, da bereits ein Thread läuft.")
             return
 
-        # Funktion in einem neuen Thread ausführen
+        # Execute the function in a new thread
         current_led_thread = threading.Thread(target=func, args=args, kwargs=kwargs)
         current_led_thread.start()
 
