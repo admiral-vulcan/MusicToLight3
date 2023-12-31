@@ -306,7 +306,10 @@ def laser_color_to_int(color):
         "green": 25,
         "blue": 45,
         "purple": 50,
-        "white": 60
+        "white": 60,
+        # not supported but... let's deal with them:
+        "orange": 20,  # like yellow
+        "pink": 50  # like purple
     }
 
     return color_table.get(color.lower())
