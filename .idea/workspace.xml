@@ -4,9 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="found bug, added comment for later fix">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added documentation">
+      <change afterPath="M:/.gitignore" afterDir="false" />
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
+      <change beforePath="M:/aud_proc.py" beforeDir="false" afterPath="M:/aud_proc.py" afterDir="false" />
+      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
+      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
       <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -108,38 +111,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00003" summary="added comments to scanner.py">
-      <option name="closed" value="true" />
-      <created>1690730254175</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1690730254175</updated>
-    </task>
-    <task id="LOCAL-00004" summary="added GNU license">
-      <option name="closed" value="true" />
-      <created>1690733359233</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1690733359233</updated>
-    </task>
-    <task id="LOCAL-00005" summary="added safe mean">
-      <option name="closed" value="true" />
-      <created>1690734675624</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1690734675624</updated>
-    </task>
-    <task id="LOCAL-00006" summary="refactored samplerate to sample_rate">
-      <option name="closed" value="true" />
-      <created>1690738793739</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1690738793739</updated>
     </task>
     <task id="LOCAL-00007" summary="tried to make it more responsive, changed sample rate, changed thread handling...">
       <option name="closed" value="true" />
@@ -501,7 +472,39 @@
       <option name="project" value="LOCAL" />
       <updated>1697380146706</updated>
     </task>
-    <option name="localTasksCounter" value="52" />
+    <task id="LOCAL-00052" summary="added video playback feature">
+      <option name="closed" value="true" />
+      <created>1699112356298</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1699112356299</updated>
+    </task>
+    <task id="LOCAL-00053" summary="performance upgrade">
+      <option name="closed" value="true" />
+      <created>1701277353645</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1701277353645</updated>
+    </task>
+    <task id="LOCAL-00054" summary="anti-stress-check in hdmi_in_threads decorator: the function shall not execute more often than once every 0.2 seconds">
+      <option name="closed" value="true" />
+      <created>1701695012931</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1701695012931</updated>
+    </task>
+    <task id="LOCAL-00055" summary="added documentation">
+      <option name="closed" value="true" />
+      <created>1701695194316</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1701695194316</updated>
+    </task>
+    <option name="localTasksCounter" value="56" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -516,10 +519,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added string - int - conversion" />
-    <MESSAGE value="added UDP communication to Arduino-led-strip" />
-    <MESSAGE value="changed brightness of hdmi zeros" />
-    <MESSAGE value="added color selection, translation, and (drop-color-) calculation" />
     <MESSAGE value="added lamp near smoke machine and a set all pixels color function" />
     <MESSAGE value="added fastboot mode and panic mode, implemented UDP communication, color calculation, and other small things" />
     <MESSAGE value="performance optimizations" />
@@ -541,6 +540,21 @@
     <MESSAGE value="added led back side" />
     <MESSAGE value="added more rolling led effect" />
     <MESSAGE value="found bug, added comment for later fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="found bug, added comment for later fix" />
+    <MESSAGE value="added video playback feature" />
+    <MESSAGE value="performance upgrade" />
+    <MESSAGE value="anti-stress-check in hdmi_in_threads decorator: the function shall not execute more often than once every 0.2 seconds" />
+    <MESSAGE value="added documentation" />
+    <option name="LAST_COMMIT_MESSAGE" value="added documentation" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://M:/main.py</url>
+          <line>522</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

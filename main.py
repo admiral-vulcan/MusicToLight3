@@ -28,6 +28,7 @@ from scipy.signal import ellip, sosfilt, sos2zpk, lfilter_zi
 from aud_proc import *
 from eurolite_t36 import *
 from scanner import *
+from laser_show import *
 from led_strip import *
 from hdmi import *
 from smoker import *
@@ -35,6 +36,7 @@ import os
 import sys
 from com_udp import *
 import argparse
+
 # from vid import *
 
 UDP_LED_COUNT = 45
@@ -47,14 +49,14 @@ args = parser.parse_args()
 
 # Setting up communication with web server via Redis
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
-redis_client.set('strobe_mode', 'auto')
+redis_client.set('strobe_mode', 'off')
 redis_client.set('smoke_mode', 'auto')
 redis_client.set('panic_mode', 'off')
 redis_client.set('play_videos_mode', 'auto')
 
 # Set master colors (TODO should later be changeable via web interface)
-st_color_name = "blue"
-nd_color_name = "red"
+st_color_name = "orange"
+nd_color_name = "green"
 st_prim_color = get_rgb_from_color_name(st_color_name)
 nd_prim_color = get_rgb_from_color_name(nd_color_name)
 
@@ -235,7 +237,6 @@ print("        Listening... Press Ctrl+C to stop.")
 print("")
 hdmi_draw_black()
 
-
 # Start main loop
 try:
     while True:
@@ -284,6 +285,7 @@ try:
             # Prepare for strobing by turning off other lights
             scan_closed(1)
             scan_closed(2)
+            laser_off()
             if smoke_mode != 'on':
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
             # Unnecessary line as turning off lights is handled above, consider removal
@@ -347,8 +349,11 @@ try:
         mid_mean = compute_mean_volume(mid_volumes)
         high_mean = compute_mean_volume(high_volumes)
 
-        low_relative = safe_mean(low_signal) / low_mean
-        low_relative = min(1, max(0, low_relative))
+        if low_mean != 0:
+            low_relative = safe_mean(low_signal) / low_mean
+            low_relative = min(1, max(0, low_relative))
+        else:
+            low_relative = 0
 
         # Energy calculations
         energy = np.sum(signal ** 2)
@@ -403,6 +408,7 @@ try:
         if strobe_mode == 'auto' and heavy and 1 in list(done_chase)[-10:]:
             if smoke_mode != 'on':
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
+            laser_off()
             kill_current_hdmi()
             scan_closed(1)
             scan_closed(2)
@@ -418,13 +424,13 @@ try:
 
         # DMX and LED operations
         done_chase.append(0)
-        scan_gobo(1, 7, 150)  #TODO - bug: go does nothing!
-        scan_gobo(2, 7, 150)  #same as above
+        scan_gobo(1, 7, 150)  # TODO - bug: go does nothing!
+        scan_gobo(2, 7, 150)  # same as above
         scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
         scan_in_thread(scan_color, (2, interpret_color(secondary_color)))
 
         if smoke_mode != 'on':
-            set_eurolite_t36(5, x*nd_r/255, x*nd_g/255, x*nd_b/255, 255, 0)  # TODO color calculation
+            set_eurolite_t36(5, x * nd_r / 255, x * nd_g / 255, x * nd_b / 255, 255, 0)  # TODO color calculation
 
         # send to Arduino
         udp_led = int(y / 8.5)  # for 30 LEDs
@@ -434,6 +440,7 @@ try:
         # Handle actions for heavy signal
 
         if heavy:
+            laser_fast_dance(x, y, nd_color_name)
             hdmi_video_stop()
             no_drop_count = 0
             # led_music_visualizer_old(signal_max, st_color_name, nd_color_name)
@@ -462,8 +469,10 @@ try:
         else:
             scan_go_home(1)
             scan_go_home(2)
+            laser_slow_dance()
             if play_videos == "auto":
-                video_path = "/mnt/vids/"
+                video_path = "/musictolight/vids/"
+                # hdmi_video_start()
                 hdmi_play_video(video_path)
                 if not is_video_playing():
                     # Generate visualization matrix based on signal
@@ -472,8 +481,7 @@ try:
 
                     # Update HDMI display with computed matrix
                     hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
-                else:
-                    hdmi_video_start()
+
             else:
                 hdmi_video_stop()
                 # Generate visualization matrix based on signal
@@ -491,9 +499,9 @@ try:
                     # () or (0 < sum(drop_history) < 32 and drop)
                     color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
                 elif not heavy:
+                    color_flow(runtime_bit, signal_max, 20, st_color_name, nd_color_name)
                     no_drop_count += 1
                     if no_drop_count < 500:
-                        set_all_pixels_color(0, 0, 0)  # Clear any existing colors
                         scan_closed(1)
                         scan_closed(2)
                     else:
@@ -503,20 +511,26 @@ try:
                 if sum(drop_history) >= 32 and drop:
                     heaviness_history.clear()
                     if 1 not in done_chase:
+                        set_all_pixels_color(0, 0, 0)
+                        laser_off()
                         if smoke_mode == 'auto':
                             smoke_on()
-                        #hdmi_outro_animation()
+                        # hdmi_outro_animation()
                         scan_closed(1)
                         scan_closed(2)
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
+                        hdmi_draw_black()
+                        laser_star_chase()
                         star_chase(Color(127, 127, 127), 52)
 
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, 0, 0, 0, 255, 0)
-                        #hdmi_intro_animation()
+                        # hdmi_intro_animation()
                         scan_opened(1)
                         scan_opened(2)
+                    # else:
+                        # color_flow(runtime_bit, signal_max, 1, st_color_name, nd_color_name)  # Adjust brightness
                     done_chase.append(1)
                     smoke_off()
             else:
@@ -532,11 +546,14 @@ try:
                     pitches.clear()
                     drop_history.clear()
                     heaviness_history.clear()
-                    color_flow(runtime_bit, signal_max, 20, st_color_name, nd_color_name)  # Adjust brightness
+                    color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
+        # print(is_video_playing())
 
 
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
+    laser_off()
+    set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     hdmi_video_stop()
     # Cleanup functions to ensure a safe shutdown
     cleanup_smoke()

@@ -290,6 +290,28 @@ def interpret_color(color):
     return closest_color
 
 
+def laser_color_to_int(color):
+    """
+    Convert a color string to an integer value based on a predefined table.
+
+    Args:
+    color (str): The color to convert.
+
+    Returns:
+    int or None: The integer value of the color, or None if the color is not in the table.
+    """
+    color_table = {
+        "red": 10,
+        "yellow": 20,
+        "green": 25,
+        "blue": 45,
+        "purple": 50,
+        "white": 60
+    }
+
+    return color_table.get(color.lower())
+
+
 def get_rgb_from_color_name(color_name):
     """Get RGB tuple from color name."""
     colors = {

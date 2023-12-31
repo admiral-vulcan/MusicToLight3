@@ -22,7 +22,10 @@ import numpy as np
 from helpers import *
 from eurolite_t36 import *
 
-# LED-Streifen Konfiguration:
+# Global variable for saving the timestamp of the last strip.show() call
+last_show_time = 0
+
+# LED-strip configuration:
 LED_COUNT = 270  # Anzahl der LED-Pixel.
 LED_PIN = 18  # GPIO-Pin, der mit dem Datenpin des LED-Streifens verbunden ist.
 LED_FREQ_HZ = 800000  # LED-Signalfrequenz in Hz (normalerweise 800khz)
@@ -114,7 +117,7 @@ def led_music_visualizer_old(audio_input):
 
 
 @led_in_thread
-def led_music_visualizer_ols(audio_input, first_color="blue", second_color="red"):
+def led_music_visualizer_old(audio_input, first_color="blue", second_color="red"):
     recent_audio_inputs.append(audio_input)
     mean_vol = safe_mean(recent_audio_inputs)
     if mean_vol > 0:
@@ -206,8 +209,22 @@ def color_flow_old(pos, audio_input, reduce=2):
     strip.show()
 
 
+# Global variable to keep track of current LED colors
+current_colors = [(0, 0, 0)] * strip.numPixels()
+
+
+def smooth_transition(current, target, step=5):
+    """Smoothly transition from current color to target color."""
+    r = int(current[0] + min(max(target[0] - current[0], -step), step))
+    g = int(current[1] + min(max(target[1] - current[1], -step), step))
+    b = int(current[2] + min(max(target[2] - current[2], -step), step))
+    return r, g, b
+
+
 def color_flow(pos, audio_input, reduce=2, first_color="blue", second_color="red"):
     """Draw a color flow that moves across display."""
+    global current_colors
+
     recent_audio_inputs.append(audio_input)
     mean_vol = safe_mean(recent_audio_inputs)
 
@@ -218,25 +235,28 @@ def color_flow(pos, audio_input, reduce=2, first_color="blue", second_color="red
         wheel_pos = ((i * 256 // int(strip.numPixels() / 2)) + pos) % 256
         first, second = wheel(wheel_pos, reduce)
 
-        # Calculate first and second color
-        first = (int(first * 50 * mean_vol))
-        second = (int(second * 50 * mean_vol))
-
-        # Find divider
+        # Calculate the target color
+        first = int(first * 50 * mean_vol)
+        second = int(second * 50 * mean_vol)
         divider = min(np.max(first_rgb) + np.max(second_rgb), 255)
+        target_r = int((first_rgb[0] * first + second_rgb[0] * second) / divider)
+        target_g = int((first_rgb[1] * first + second_rgb[1] * second) / divider)
+        target_b = int((first_rgb[2] * first + second_rgb[2] * second) / divider)
 
-        # Calculate the new RGB values based on the ratios
-        r = int((first_rgb[0] * first + second_rgb[0] * second) / divider)
-        g = int((first_rgb[1] * first + second_rgb[1] * second) / divider)
-        b = int((first_rgb[2] * first + second_rgb[2] * second) / divider)
+        # Get the current color
+        current_color = current_colors[i]
+
+        # Smoothly transition to the target color
+        new_color = smooth_transition(current_color, (target_r, target_g, target_b))
 
         # Clip values to 0-4095 range to prevent overflows
-        r = min(max(r, 0), 4095)
-        g = min(max(g, 0), 4095)
-        b = min(max(b, 0), 4095)
+        r, g, b = [min(max(c, 0), 4095) for c in new_color]
 
         # Set the pixel color
         strip.setPixelColor(i, Color(r, g, b))
+
+        # Update current color
+        current_colors[i] = (r, g, b)
 
     strip.show()
 
@@ -290,8 +310,15 @@ def lerp(a, b, t, exponent=3):
     return int(a * ((1 - t) ** exponent) + b * (t ** exponent))
 
 
+def adjust_brightness(color, factor):
+    """ Passt die Helligkeit einer Farbe an. """
+    return int(color * factor)
+
+
 @led_in_thread
 def led_music_visualizer(data, first_color="blue", second_color="red"):
+    global last_show_time
+
     set_all_pixels_color(0, 0, 0)
     first_r, first_g, first_b = get_rgb_from_color_name(first_color)
     second_r, second_g, second_b = get_rgb_from_color_name(second_color)
@@ -303,13 +330,21 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
     # print(num_leds_front)
 
     for pos in range(data):
+        current_time = time.time()
+
         t = pos / mid_point
 
         # front side
-        strip.setPixelColor(mid_point - pos,
-                            Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
-        strip.setPixelColor(mid_point + pos,
-                            Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
+        brightness_factor = 0.125
+
+        # Anpassen der Helligkeit der Farben
+        bright_r = adjust_brightness(lerp(first_r, second_r, t), brightness_factor)
+        bright_g = adjust_brightness(lerp(first_g, second_g, t), brightness_factor)
+        bright_b = adjust_brightness(lerp(first_b, second_b, t), brightness_factor)
+
+        # Setzen der Farben mit angepasster Helligkeit
+        strip.setPixelColor(mid_point - pos, Color(bright_r, bright_g, bright_b))
+        strip.setPixelColor(mid_point + pos, Color(bright_r, bright_g, bright_b))
 
         # back side
         strip.setPixelColor(num_leds_front + mid_point - pos,
@@ -318,17 +353,22 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
                             Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
 
         # animate a bit for smoothness
-        if pos % 10 == 0:
+        # if current_time - last_show_time >= 0.05:  # Überprüfe, ob 50ms seit dem letzten Aufruf vergangen sind
+        if pos % 4 == 0:
             strip.show()
-        if data < 35 and pos % 5 == 0:
+            last_show_time = current_time
+        elif data < 35 and pos % 2 == 0:
             strip.show()
-        if data < 15 and pos % 2 == 0:
+            last_show_time = current_time
+        elif data < 15:
             strip.show()
+            last_show_time = current_time
+
     strip.show()
 
 
 """
-test code
+# test code
 
 while True:
     led_music_visualizer_new(1)

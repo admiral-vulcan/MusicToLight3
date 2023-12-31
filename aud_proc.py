@@ -47,12 +47,35 @@ def get_second_highest(values):
         return values[0]
 
 
-def adjust_gain(volumes, signal, target_volume=0.1, max_gain=5):
+def adjust_gain_old(volumes, signal, target_volume=0.1, max_gain=5):
     average_volume = safe_mean(volumes)
     gain_factor = target_volume / average_volume if average_volume > 0 else 1.0
     if gain_factor > max_gain:
         gain_factor = max_gain
+    if signal.any() > 0:
+        print(signal)
     return signal * gain_factor, gain_factor
+
+
+def adjust_gain(volumes, signal, target_volume=0.1, max_gain=5):
+    # Berechne den durchschnittlichen Lautstärkepegel
+    average_volume = safe_mean(volumes)
+
+    # Berechne den Verstärkungsfaktor
+    gain_factor = target_volume / average_volume if average_volume > 0 else 1.0
+
+    # Begrenze den Verstärkungsfaktor auf den maximal zulässigen Wert
+    if gain_factor > max_gain:
+        gain_factor = max_gain
+
+    # Setze Werte mit einem Betrag kleiner als 0,01 auf 0
+    signal = signal * 1
+    signal[np.abs(signal) < 0.01] = 0
+
+    # Wende den Verstärkungsfaktor auf das Signal an
+    adjusted_signal = signal * gain_factor
+
+    return adjusted_signal, gain_factor
 
 
 def design_filter(lowcut, highcut, sample_rate, ripple_db=0.5, stop_atten_db=40, order=3):
@@ -232,7 +255,8 @@ def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, pitches):
             return this_category
 
         # If low volume is significantly higher than mid and high volumes and the standard deviation of the low volumes is high, then classify as 'Techno'
-        elif (min_pitch == 0 and max_pitch > 4000) or (low_mean_volume > mid_mean_volume * 3 and low_mean_volume > high_mean_volume * 3 and low_std_volume > mid_std_volume):
+        elif (min_pitch == 0 and max_pitch > 4000) or (
+                low_mean_volume > mid_mean_volume * 3 and low_mean_volume > high_mean_volume * 3 and low_std_volume > mid_std_volume):
             this_category = 2  # energetic music
             return this_category
 
