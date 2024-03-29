@@ -15,6 +15,7 @@
 # Required Libraries
 import RPi.GPIO as GPIO
 import time
+from time import sleep
 from rpi_rf import RFDevice
 
 # Global variables
@@ -36,8 +37,11 @@ def smoke_on():
     global smoke_status  # Access the global variable
     if smoke_status != "on":  # Check if the machine is not already on
         rfdevice.tx_code(code_on, 1, pulse_length, 24)
-        print("Smoke machine turned on")
+        rfdevice.tx_code(code_on, 1, pulse_length, 24)
+        rfdevice.tx_code(code_on, 1, pulse_length, 24)
+        # print("Smoke machine turned on")
         smoke_status = "on"  # Update the status
+        sleep(0.37)
 
 
 def smoke_off():
@@ -45,8 +49,11 @@ def smoke_off():
     global smoke_status  # Access the global variable
     if smoke_status != "off":  # Check if the machine is not already off
         rfdevice.tx_code(code_off, 1, pulse_length, 24)
-        print("Smoke machine turned off")
+        rfdevice.tx_code(code_off, 1, pulse_length, 24)
+        rfdevice.tx_code(code_off, 1, pulse_length, 24)
+        # print("Smoke machine turned off")
         smoke_status = "off"  # Update the status
+        sleep(0.37)
 
 
 def cleanup_smoke():

@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added laser colors that are not supported">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="changed smoker switch to wireless 433 MHz signal">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
       <change beforePath="M:/smoker.py" beforeDir="false" afterPath="M:/smoker.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -108,14 +107,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00009" summary="added hdmi-output">
-      <option name="closed" value="true" />
-      <created>1691870099254</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1691870099254</updated>
     </task>
     <task id="LOCAL-00010" summary="added more threading">
       <option name="closed" value="true" />
@@ -501,7 +492,15 @@
       <option name="project" value="LOCAL" />
       <updated>1703986769336</updated>
     </task>
-    <option name="localTasksCounter" value="58" />
+    <task id="LOCAL-00058" summary="changed smoker switch to wireless 433 MHz signal">
+      <option name="closed" value="true" />
+      <created>1711744904282</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1711744904282</updated>
+    </task>
+    <option name="localTasksCounter" value="59" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -516,7 +515,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="performance optimizations" />
     <MESSAGE value="changed count of Arduino-LEDs to 30" />
     <MESSAGE value="added red light near smoke machine" />
     <MESSAGE value="added error catching while sending UDP packages" />
@@ -541,7 +539,8 @@
     <MESSAGE value="added documentation" />
     <MESSAGE value="added laser_show, many bugfixes" />
     <MESSAGE value="added laser colors that are not supported" />
-    <option name="LAST_COMMIT_MESSAGE" value="added laser colors that are not supported" />
+    <MESSAGE value="changed smoker switch to wireless 433 MHz signal" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed smoker switch to wireless 433 MHz signal" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

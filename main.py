@@ -516,14 +516,14 @@ try:
                     if 1 not in done_chase:
                         set_all_pixels_color(0, 0, 0)
                         laser_off()
+                        scan_closed(1)
+                        scan_closed(2)
+                        hdmi_draw_black()
+                        if smoke_mode != 'on':
+                            set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
                         if smoke_mode == 'auto':
                             smoke_on()
                         # hdmi_outro_animation()
-                        scan_closed(1)
-                        scan_closed(2)
-                        if smoke_mode != 'on':
-                            set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
-                        hdmi_draw_black()
                         laser_star_chase()
                         star_chase(Color(127, 127, 127), 52)
 
