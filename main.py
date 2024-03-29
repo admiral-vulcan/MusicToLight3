@@ -49,14 +49,14 @@ args = parser.parse_args()
 
 # Setting up communication with web server via Redis
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
-redis_client.set('strobe_mode', 'off')
+redis_client.set('strobe_mode', 'auto')
 redis_client.set('smoke_mode', 'auto')
 redis_client.set('panic_mode', 'off')
 redis_client.set('play_videos_mode', 'auto')
 
 # Set master colors (TODO should later be changeable via web interface)
-st_color_name = "orange"
-nd_color_name = "green"
+st_color_name = "blue"
+nd_color_name = "red"
 st_prim_color = get_rgb_from_color_name(st_color_name)
 nd_prim_color = get_rgb_from_color_name(nd_color_name)
 
@@ -82,6 +82,9 @@ secondary_color = tuple(int(val * factor) for val in average_color)
 redis_client.set('st_prim_color', json.dumps(st_prim_color))
 redis_client.set('nd_prim_color', json.dumps(nd_prim_color))
 redis_client.set('secondary_color', json.dumps(secondary_color))
+
+# init smoke
+init_smoke()
 
 
 def redis_get_colors():
@@ -530,7 +533,7 @@ try:
                         scan_opened(1)
                         scan_opened(2)
                     # else:
-                        # color_flow(runtime_bit, signal_max, 1, st_color_name, nd_color_name)  # Adjust brightness
+                    # color_flow(runtime_bit, signal_max, 1, st_color_name, nd_color_name)  # Adjust brightness
                     done_chase.append(1)
                     smoke_off()
             else:

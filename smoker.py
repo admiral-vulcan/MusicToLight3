@@ -15,28 +15,40 @@
 # Required Libraries
 import RPi.GPIO as GPIO
 import time
+from rpi_rf import RFDevice
+
+# Global variables
+gpio_pin = 23  # GPIO pin connected to the FS1000A transmitter's data pin
+code_on = 4543756  # Decimal code to turn the smoke machine on
+code_off = 4543792  # Decimal code to turn the smoke machine off
+pulse_length = 370  # Pulse length in microseconds
+rfdevice = RFDevice(gpio_pin)  # Initialize the RF device for communication
+smoke_status = "off"  # Tracks the current state of the smoke machine, default is 'off'
 
 
-# Initialize GPIO settings for smoke machine control
 def init_smoke():
-    """Initialize GPIO pin for smoke machine control."""
-    GPIO.setmode(GPIO.BCM)  # Set GPIO numbering mode to BCM
-    GPIO.setup(23, GPIO.OUT)  # Set GPIO pin 23 as an output
+    """Initializes the RF device for smoke machine control."""
+    rfdevice.enable_tx()  # Enables the transmission mode
 
 
-# Activate smoke machine
 def smoke_on():
-    """Turn the smoke machine on."""
-    GPIO.output(23, GPIO.HIGH)  # Set GPIO pin 23 to high, activating the relay
+    """Turns the smoke machine on by sending the 'on' code."""
+    global smoke_status  # Access the global variable
+    if smoke_status != "on":  # Check if the machine is not already on
+        rfdevice.tx_code(code_on, 1, pulse_length, 24)
+        print("Smoke machine turned on")
+        smoke_status = "on"  # Update the status
 
 
-# Deactivate smoke machine
 def smoke_off():
-    """Turn the smoke machine off."""
-    GPIO.output(23, GPIO.LOW)  # Set GPIO pin 23 to low, deactivating the relay
+    """Turns the smoke machine off by sending the 'off' code."""
+    global smoke_status  # Access the global variable
+    if smoke_status != "off":  # Check if the machine is not already off
+        rfdevice.tx_code(code_off, 1, pulse_length, 24)
+        print("Smoke machine turned off")
+        smoke_status = "off"  # Update the status
 
 
-# Cleanup GPIO settings
 def cleanup_smoke():
-    """Cleanup GPIO settings after usage."""
-    GPIO.cleanup()  # Reset GPIO settings to default
+    """Cleans up the RF device after usage."""
+    rfdevice.cleanup()  # Resets the RF device to a neutral state

@@ -4,13 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added documentation">
-      <change afterPath="M:/.gitignore" afterDir="false" />
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added laser colors that are not supported">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/aud_proc.py" beforeDir="false" afterPath="M:/aud_proc.py" afterDir="false" />
-      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
-      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
       <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
+      <change beforePath="M:/smoker.py" beforeDir="false" afterPath="M:/smoker.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,22 +108,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00007" summary="tried to make it more responsive, changed sample rate, changed thread handling...">
-      <option name="closed" value="true" />
-      <created>1691441140209</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1691441140209</updated>
-    </task>
-    <task id="LOCAL-00008" summary="doubled LED-strip physically by adding a second one. restricted the code to only work on the first one. the second one will be addressed later.">
-      <option name="closed" value="true" />
-      <created>1691611136322</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1691611136322</updated>
     </task>
     <task id="LOCAL-00009" summary="added hdmi-output">
       <option name="closed" value="true" />
@@ -504,7 +485,23 @@
       <option name="project" value="LOCAL" />
       <updated>1701695194316</updated>
     </task>
-    <option name="localTasksCounter" value="56" />
+    <task id="LOCAL-00056" summary="added laser_show, many bugfixes">
+      <option name="closed" value="true" />
+      <created>1703986572116</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1703986572116</updated>
+    </task>
+    <task id="LOCAL-00057" summary="added laser colors that are not supported">
+      <option name="closed" value="true" />
+      <created>1703986769336</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1703986769336</updated>
+    </task>
+    <option name="localTasksCounter" value="58" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -519,8 +516,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added lamp near smoke machine and a set all pixels color function" />
-    <MESSAGE value="added fastboot mode and panic mode, implemented UDP communication, color calculation, and other small things" />
     <MESSAGE value="performance optimizations" />
     <MESSAGE value="changed count of Arduino-LEDs to 30" />
     <MESSAGE value="added red light near smoke machine" />
@@ -544,14 +539,16 @@
     <MESSAGE value="performance upgrade" />
     <MESSAGE value="anti-stress-check in hdmi_in_threads decorator: the function shall not execute more often than once every 0.2 seconds" />
     <MESSAGE value="added documentation" />
-    <option name="LAST_COMMIT_MESSAGE" value="added documentation" />
+    <MESSAGE value="added laser_show, many bugfixes" />
+    <MESSAGE value="added laser colors that are not supported" />
+    <option name="LAST_COMMIT_MESSAGE" value="added laser colors that are not supported" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://M:/main.py</url>
-          <line>522</line>
+          <line>525</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
