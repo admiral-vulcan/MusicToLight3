@@ -60,6 +60,8 @@ def smoke_on():
         smoke_status = "on"
         with smoke_lock:
             smoke_status = "on"
+            sleep(10)
+            smoke_off()
 
 
 @run_in_thread
