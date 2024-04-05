@@ -335,7 +335,7 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
         t = pos / mid_point
 
         # front side
-        brightness_factor = 0.125
+        brightness_factor = 0.5
 
         # Anpassen der Helligkeit der Farben
         bright_r = adjust_brightness(lerp(first_r, second_r, t), brightness_factor)
@@ -354,7 +354,8 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
 
         # animate a bit for smoothness
         # if current_time - last_show_time >= 0.05:  # Überprüfe, ob 50ms seit dem letzten Aufruf vergangen sind
-        if pos % 4 == 0:
+
+        if pos % 10 == 0:
             strip.show()
             last_show_time = current_time
         elif data < 35 and pos % 2 == 0:
