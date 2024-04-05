@@ -38,6 +38,8 @@ LED_CHANNEL = 0  # set to '1' for GPIOs 13, 19, 41, 45 or 53
 strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
 # Intialize the library (must be called once before other functions).
 strip.begin()
+current_time = 0
+global_led_state = [(0, 0, 0) for _ in range(strip.numPixels())]
 
 recent_audio_inputs = deque(maxlen=int(3))  # adjust as needed, originally 20
 
@@ -317,55 +319,64 @@ def adjust_brightness(color, factor):
 
 @led_in_thread
 def led_music_visualizer(data, first_color="blue", second_color="red"):
-    global last_show_time
+    global last_show_time, current_time, global_led_state
 
-    set_all_pixels_color(0, 0, 0)
     first_r, first_g, first_b = get_rgb_from_color_name(first_color)
     second_r, second_g, second_b = get_rgb_from_color_name(second_color)
 
     num_leds = strip.numPixels()
+    # Erstellen eines Arrays zur Speicherung der Farbinformationen für jede LED
+    led_array = [(0, 0, 0) for _ in range(num_leds)]  # Startet mit allen LEDs ausgeschaltet
+
     num_leds_front = int(num_leds / 2)
     mid_point = int(num_leds / 2) // 2
     data = int(data * mid_point)
-    # print(num_leds_front)
+
+    # Initialisiere led_array mit halben Werten von global_led_state
+    led_array = [(int(r / 2.5), int(g / 2.5), int(b / 2.5)) for r, g, b in global_led_state]
+    global_led_state = led_array
 
     for pos in range(data):
         current_time = time.time()
 
         t = pos / mid_point
+        brightness_factor = 0.75
 
-        # front side
-        brightness_factor = 0.5
-
-        # Anpassen der Helligkeit der Farben
+        # Berechnung der neuen Farbwerte mit Helligkeitsanpassung
         bright_r = adjust_brightness(lerp(first_r, second_r, t), brightness_factor)
         bright_g = adjust_brightness(lerp(first_g, second_g, t), brightness_factor)
         bright_b = adjust_brightness(lerp(first_b, second_b, t), brightness_factor)
 
-        # Setzen der Farben mit angepasster Helligkeit
-        strip.setPixelColor(mid_point - pos, Color(bright_r, bright_g, bright_b))
-        strip.setPixelColor(mid_point + pos, Color(bright_r, bright_g, bright_b))
+        # Speichern der Farben im Array statt direktem Setzen
+        led_array[mid_point - pos] = (bright_r, bright_g, bright_b)
+        led_array[mid_point + pos] = (bright_r, bright_g, bright_b)
+        led_array[num_leds_front + mid_point - pos] = (
+            lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t))
+        led_array[num_leds_front + mid_point + pos] = (
+            lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t))
 
-        # back side
-        strip.setPixelColor(num_leds_front + mid_point - pos,
-                            Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
-        strip.setPixelColor(num_leds_front + mid_point + pos,
-                            Color(lerp(first_r, second_r, t), lerp(first_g, second_g, t), lerp(first_b, second_b, t)))
+    # Aktualisieren des LED-Streifens basierend auf dem Array
+    for i, color in enumerate(led_array):
+        strip.setPixelColor(i, Color(*color))
 
-        # animate a bit for smoothness
-        # if current_time - last_show_time >= 0.05:  # Überprüfe, ob 50ms seit dem letzten Aufruf vergangen sind
+    active_leds = sum(1 for color in led_array if color != (0, 0, 0))
 
-        if pos % 10 == 0:
-            strip.show()
-            last_show_time = current_time
-        elif data < 35 and pos % 2 == 0:
-            strip.show()
-            last_show_time = current_time
-        elif data < 15:
-            strip.show()
-            last_show_time = current_time
-
-    strip.show()
+    # Bedingungen für das Aktualisieren der Anzeige basierend auf der Anzahl der Datenpunkte (data)
+    if active_leds < 10:
+        # Wenn die Datenmenge sehr klein ist, aktualisiere bei jedem Durchgang
+        strip.show()
+        last_show_time = current_time
+    elif active_leds < 40 and (active_leds - 1) % 2 == 0:
+        # Für eine mäßige Datenmenge und wenn der letzte Datenpunkt auf eine gerade Zahl fällt, aktualisiere die Anzeige
+        strip.show()
+        last_show_time = current_time
+    elif (active_leds - 1) % 10 == 0:
+        # Für größere Datenmengen, aktualisiere die Anzeige weniger häufig, hier nur wenn der letzte Datenpunkt ein Vielfaches von 10 ist
+        strip.show()
+        last_show_time = current_time
+    else:
+        # Wenn keine der Bedingungen zutrifft, führe eine Standardaktualisierung durch
+        strip.show()
 
 
 """
