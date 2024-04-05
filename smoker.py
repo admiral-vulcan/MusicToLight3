@@ -53,13 +53,11 @@ def smoke_on():
     global smoke_status
     if smoke_status != "on":
         rfdevice.tx_code(code_on, 1, pulse_length, 24)
-        rfdevice.tx_code(code_on, 1, pulse_length, 24)
-        rfdevice.tx_code(code_on, 1, pulse_length, 24)
-        rfdevice.tx_code(code_on, 1, pulse_length, 24)
-        rfdevice.tx_code(code_on, 1, pulse_length, 24)
-        rfdevice.tx_code(code_on, 1, pulse_length, 24)
-        print("smoke on")
         sleep(0.37)
+        rfdevice.tx_code(code_on, 1, pulse_length, 24)
+        sleep(0.37)
+        print("smoke on")
+        smoke_status = "on"
         with smoke_lock:
             smoke_status = "on"
 
@@ -69,13 +67,11 @@ def smoke_off():
     global smoke_status
     if smoke_status != "off":
         rfdevice.tx_code(code_off, 1, pulse_length, 24)
-        rfdevice.tx_code(code_off, 1, pulse_length, 24)
-        rfdevice.tx_code(code_off, 1, pulse_length, 24)
-        rfdevice.tx_code(code_off, 1, pulse_length, 24)
-        rfdevice.tx_code(code_off, 1, pulse_length, 24)
-        rfdevice.tx_code(code_off, 1, pulse_length, 24)
-        print("smoke off")
         sleep(0.37)
+        rfdevice.tx_code(code_off, 1, pulse_length, 24)
+        sleep(0.37)
+        print("smoke off")
+        smoke_status = "off"
         with smoke_lock:
             smoke_status = "off"
 
