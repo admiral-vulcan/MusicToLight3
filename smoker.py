@@ -17,6 +17,9 @@ import RPi.GPIO as GPIO
 import time
 from time import sleep
 from rpi_rf import RFDevice
+import threading
+from threading import Lock
+
 
 # Global variables
 gpio_pin = 23  # GPIO pin connected to the FS1000A transmitter's data pin
@@ -26,34 +29,55 @@ pulse_length = 370  # Pulse length in microseconds
 rfdevice = RFDevice(gpio_pin)  # Initialize the RF device for communication
 smoke_status = "off"  # Tracks the current state of the smoke machine, default is 'off'
 
+smoke_lock = Lock()
+
+
+def run_in_thread(fn):
+    """Dieser Dekorator führt die gegebene Funktion in einem neuen Thread aus."""
+
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
+        thread.start()
+        return thread  # Optional, falls du den Thread später verwalten möchtest
+
+    return wrapper
+
 
 def init_smoke():
     """Initializes the RF device for smoke machine control."""
     rfdevice.enable_tx()  # Enables the transmission mode
 
 
+@run_in_thread
 def smoke_on():
-    """Turns the smoke machine on by sending the 'on' code."""
-    global smoke_status  # Access the global variable
-    if smoke_status != "on":  # Check if the machine is not already on
+    global smoke_status
+    if smoke_status != "on":
         rfdevice.tx_code(code_on, 1, pulse_length, 24)
         rfdevice.tx_code(code_on, 1, pulse_length, 24)
         rfdevice.tx_code(code_on, 1, pulse_length, 24)
-        # print("Smoke machine turned on")
-        smoke_status = "on"  # Update the status
-        sleep(0.37)
+        rfdevice.tx_code(code_on, 1, pulse_length, 24)
+        rfdevice.tx_code(code_on, 1, pulse_length, 24)
+        rfdevice.tx_code(code_on, 1, pulse_length, 24)
+        with smoke_lock:
+            smoke_status = "on"
+            print("smoke on")
+            sleep(1)
 
 
+@run_in_thread
 def smoke_off():
-    """Turns the smoke machine off by sending the 'off' code."""
-    global smoke_status  # Access the global variable
-    if smoke_status != "off":  # Check if the machine is not already off
+    global smoke_status
+    if smoke_status != "off":
         rfdevice.tx_code(code_off, 1, pulse_length, 24)
         rfdevice.tx_code(code_off, 1, pulse_length, 24)
         rfdevice.tx_code(code_off, 1, pulse_length, 24)
-        # print("Smoke machine turned off")
-        smoke_status = "off"  # Update the status
-        sleep(0.37)
+        rfdevice.tx_code(code_off, 1, pulse_length, 24)
+        rfdevice.tx_code(code_off, 1, pulse_length, 24)
+        rfdevice.tx_code(code_off, 1, pulse_length, 24)
+        with smoke_lock:
+            smoke_status = "off"
+            print("smoke off")
+            sleep(1)
 
 
 def cleanup_smoke():

@@ -533,10 +533,9 @@ try:
                         # hdmi_intro_animation()
                         scan_opened(1)
                         scan_opened(2)
-                    # else:
-                    # color_flow(runtime_bit, signal_max, 1, st_color_name, nd_color_name)  # Adjust brightness
-                    done_chase.append(1)
+
                     smoke_off()
+                    done_chase.append(1)
             else:
                 input_history.append(0.0)
 
