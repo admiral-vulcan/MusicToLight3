@@ -526,6 +526,7 @@ try:
                         # hdmi_outro_animation()
                         laser_star_chase()
                         star_chase(Color(127, 127, 127), 52)
+                        laser_off()
 
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, 0, 0, 0, 255, 0)

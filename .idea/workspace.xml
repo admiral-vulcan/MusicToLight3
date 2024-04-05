@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="deleted deprecated code">
-      <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="optimized led refresh">
+      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -108,14 +107,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00018" summary="added more dynamic to hdmi numbers">
-      <option name="closed" value="true" />
-      <created>1691882848462</created>
-      <option name="number" value="00018" />
-      <option name="presentableId" value="LOCAL-00018" />
-      <option name="project" value="LOCAL" />
-      <updated>1691882848462</updated>
     </task>
     <task id="LOCAL-00019" summary="changed position of strobe and added blackness at the beginning">
       <option name="closed" value="true" />
@@ -501,7 +492,15 @@
       <option name="project" value="LOCAL" />
       <updated>1712345600013</updated>
     </task>
-    <option name="localTasksCounter" value="67" />
+    <task id="LOCAL-00067" summary="optimized led refresh">
+      <option name="closed" value="true" />
+      <created>1712349259836</created>
+      <option name="number" value="00067" />
+      <option name="presentableId" value="LOCAL-00067" />
+      <option name="project" value="LOCAL" />
+      <updated>1712349259836</updated>
+    </task>
+    <option name="localTasksCounter" value="68" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -516,7 +515,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="deleted runtime counters" />
     <MESSAGE value="added feature: settable colors" />
     <MESSAGE value="added feature: dominant harmony based on Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003" />
     <MESSAGE value="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color" />
@@ -541,6 +539,7 @@
     <MESSAGE value="set new dmx address" />
     <MESSAGE value="added smooth led dimming" />
     <MESSAGE value="deleted deprecated code" />
-    <option name="LAST_COMMIT_MESSAGE" value="deleted deprecated code" />
+    <MESSAGE value="optimized led refresh" />
+    <option name="LAST_COMMIT_MESSAGE" value="optimized led refresh" />
   </component>
 </project>
