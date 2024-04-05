@@ -48,34 +48,26 @@ def init_smoke():
     rfdevice.enable_tx()  # Enables the transmission mode
 
 
-@run_in_thread
 def smoke_on():
     global smoke_status
     if smoke_status != "on":
         rfdevice.tx_code(code_on, 1, pulse_length, 24)
-        sleep(0.37)
         rfdevice.tx_code(code_on, 1, pulse_length, 24)
-        sleep(0.37)
         print("smoke on")
         smoke_status = "on"
-        with smoke_lock:
-            smoke_status = "on"
-            sleep(10)
-            smoke_off()
+        smoke_status = "on"
+        sleep(0.37)
 
 
-@run_in_thread
 def smoke_off():
     global smoke_status
     if smoke_status != "off":
         rfdevice.tx_code(code_off, 1, pulse_length, 24)
-        sleep(0.37)
         rfdevice.tx_code(code_off, 1, pulse_length, 24)
-        sleep(0.37)
         print("smoke off")
         smoke_status = "off"
-        with smoke_lock:
-            smoke_status = "off"
+        smoke_status = "off"
+        sleep(0.37)
 
 
 def cleanup_smoke():

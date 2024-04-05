@@ -288,6 +288,7 @@ try:
             # Prepare for strobing by turning off other lights
             scan_closed(1)
             scan_closed(2)
+            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
             laser_off()
             if smoke_mode != 'on':
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
@@ -519,6 +520,7 @@ try:
                         scan_closed(1)
                         scan_closed(2)
                         hdmi_draw_black()
+                        laser_off()
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
                         if smoke_mode == 'auto':
@@ -526,7 +528,6 @@ try:
                         # hdmi_outro_animation()
                         laser_star_chase()
                         star_chase(Color(127, 127, 127), 52)
-                        laser_off()
 
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, 0, 0, 0, 255, 0)

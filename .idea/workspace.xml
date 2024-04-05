@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: smoke erratic behaviour" />
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added threading to led function: color_flow">
+      <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
+      <change beforePath="M:/smoker.py" beforeDir="false" afterPath="M:/smoker.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -105,22 +109,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00022" summary="cleaned comments">
-      <option name="closed" value="true" />
-      <created>1692460706293</created>
-      <option name="number" value="00022" />
-      <option name="presentableId" value="LOCAL-00022" />
-      <option name="project" value="LOCAL" />
-      <updated>1692460706293</updated>
-    </task>
-    <task id="LOCAL-00023" summary="added smoke machine py-file">
-      <option name="closed" value="true" />
-      <created>1692461877930</created>
-      <option name="number" value="00023" />
-      <option name="presentableId" value="LOCAL-00023" />
-      <option name="project" value="LOCAL" />
-      <updated>1692461877930</updated>
     </task>
     <task id="LOCAL-00024" summary="cleaned comments and added smoke machine">
       <option name="closed" value="true" />
@@ -498,7 +486,23 @@
       <option name="project" value="LOCAL" />
       <updated>1712357555690</updated>
     </task>
-    <option name="localTasksCounter" value="71" />
+    <task id="LOCAL-00071" summary="bugfix: smoke erratic behaviour">
+      <option name="closed" value="true" />
+      <created>1712357621835</created>
+      <option name="number" value="00071" />
+      <option name="presentableId" value="LOCAL-00071" />
+      <option name="project" value="LOCAL" />
+      <updated>1712357621835</updated>
+    </task>
+    <task id="LOCAL-00072" summary="added threading to led function: color_flow">
+      <option name="closed" value="true" />
+      <created>1712357970764</created>
+      <option name="number" value="00072" />
+      <option name="presentableId" value="LOCAL-00072" />
+      <option name="project" value="LOCAL" />
+      <updated>1712357970764</updated>
+    </task>
+    <option name="localTasksCounter" value="73" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -513,7 +517,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color" />
     <MESSAGE value="bugfix: hdmi didn't take custom colors" />
     <MESSAGE value="renamed theater chase to star chase" />
     <MESSAGE value="minor performance upgrades" />
@@ -538,6 +541,7 @@
     <MESSAGE value="optimized led refresh" />
     <MESSAGE value="bugfix: laser chase was longer then led chase" />
     <MESSAGE value="bugfix: smoke erratic behaviour" />
-    <option name="LAST_COMMIT_MESSAGE" value="bugfix: smoke erratic behaviour" />
+    <MESSAGE value="added threading to led function: color_flow" />
+    <option name="LAST_COMMIT_MESSAGE" value="added threading to led function: color_flow" />
   </component>
 </project>
