@@ -76,88 +76,6 @@ def star_chase(c, wait_ms):
     set_eurolite_t36(5, 0, 0, 0, 255, 0)
 
 
-# Define function to visualize music on LED strip
-@led_in_thread
-def led_music_visualizer_old(audio_input):
-    recent_audio_inputs.append(audio_input)
-    mean_vol = safe_mean(recent_audio_inputs)
-    if mean_vol > 0:
-        to_mean_factor = 1 / mean_vol
-    else:
-        to_mean_factor = 1
-
-    # Convert audio input to an integer in the range 0 to int(strip.numPixels() / 2) / 2
-    num_leds = int(to_mean_factor * audio_input * (int(strip.numPixels() / 2) // 2))
-    num_leds = exponential_decrease(num_leds, 128)
-
-    mid_point = int(strip.numPixels() / 2) // 2
-
-    # Cap mean_vol at 1
-    mean_vol = min(mean_vol, 1)
-
-    # Visualize the audio energy on the LED strip
-    for i in range(int(strip.numPixels() / 2)):
-        # Calculate the distance from the mid point in range [0, 1]
-        distance_from_mid = abs(i - mid_point) / (int(strip.numPixels() / 2) / 2)
-        distance_from_mid = min(distance_from_mid, 1)  # Ensure distance_from_mid is not more than 1
-        # Exponential increase in red color as we move away from the center
-        red = int((distance_from_mid ** 2) * mean_vol * 255)
-        red = min(red, 255)  # Ensure red is not more than 255
-        # Exponential decrease in blue color as we move away from the center
-        blue = int(((1 - distance_from_mid) ** 2) * mean_vol * 255)
-        blue = min(blue, 255)  # Ensure blue is not more than 255
-        # print(f"mean_vol: {mean_vol}, distance_from_mid: {distance_from_mid}, red: {red}, blue: {blue}")
-
-        if mid_point - num_leds <= i <= mid_point + num_leds:
-            strip.setPixelColor(i, Color(red, 0, blue))
-        else:
-            # Turn off the rest of the LEDs
-            strip.setPixelColor(i, Color(0, 0, 0))
-
-    # Update the strip
-    strip.show()
-
-
-@led_in_thread
-def led_music_visualizer_old(audio_input, first_color="blue", second_color="red"):
-    recent_audio_inputs.append(audio_input)
-    mean_vol = safe_mean(recent_audio_inputs)
-    if mean_vol > 0:
-        to_mean_factor = 1 / mean_vol
-    else:
-        to_mean_factor = 1
-
-    first_rgb = get_rgb_from_color_name(first_color)
-    second_rgb = get_rgb_from_color_name(second_color)
-
-    num_leds = int(to_mean_factor * audio_input * (int(strip.numPixels() / 2) // 2))
-    num_leds = exponential_decrease(num_leds, 128)
-
-    mid_point = int(strip.numPixels() / 2) // 2
-    mean_vol = min(mean_vol, 1)
-
-    for i in range(int(strip.numPixels() / 2)):
-        distance_from_mid = abs(i - mid_point) / (int(strip.numPixels() / 2) / 2)
-        distance_from_mid = min(distance_from_mid, 1)
-
-        # Calculate the new RGB values based on the ratios
-        r = int((second_rgb[0] * (distance_from_mid ** 2) + first_rgb[0] * ((1 - distance_from_mid) ** 2)) * mean_vol)
-        g = int((second_rgb[1] * (distance_from_mid ** 2) + first_rgb[1] * ((1 - distance_from_mid) ** 2)) * mean_vol)
-        b = int((second_rgb[2] * (distance_from_mid ** 2) + first_rgb[2] * ((1 - distance_from_mid) ** 2)) * mean_vol)
-
-        # Clip values to 0-4095 range to prevent overflows
-        r = min(max(r, 0), 4095)
-        g = min(max(g, 0), 4095)
-        b = min(max(b, 0), 4095)
-
-        if mid_point - num_leds <= i <= mid_point + num_leds:
-            strip.setPixelColor(i, Color(r, g, b))
-        else:
-            strip.setPixelColor(i, Color(0, 0, 0))
-
-    strip.show()
-
-
 def color_wipe(color, wait_ms=50):
     """Füllen Sie den Streifen nacheinander mit einer Farbe aus. Wartezeit in ms zwischen den Pixeln."""
     for i in range(int(strip.numPixels())):
@@ -378,15 +296,3 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
         # Wenn keine der Bedingungen zutrifft, führe eine Standardaktualisierung durch
         strip.show()
 
-
-"""
-# test code
-
-while True:
-    led_music_visualizer_new(1)
-    time.sleep(0.1)
-    led_music_visualizer_new(0.1)
-    time.sleep(0.1)
-    led_music_visualizer_new(0.3)
-    time.sleep(0.1)
-"""
