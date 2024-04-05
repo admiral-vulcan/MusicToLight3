@@ -280,16 +280,16 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
     active_leds = sum(1 for color in led_array if color != (0, 0, 0))
 
     # Bedingungen für das Aktualisieren der Anzeige basierend auf der Anzahl der Datenpunkte (data)
-    if active_leds < 10:
+    if active_leds < 15:
         # Wenn die Datenmenge sehr klein ist, aktualisiere bei jedem Durchgang
         strip.show()
         last_show_time = current_time
-    elif active_leds < 40 and (active_leds - 1) % 2 == 0:
+    elif active_leds < 30 and (active_leds - 1) % 2 == 0:
         # Für eine mäßige Datenmenge und wenn der letzte Datenpunkt auf eine gerade Zahl fällt, aktualisiere die Anzeige
         strip.show()
         last_show_time = current_time
-    elif (active_leds - 1) % 10 == 0:
-        # Für größere Datenmengen, aktualisiere die Anzeige weniger häufig, hier nur wenn der letzte Datenpunkt ein Vielfaches von 10 ist
+    elif (active_leds - 1) % 5 == 0:
+        # Für größere Datenmengen aktualisiere nur, wenn der letzte Datenpunkt ein Vielfaches von 5 ist
         strip.show()
         last_show_time = current_time
     else:

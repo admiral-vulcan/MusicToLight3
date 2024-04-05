@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="set new dmx address">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="deleted deprecated code">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
       <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,38 +108,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00014" summary="added thread killer for strobe">
-      <option name="closed" value="true" />
-      <created>1691881862252</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1691881862252</updated>
-    </task>
-    <task id="LOCAL-00015" summary="added strobe">
-      <option name="closed" value="true" />
-      <created>1691881892563</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1691881892563</updated>
-    </task>
-    <task id="LOCAL-00016" summary="deleted error in thread killer">
-      <option name="closed" value="true" />
-      <created>1691882014372</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1691882014372</updated>
-    </task>
-    <task id="LOCAL-00017" summary="changed borders">
-      <option name="closed" value="true" />
-      <created>1691882044043</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1691882044043</updated>
     </task>
     <task id="LOCAL-00018" summary="added more dynamic to hdmi numbers">
       <option name="closed" value="true" />
@@ -502,7 +469,39 @@
       <option name="project" value="LOCAL" />
       <updated>1712339322964</updated>
     </task>
-    <option name="localTasksCounter" value="63" />
+    <task id="LOCAL-00063" summary="set new dmx address">
+      <option name="closed" value="true" />
+      <created>1712345438657</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1712345438657</updated>
+    </task>
+    <task id="LOCAL-00064" summary="set new dmx address">
+      <option name="closed" value="true" />
+      <created>1712345449000</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1712345449000</updated>
+    </task>
+    <task id="LOCAL-00065" summary="added smooth led dimming">
+      <option name="closed" value="true" />
+      <created>1712345497539</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1712345497539</updated>
+    </task>
+    <task id="LOCAL-00066" summary="deleted deprecated code">
+      <option name="closed" value="true" />
+      <created>1712345600013</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1712345600013</updated>
+    </task>
+    <option name="localTasksCounter" value="67" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -517,8 +516,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="sped up scanners, bugfix: lamp sometimes didn't turn off at strobe" />
-    <MESSAGE value="updated python interpreter" />
     <MESSAGE value="deleted runtime counters" />
     <MESSAGE value="added feature: settable colors" />
     <MESSAGE value="added feature: dominant harmony based on Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003" />
@@ -542,6 +539,8 @@
     <MESSAGE value="bugfix: smoker wouldn't turn on automatically" />
     <MESSAGE value="made leds brighter and faster" />
     <MESSAGE value="set new dmx address" />
-    <option name="LAST_COMMIT_MESSAGE" value="set new dmx address" />
+    <MESSAGE value="added smooth led dimming" />
+    <MESSAGE value="deleted deprecated code" />
+    <option name="LAST_COMMIT_MESSAGE" value="deleted deprecated code" />
   </component>
 </project>
