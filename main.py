@@ -40,7 +40,7 @@ import argparse
 # from vid import *
 
 UDP_LED_COUNT = 45
-UDP_IP_ADDRESS = "192.168.1.111"
+UDP_IP_ADDRESS = "192.168.1.152"  # musictolight-led1
 UDP_PORT = 4210
 
 parser = argparse.ArgumentParser(description='MusicToLight3')
