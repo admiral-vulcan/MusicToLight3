@@ -24,7 +24,7 @@ dmx_values = ['0'] * 512
 
 
 def send_dmx_values():
-    session.post('http://musictolight-dmx/:9090/set_dmx', data={'u': '0', 'd': ','.join(dmx_values)})
+    session.post('http://musictolight-dmx:9090/set_dmx', data={'u': '0', 'd': ','.join(dmx_values)})
 
 
 def set_dmx_value(address, value):
