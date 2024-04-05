@@ -44,6 +44,7 @@ global_led_state = [(0, 0, 0) for _ in range(strip.numPixels())]
 recent_audio_inputs = deque(maxlen=int(3))  # adjust as needed, originally 20
 
 
+@led_in_thread
 def star_chase(c, wait_ms):
     NUMCHASE = 30
     NUMPIX = int(strip.numPixels() / 2)
@@ -74,17 +75,6 @@ def star_chase(c, wait_ms):
             strip.setPixelColor(i, 0)  # Schalte alle LEDs aus
         strip.show()  # Sende die Farbänderungen an den Streifen
     set_eurolite_t36(5, 0, 0, 0, 255, 0)
-
-
-def color_wipe(color, wait_ms=50):
-    """Füllen Sie den Streifen nacheinander mit einer Farbe aus. Wartezeit in ms zwischen den Pixeln."""
-    for i in range(int(strip.numPixels())):
-        strip.setPixelColor(i, color)
-        if wait_ms != 0:
-            strip.show()
-            time.sleep(wait_ms / 1000.0)
-    if wait_ms == 0:
-        strip.show()
 
 
 def set_all_pixels_color(red, green, blue):
@@ -141,6 +131,7 @@ def smooth_transition(current, target, step=5):
     return r, g, b
 
 
+@led_in_thread
 def color_flow(pos, audio_input, reduce=2, first_color="blue", second_color="red"):
     """Draw a color flow that moves across display."""
     global current_colors
@@ -216,10 +207,6 @@ def led_strobe_effect(duration_seconds, frequency_ms):
         time.sleep(frequency_ms / 1000.0)
 
 
-# Rot einfärben
-# color_wipe(Color(255, 0, 0))
-
-# star_chase(Color(127, 127, 127), 50)
 def lin_lerp(a, b, t):
     """Linear interpolation between a and b"""
     return int(a * (1 - t) + b * t)
