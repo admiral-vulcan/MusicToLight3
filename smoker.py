@@ -58,10 +58,10 @@ def smoke_on():
         rfdevice.tx_code(code_on, 1, pulse_length, 24)
         rfdevice.tx_code(code_on, 1, pulse_length, 24)
         rfdevice.tx_code(code_on, 1, pulse_length, 24)
+        print("smoke on")
+        sleep(0.37)
         with smoke_lock:
             smoke_status = "on"
-            print("smoke on")
-            sleep(1)
 
 
 @run_in_thread
@@ -74,10 +74,10 @@ def smoke_off():
         rfdevice.tx_code(code_off, 1, pulse_length, 24)
         rfdevice.tx_code(code_off, 1, pulse_length, 24)
         rfdevice.tx_code(code_off, 1, pulse_length, 24)
+        print("smoke off")
+        sleep(0.37)
         with smoke_lock:
             smoke_status = "off"
-            print("smoke off")
-            sleep(1)
 
 
 def cleanup_smoke():

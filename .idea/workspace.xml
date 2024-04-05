@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: laser chase was longer then led chase">
-      <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
-      <change beforePath="M:/smoker.py" beforeDir="false" afterPath="M:/smoker.py" afterDir="false" />
-    </list>
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: smoke erratic behaviour" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -109,14 +105,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00020" summary="added pygame to README.md">
-      <option name="closed" value="true" />
-      <created>1691883597379</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1691883597379</updated>
     </task>
     <task id="LOCAL-00021" summary="changed stuff">
       <option name="closed" value="true" />
@@ -502,7 +490,15 @@
       <option name="project" value="LOCAL" />
       <updated>1712349701018</updated>
     </task>
-    <option name="localTasksCounter" value="69" />
+    <task id="LOCAL-00069" summary="bugfix: smoke erratic behaviour">
+      <option name="closed" value="true" />
+      <created>1712354266374</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1712354266374</updated>
+    </task>
+    <option name="localTasksCounter" value="70" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -517,7 +513,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added feature: dominant harmony based on Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003" />
     <MESSAGE value="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color" />
     <MESSAGE value="bugfix: hdmi didn't take custom colors" />
     <MESSAGE value="renamed theater chase to star chase" />
@@ -542,6 +537,7 @@
     <MESSAGE value="deleted deprecated code" />
     <MESSAGE value="optimized led refresh" />
     <MESSAGE value="bugfix: laser chase was longer then led chase" />
-    <option name="LAST_COMMIT_MESSAGE" value="bugfix: laser chase was longer then led chase" />
+    <MESSAGE value="bugfix: smoke erratic behaviour" />
+    <option name="LAST_COMMIT_MESSAGE" value="bugfix: smoke erratic behaviour" />
   </component>
 </project>
