@@ -31,7 +31,6 @@ from scanner import *
 from laser_show import *
 from led_strip import *
 from hdmi import *
-from smoker import *
 import os
 import sys
 from com_udp import *
@@ -82,9 +81,6 @@ secondary_color = tuple(int(val * factor) for val in average_color)
 redis_client.set('st_prim_color', json.dumps(st_prim_color))
 redis_client.set('nd_prim_color', json.dumps(nd_prim_color))
 redis_client.set('secondary_color', json.dumps(secondary_color))
-
-# init smoke
-init_smoke()
 
 
 def redis_get_colors():
@@ -276,10 +272,10 @@ try:
         # Handle smoke mode
         if smoke_mode == 'on':
             set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
-            smoke_on()
+            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_on")
             # set_eurolite_t36(5, 0, 0, 0, 255, 0)
         else:
-            smoke_off()
+            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_off")
 
         # Handle strobe mode when explicitly set to "on"
         if strobe_mode == 'on':
@@ -524,7 +520,7 @@ try:
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
                         if smoke_mode == 'auto':
-                            smoke_on()
+                            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_on")
                         # hdmi_outro_animation()
                         laser_star_chase()
                         star_chase(Color(127, 127, 127), 52)
@@ -535,7 +531,7 @@ try:
                         scan_opened(1)
                         scan_opened(2)
 
-                    smoke_off()
+                    send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_off")
                     done_chase.append(1)
             else:
                 input_history.append(0.0)

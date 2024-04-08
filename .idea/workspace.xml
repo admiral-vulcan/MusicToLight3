@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added threading to led function: color_flow">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bug searching: still smoke erratic behaviour">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
       <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
       <change beforePath="M:/smoker.py" beforeDir="false" afterPath="M:/smoker.py" afterDir="false" />
@@ -109,14 +109,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00024" summary="cleaned comments and added smoke machine">
-      <option name="closed" value="true" />
-      <created>1692461897470</created>
-      <option name="number" value="00024" />
-      <option name="presentableId" value="LOCAL-00024" />
-      <option name="project" value="LOCAL" />
-      <updated>1692461897470</updated>
     </task>
     <task id="LOCAL-00025" summary="added string - int - conversion">
       <option name="closed" value="true" />
@@ -502,7 +494,15 @@
       <option name="project" value="LOCAL" />
       <updated>1712357970764</updated>
     </task>
-    <option name="localTasksCounter" value="73" />
+    <task id="LOCAL-00073" summary="bug searching: still smoke erratic behaviour">
+      <option name="closed" value="true" />
+      <created>1712359010324</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
+      <option name="project" value="LOCAL" />
+      <updated>1712359010324</updated>
+    </task>
+    <option name="localTasksCounter" value="74" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -517,7 +517,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="bugfix: hdmi didn't take custom colors" />
     <MESSAGE value="renamed theater chase to star chase" />
     <MESSAGE value="minor performance upgrades" />
     <MESSAGE value="added dark mood if not beat and not drop for 500 loops" />
@@ -542,6 +541,7 @@
     <MESSAGE value="bugfix: laser chase was longer then led chase" />
     <MESSAGE value="bugfix: smoke erratic behaviour" />
     <MESSAGE value="added threading to led function: color_flow" />
-    <option name="LAST_COMMIT_MESSAGE" value="added threading to led function: color_flow" />
+    <MESSAGE value="bug searching: still smoke erratic behaviour" />
+    <option name="LAST_COMMIT_MESSAGE" value="bug searching: still smoke erratic behaviour" />
   </component>
 </project>
