@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bug searching: still smoke erratic behaviour">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: now sending smoker signal via UDP">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
-      <change beforePath="M:/smoker.py" beforeDir="false" afterPath="M:/smoker.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,14 +107,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00025" summary="added string - int - conversion">
-      <option name="closed" value="true" />
-      <created>1692463931229</created>
-      <option name="number" value="00025" />
-      <option name="presentableId" value="LOCAL-00025" />
-      <option name="project" value="LOCAL" />
-      <updated>1692463931229</updated>
     </task>
     <task id="LOCAL-00026" summary="added UDP communication to Arduino-led-strip">
       <option name="closed" value="true" />
@@ -502,7 +492,15 @@
       <option name="project" value="LOCAL" />
       <updated>1712359010324</updated>
     </task>
-    <option name="localTasksCounter" value="74" />
+    <task id="LOCAL-00074" summary="bugfix: now sending smoker signal via UDP">
+      <option name="closed" value="true" />
+      <created>1712602064501</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
+      <option name="project" value="LOCAL" />
+      <updated>1712602064501</updated>
+    </task>
+    <option name="localTasksCounter" value="75" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -517,7 +515,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="renamed theater chase to star chase" />
     <MESSAGE value="minor performance upgrades" />
     <MESSAGE value="added dark mood if not beat and not drop for 500 loops" />
     <MESSAGE value="bugfix: hdmi colors mixed up" />
@@ -542,6 +539,7 @@
     <MESSAGE value="bugfix: smoke erratic behaviour" />
     <MESSAGE value="added threading to led function: color_flow" />
     <MESSAGE value="bug searching: still smoke erratic behaviour" />
-    <option name="LAST_COMMIT_MESSAGE" value="bug searching: still smoke erratic behaviour" />
+    <MESSAGE value="bugfix: now sending smoker signal via UDP" />
+    <option name="LAST_COMMIT_MESSAGE" value="bugfix: now sending smoker signal via UDP" />
   </component>
 </project>

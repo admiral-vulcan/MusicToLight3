@@ -556,7 +556,6 @@ except KeyboardInterrupt:
     set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     hdmi_video_stop()
     # Cleanup functions to ensure a safe shutdown
-    cleanup_smoke()
     hdmi_outro_animation()
     print("\nEnding program...")
     set_all_pixels_color(0, 0, 0)  # Clear any existing colors
