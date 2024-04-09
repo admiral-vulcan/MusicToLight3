@@ -44,7 +44,6 @@ global_led_state = [(0, 0, 0) for _ in range(strip.numPixels())]
 recent_audio_inputs = deque(maxlen=int(3))  # adjust as needed, originally 20
 
 
-@led_in_thread
 def star_chase(c, wait_ms):
     NUMCHASE = 30
     NUMPIX = int(strip.numPixels() / 2)

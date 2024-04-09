@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import RPi.GPIO as GPIO
+import pyaudio
 import numpy as np
 import math
 import threading
@@ -30,6 +32,27 @@ current_led_thread = None
 
 # Global variable to store the timestamp of the last run of the HDMI thread
 last_run_time = None
+
+# Set the GPIO mode to BCM and disable warnings
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+
+# Configure GPIO 23 as an output (For Fog Machine)
+GPIO.setup(23, GPIO.OUT)
+
+# Filter configurations
+thx_band = (1, 120)
+low_band = (1, 300)
+mid_band = (300, 2000)
+high_band = (2000, 16000)
+
+# PyAudio settings
+buffer_size = 1024
+hop_size = buffer_size // 2
+pyaudio_format = pyaudio.paFloat32
+n_channels = 1
+sample_rate = 44100
+device_index = 0
 
 
 def calc_address(num):

@@ -21,6 +21,9 @@ import numpy as np
 import aubio
 from scipy.signal import ellip, sosfilt, sos2zpk, lfilter_zi
 from helpers import *
+from pyloudnorm import Meter
+from scipy.fft import fft
+import sys
 
 os.environ['ALSA_LOG_LEVEL'] = 'error'
 
@@ -287,3 +290,72 @@ def get_pitch(audiobuffer, p_detection):
     pitch = p_detection(samples)[0]
 
     return pitch
+
+
+# Initialize LUFS-loudness recognition NOT USED YET ;)
+# meter = Meter(sample_rate)
+
+# Initialize pitch detection
+pDetection = aubio.pitch("default", buffer_size, hop_size, sample_rate)
+pDetection.set_unit("Hz")
+pDetection.set_tolerance(0.8)
+
+# Initialize Aubio beat detection
+aubio_onset = aubio.onset("complex", buffer_size, hop_size, sample_rate)
+
+# Design the audio filters
+thx_sos, thx_zi = design_filter(thx_band[0], thx_band[1], sample_rate)
+low_sos, low_zi = design_filter(low_band[0], low_band[1], sample_rate)
+mid_sos, mid_zi = design_filter(mid_band[0], mid_band[1], sample_rate)
+high_sos, high_zi = design_filter(high_band[0], high_band[1], sample_rate)
+
+# Initialize PyAudio
+p = pyaudio.PyAudio()
+
+# Retrieve device index based on device name
+desired_device_index = None
+for i in range(p.get_device_count()):
+    info = p.get_device_info_by_index(i)
+    if 'ICUSBAUDIO7D: USB Audio' in info["name"]:
+        desired_device_index = i
+        break
+
+# Use the desired device to open audio stream
+if desired_device_index is not None:
+    line_in = p.open(format=pyaudio_format,
+                     channels=n_channels,
+                     rate=sample_rate,
+                     input=True,
+                     input_device_index=desired_device_index,
+                     frames_per_buffer=buffer_size)
+else:
+    print("No suitable audio device found!")
+    exit()
+
+# Define the number of samples for average calculations
+average_samples = int(5 * sample_rate / buffer_size)
+average_heavy_samples = int(sample_rate / buffer_size)
+
+# Initialize data collections
+volumes = collections.deque(maxlen=average_samples)
+heavyvols = collections.deque(maxlen=20)
+max_values = collections.deque(maxlen=20)
+heaviness_values = collections.deque(maxlen=average_samples)
+
+low_volumes = collections.deque(maxlen=average_samples)
+mid_volumes = collections.deque(maxlen=average_samples)
+high_volumes = collections.deque(maxlen=average_samples)
+
+last_counts = collections.deque(maxlen=5)
+previous_count_over = 0
+heavy_counter = 0
+delta_values = collections.deque(maxlen=20)
+
+dominant_frequencies = collections.deque(maxlen=average_samples)
+heaviness_history = collections.deque(maxlen=average_samples)
+drop_history = collections.deque(maxlen=512)
+input_history = collections.deque(maxlen=average_samples)
+pitches = collections.deque(maxlen=average_samples)
+
+done_chase = collections.deque(maxlen=int(250))
+

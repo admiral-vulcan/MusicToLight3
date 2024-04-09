@@ -5,6 +5,11 @@ import time
 last_sent_time = {}
 
 
+UDP_LED_COUNT = 45
+UDP_IP_ADDRESS = "192.168.1.152"  # musictolight-led1
+UDP_PORT = 4210
+
+
 def send_udp_message(ip_address, port, message):
     """Sends a UDP message to the given IP address and port."""
     global last_sent_time

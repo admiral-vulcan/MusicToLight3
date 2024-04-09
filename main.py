@@ -12,183 +12,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import pyaudio
-import collections
 import time
 import math
-import numpy as np
-from pyloudnorm import Meter
-from scipy.fft import fft
-import aubio
 
-import RPi.GPIO as GPIO
-import redis
-import json
-from scipy.signal import ellip, sosfilt, sos2zpk, lfilter_zi
 from aud_proc import *
 from eurolite_t36 import *
 from scanner import *
 from laser_show import *
 from led_strip import *
 from hdmi import *
+from helpers import *
 import os
 import sys
 from com_udp import *
+from gui import *
+
 import argparse
 
-# from vid import *
-
-UDP_LED_COUNT = 45
-UDP_IP_ADDRESS = "192.168.1.152"  # musictolight-led1
-UDP_PORT = 4210
-
+# Parse arguments from console
 parser = argparse.ArgumentParser(description='MusicToLight3')
 parser.add_argument('--fastboot', action='store_true', help='Activates Fastboot-Mode. Deactivates calibrating.')
 args = parser.parse_args()
-
-# Setting up communication with web server via Redis
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
-redis_client.set('strobe_mode', 'auto')
-redis_client.set('smoke_mode', 'auto')
-redis_client.set('panic_mode', 'off')
-redis_client.set('play_videos_mode', 'auto')
-
-# Set master colors (TODO should later be changeable via web interface)
-st_color_name = "blue"
-nd_color_name = "red"
-st_prim_color = get_rgb_from_color_name(st_color_name)
-nd_prim_color = get_rgb_from_color_name(nd_color_name)
-
-# Translate to RGB-Bytes
-st_r, st_g, st_b = st_prim_color
-nd_r, nd_g, nd_b = nd_prim_color
-
-# Calculate the average of the two colors
-average_color = tuple((a + b) // 2 for a, b in zip(st_prim_color, nd_prim_color))
-
-# Find the highest value in the average
-max_val = max(average_color)
-
-# Calculate the factor to scale the highest value to 255
-if max_val != 0:  # Prevent division by zero
-    factor = 255 / max_val
-else:
-    factor = 0
-
-# Multiply each color value in the average by the factor
-secondary_color = tuple(int(val * factor) for val in average_color)
-
-redis_client.set('st_prim_color', json.dumps(st_prim_color))
-redis_client.set('nd_prim_color', json.dumps(nd_prim_color))
-redis_client.set('secondary_color', json.dumps(secondary_color))
-
-
-def redis_get_colors():
-    """
-    Retrieve the color values from Redis and assign them to the global variables.
-    """
-    global st_prim_color
-    global nd_prim_color
-    global secondary_color
-    global st_r, st_g, st_b
-    global nd_r, nd_g, nd_b
-
-    st_prim_color = tuple(json.loads(redis_client.get('st_prim_color')))
-    nd_prim_color = tuple(json.loads(redis_client.get('nd_prim_color')))
-    secondary_color = tuple(json.loads(redis_client.get('secondary_color')))
-
-    # Translate to RGB-Bytes
-    st_r, st_g, st_b = st_prim_color
-    nd_r, nd_g, nd_b = nd_prim_color
-
-
-# Set the GPIO mode to BCM and disable warnings
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
-
-# Configure GPIO 23 as an output (For Fog Machine)
-GPIO.setup(23, GPIO.OUT)
-
-# Filter configurations
-thx_band = (1, 120)
-low_band = (1, 300)
-mid_band = (300, 2000)
-high_band = (2000, 16000)
-
-# PyAudio settings
-buffer_size = 1024
-hop_size = buffer_size // 2
-pyaudio_format = pyaudio.paFloat32
-n_channels = 1
-sample_rate = 44100
-device_index = 0
-
-# Initialize LUFS-loudness recognition
-meter = Meter(sample_rate)
-
-# Initialize pitch detection
-pDetection = aubio.pitch("default", buffer_size, hop_size, sample_rate)
-pDetection.set_unit("Hz")
-pDetection.set_tolerance(0.8)
-
-# Initialize Aubio beat detection
-aubio_onset = aubio.onset("complex", buffer_size, hop_size, sample_rate)
-
-# Design the audio filters
-thx_sos, thx_zi = design_filter(thx_band[0], thx_band[1], sample_rate)
-low_sos, low_zi = design_filter(low_band[0], low_band[1], sample_rate)
-mid_sos, mid_zi = design_filter(mid_band[0], mid_band[1], sample_rate)
-high_sos, high_zi = design_filter(high_band[0], high_band[1], sample_rate)
-
-# Initialize PyAudio
-p = pyaudio.PyAudio()
-
-# Retrieve device index based on device name
-desired_device_index = None
-for i in range(p.get_device_count()):
-    info = p.get_device_info_by_index(i)
-    if 'ICUSBAUDIO7D: USB Audio' in info["name"]:
-        desired_device_index = i
-        break
-
-# Use the desired device to open audio stream
-if desired_device_index is not None:
-    line_in = p.open(format=pyaudio_format,
-                     channels=n_channels,
-                     rate=sample_rate,
-                     input=True,
-                     input_device_index=desired_device_index,
-                     frames_per_buffer=buffer_size)
-else:
-    print("No suitable audio device found!")
-    exit()
-
-# Define the number of samples for average calculations
-average_samples = int(5 * sample_rate / buffer_size)
-average_heavy_samples = int(sample_rate / buffer_size)
-
-# Initialize data collections
-volumes = collections.deque(maxlen=average_samples)
-heavyvols = collections.deque(maxlen=20)
-max_values = collections.deque(maxlen=20)
-heaviness_values = collections.deque(maxlen=average_samples)
-
-low_volumes = collections.deque(maxlen=average_samples)
-mid_volumes = collections.deque(maxlen=average_samples)
-high_volumes = collections.deque(maxlen=average_samples)
-
-last_counts = collections.deque(maxlen=5)
-previous_count_over = 0
-heavy_counter = 0
-delta_values = collections.deque(maxlen=20)
-
-dominant_frequencies = collections.deque(maxlen=average_samples)
-heaviness_history = collections.deque(maxlen=average_samples)
-drop_history = collections.deque(maxlen=512)
-input_history = collections.deque(maxlen=average_samples)
-pitches = collections.deque(maxlen=average_samples)
-
-done_chase = deque(maxlen=int(250))
 
 runtime_bit = 0
 runtime_byte = 0
@@ -212,6 +56,7 @@ print("        Initializing devices.")
 print("")
 
 # initialise devices
+set_all_pixels_color(0, 0, 0)
 init_hdmi()
 hdmi_draw_centered_text(
     "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\n"
@@ -227,24 +72,24 @@ else:
     scan_reset(1)
     scan_reset(2)
     hdmi_intro_animation()
-# scan_in_thread(scan_reset, (1,))
-# scan_in_thread(scan_reset, (2,))
-# set_eurolite_t36(5, 0, 0, 0, 0, 0)
-# set_eurolite_t36(5, 0, 0, 0, 255, 0)
-set_all_pixels_color(0, 0, 0)
+
 print("        Listening... Press Ctrl+C to stop.")
 print("")
 hdmi_draw_black()
 
+global strobe_mode
+global smoke_mode
+global panic_mode
+global play_videos
 # Start main loop
 try:
     while True:
-        # Check for user commands regarding colors, strobe and smoke effects via Redis
-        redis_get_colors()
-        strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
-        smoke_mode = (redis_client.get('smoke_mode') or b'').decode('utf-8')
-        panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
-        play_videos = (redis_client.get('play_videos_mode') or b'').decode('utf-8')
+        commands = get_gui_commands()
+
+        strobe_mode = commands['strobe_mode']
+        smoke_mode = commands['smoke_mode']
+        panic_mode = commands['panic_mode']
+        play_videos = commands['play_videos']
 
         # Handle panic mode
         if panic_mode == 'on':
@@ -443,7 +288,6 @@ try:
             laser_fast_dance(x, y, nd_color_name)
             hdmi_video_stop()
             no_drop_count = 0
-            # led_music_visualizer_old(signal_max, st_color_name, nd_color_name)
             led_music_visualizer(low_relative, st_color_name, nd_color_name)
             scan_opened(1)
             scan_opened(2)
