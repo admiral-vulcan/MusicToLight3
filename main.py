@@ -34,6 +34,8 @@ parser = argparse.ArgumentParser(description='MusicToLight3')
 parser.add_argument('--fastboot', action='store_true', help='Activates Fastboot-Mode. Deactivates calibrating.')
 args = parser.parse_args()
 
+use_hdmi = False
+
 runtime_bit = 0
 runtime_byte = 0
 runtime_kb = 0
@@ -57,13 +59,16 @@ print("")
 
 # initialise devices
 set_all_pixels_color(0, 0, 0)
-init_hdmi()
-hdmi_draw_centered_text(
-    "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\n"
-    "This program is licensed under the terms of the \n"
-    "GNU General Public License version 3.\n"
-    "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\n"
-    "Initialising devices...")
+if use_hdmi:
+    init_hdmi()
+
+if use_hdmi:
+    hdmi_draw_centered_text(
+        "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\n"
+        "This program is licensed under the terms of the \n"
+        "GNU General Public License version 3.\n"
+        "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\n"
+        "Initialising devices...")
 
 if args.fastboot:
     print('        Fastboot-Mode on. Devices are not calibrating.')
@@ -71,11 +76,14 @@ if args.fastboot:
 else:
     scan_reset(1)
     scan_reset(2)
-    hdmi_intro_animation()
+
+    if use_hdmi:
+        hdmi_intro_animation()
 
 print("        Listening... Press Ctrl+C to stop.")
 print("")
-hdmi_draw_black()
+if use_hdmi:
+    hdmi_draw_black()
 
 global strobe_mode
 global smoke_mode
@@ -97,7 +105,8 @@ try:
             set_all_pixels_color(255, 255, 255)
             set_eurolite_t36(5, 255, 255, 255, 255, 0)
             # Blacken HDMI display
-            hdmi_draw_black()
+            if use_hdmi:
+                hdmi_draw_black()
             # Turn off other lights
             scan_closed(1)
             scan_closed(2)
@@ -110,7 +119,8 @@ try:
             set_all_pixels_color(0, 0, 0)
             set_eurolite_t36(5, 0, 0, 0, 255, 0)
             send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
-            hdmi_intro_animation()
+            if use_hdmi:
+                hdmi_intro_animation()
             scan_opened(1)
             scan_opened(2)
 
@@ -125,7 +135,8 @@ try:
         # Handle strobe mode when explicitly set to "on"
         if strobe_mode == 'on':
             # Stop any ongoing HDMI display
-            kill_current_hdmi()
+            if use_hdmi:
+                kill_current_hdmi()
             # Prepare for strobing by turning off other lights
             scan_closed(1)
             scan_closed(2)
@@ -134,12 +145,14 @@ try:
             if smoke_mode != 'on':
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
             # Unnecessary line as turning off lights is handled above, consider removal
-            hdmi_draw_black()  # Consider removal
+            if use_hdmi:
+                hdmi_draw_black()  # Consider removal
             while strobe_mode == 'on':
                 led_strobe_effect(1, 75)
                 strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
             # Restore default display after strobing
-            hdmi_intro_animation()
+            if use_hdmi:
+                hdmi_intro_animation()
             scan_opened(1)
             scan_opened(2)
 
@@ -157,67 +170,40 @@ try:
         # Uncomment below for debugging runtime counters
         # print(runtime_mb, runtime_kb, runtime_byte, runtime_bit)
 
-        # Read audio buffer
-        audiobuffer = line_in.read(int(buffer_size / 2), exception_on_overflow=False)
-        signal_input = np.frombuffer(audiobuffer, dtype=np.float32)
-        signal_max = np.max(signal_input)
-        # signal_mean = safe_mean(signal_input)
+        audio_buffer = process_audio_buffer(line_in, buffer_size, volumes, low_volumes, mid_volumes, high_volumes,
+                                            heavyvols, max_values, delta_values, last_counts, heaviness_values)
 
-        # Adjust signal gain if necessary (comment suggests it's not working properly)
-        signal, gain_factor = adjust_gain(volumes, signal_input)
+        signal = audio_buffer['signal']
+        thx_signal = audio_buffer['thx_signal']
+        low_signal = audio_buffer['low_signal']
+        mid_signal = audio_buffer['mid_signal']
+        high_signal = audio_buffer['high_signal']
+        low_mean = audio_buffer['low_mean']
+        mid_mean = audio_buffer['mid_mean']
+        high_mean = audio_buffer['high_mean']
+        signal_max = audio_buffer['signal_max']
+        relative_volume = audio_buffer['relative_volume']
+        low_relative = audio_buffer['low_relative']
+        energy = audio_buffer['energy']
+        relative_energy = audio_buffer['relative_energy']
+        heavy = audio_buffer['heavy']
+        heaviness = audio_buffer['heaviness']
 
-        # Compute and store current volume
-        current_volume = np.sqrt(safe_mean(signal ** 2))
-        volumes.append(current_volume)
+        volumes = audio_buffer['volumes']
+        low_volumes = audio_buffer['low_volumes']
+        mid_volumes = audio_buffer['mid_volumes']
+        high_volumes = audio_buffer['high_volumes']
+        heavyvols = audio_buffer['heavyvols']
+        max_values = audio_buffer['max_values']
+        delta_values = audio_buffer['delta_values']
+        last_counts = audio_buffer['last_counts']
+        heaviness_values = audio_buffer['heaviness_values']
+        heavy_counter = audio_buffer['heavy_counter']
 
-        # Compute the mean volume
-        mean_volume = safe_mean(np.array(volumes))
-
-        # Calculate the relative volume
-        relative_volume = 0 if mean_volume == 0 else current_volume / mean_volume
-
-        # Clip the value between 0 and 1
-        relative_volume = min(1, max(0, relative_volume))
-
-        # Filter and store values for low, mid, and high frequency signals
-        low_signal, low_zi = sosfilt(low_sos, signal, zi=low_zi)
-        low_volumes.append(np.sqrt(safe_mean(low_signal ** 2)))
-
-        mid_signal, mid_zi = sosfilt(mid_sos, signal, zi=mid_zi)
-        mid_volumes.append(np.sqrt(safe_mean(mid_signal ** 2)))
-
-        high_signal, high_zi = sosfilt(high_sos, signal, zi=high_zi)
-        high_volumes.append(np.sqrt(safe_mean(high_signal ** 2)))
-
-        # Compute average volumes for frequency bands
-        low_mean = compute_mean_volume(low_volumes)
-        mid_mean = compute_mean_volume(mid_volumes)
-        high_mean = compute_mean_volume(high_volumes)
-
-        if low_mean != 0:
-            low_relative = safe_mean(low_signal) / low_mean
-            low_relative = min(1, max(0, low_relative))
-        else:
-            low_relative = 0
-
-        # Energy calculations
-        energy = np.sum(signal ** 2)
-        relative_energy = energy / len(signal)
-
-        # THX signal filtering
-        thx_signal, zi = sosfilt(thx_sos, signal, zi=thx_zi)
-        thx_signal = thx_signal.astype(np.float32)
-
-        # Metrics related to "heaviness" of signal
-        heavyvols.append(np.max(thx_signal))
-        delta_value = np.max(thx_signal) - np.min(thx_signal)
-        max_values.append(np.max(thx_signal))
-        delta_values.append(delta_value)
-        count_over = sum(1 for value in max_values if value > 0.08)
-        last_counts.append(count_over)
-        heavy, heavy_counter = is_heavy(signal, delta_values, count_over, max_values, last_counts, heavy_counter)
-        heaviness = calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter)
-        heaviness_values.append(heaviness)
+        low_zi = audio_buffer['low_zi']
+        mid_zi = audio_buffer['mid_zi']
+        high_zi = audio_buffer['high_zi']
+        thx_zi = audio_buffer['thx_zi']
 
         """ New Psyco-Acoustic-Analysis """
         # LUFS-loudness-analysis
@@ -230,7 +216,7 @@ try:
         # weighted_fft_magnitude = apply_fletcher_munson_curve(fft_magnitude, fft_frequencies)
 
         # Find dominant harmony by Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003
-        """ shit happens here """
+        """ magic happens here """
         # dominant_harmony = find_dominant_harmony_in_timeframe(signal, sample_rate)
 
         # debug
@@ -246,20 +232,23 @@ try:
 
         # Beat detection
         is_beat = aubio_onset(thx_signal)
-        pitch = get_pitch(audiobuffer, pDetection)
-        pitches.append(pitch)
+        # pitch = get_pitch(audio_buffer, pDetection)
+        # pitches.append(pitch)
 
         # Check for auto-strobe conditions and execute strobe if criteria met
         if strobe_mode == 'auto' and heavy and 1 in list(done_chase)[-10:]:
             if smoke_mode != 'on':
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
             laser_off()
-            kill_current_hdmi()
+            if use_hdmi:
+                kill_current_hdmi()
             scan_closed(1)
             scan_closed(2)
-            hdmi_draw_black()
+            if use_hdmi:
+                hdmi_draw_black()
             led_strobe_effect(10, 75)
-            hdmi_intro_animation()
+            if use_hdmi:
+                hdmi_intro_animation()
             done_chase.clear()
 
         # Color transformations based on signal energy
@@ -286,7 +275,8 @@ try:
 
         if heavy:
             laser_fast_dance(x, y, nd_color_name)
-            hdmi_video_stop()
+            if use_hdmi:
+                hdmi_video_stop()
             no_drop_count = 0
             led_music_visualizer(low_relative, st_color_name, nd_color_name)
             scan_opened(1)
@@ -304,36 +294,38 @@ try:
                 heavy_counter -= 1
 
             # Generate visualization matrix based on signal
-            hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
-            transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
+            if use_hdmi:
+                hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
+                transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
 
-            # Update HDMI display with computed matrix
-            hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
+                # Update HDMI display with computed matrix
+                hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
 
         else:
             scan_go_home(1)
             scan_go_home(2)
             laser_slow_dance()
-            if play_videos == "auto":
-                video_path = "/musictolight/vids/"
-                # hdmi_video_start()
-                hdmi_play_video(video_path)
-                if not is_video_playing():
+            if use_hdmi:
+                if play_videos == "auto":
+                    video_path = "/musictolight/vids/"
+                    # hdmi_video_start()
+                    hdmi_play_video(video_path)
+                    if not is_video_playing():
+                        # Generate visualization matrix based on signal
+                        hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
+                        transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
+
+                        # Update HDMI display with computed matrix
+                        hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
+
+                else:
+                    hdmi_video_stop()
                     # Generate visualization matrix based on signal
                     hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
                     transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
 
                     # Update HDMI display with computed matrix
                     hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
-
-            else:
-                hdmi_video_stop()
-                # Generate visualization matrix based on signal
-                hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
-                transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
-
-                # Update HDMI display with computed matrix
-                hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
 
             # Handle light actions based on signal strength and history
             if signal_max > 0.007:
@@ -359,7 +351,8 @@ try:
                         laser_off()
                         scan_closed(1)
                         scan_closed(2)
-                        hdmi_draw_black()
+                        if use_hdmi:
+                            hdmi_draw_black()
                         laser_off()
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
@@ -387,7 +380,7 @@ try:
                     low_volumes.clear()
                     mid_volumes.clear()
                     high_volumes.clear()
-                    pitches.clear()
+                    # pitches.clear()
                     drop_history.clear()
                     heaviness_history.clear()
                     color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
@@ -398,9 +391,11 @@ try:
 except KeyboardInterrupt:
     laser_off()
     set_all_pixels_color(0, 0, 0)  # Clear any existing colors
-    hdmi_video_stop()
+    if use_hdmi:
+        hdmi_video_stop()
     # Cleanup functions to ensure a safe shutdown
-    hdmi_outro_animation()
+    if use_hdmi:
+        hdmi_outro_animation()
     print("\nEnding program...")
     set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     scan_closed(1)
@@ -408,21 +403,23 @@ except KeyboardInterrupt:
     set_eurolite_t36(5, 0, 0, 0, 0, 0)  # Reset the eurolite device
     line_in.close()
     p.terminate()
-    hdmi_video_stop()
+    if use_hdmi:
+        hdmi_video_stop()
 
     # Ensure any HDMI thread finishes before program exit
-    if current_hdmi_thread and current_hdmi_thread.is_alive():
+    if use_hdmi and current_hdmi_thread and current_hdmi_thread.is_alive():
         current_hdmi_thread.join()
 
     time.sleep(2)  # Pause for 2 seconds
 
     # Display the license and copyright information on HDMI
-    hdmi_draw_centered_text(
-        "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\n"
-        "This program is licensed under the terms of the \n"
-        "GNU General Public License version 3.\n"
-        "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n"
-        "\n\nProgram ended gracefully.")
+    if use_hdmi:
+        hdmi_draw_centered_text(
+            "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\n"
+            "This program is licensed under the terms of the \n"
+            "GNU General Public License version 3.\n"
+            "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n"
+            "\n\nProgram ended gracefully.")
 
     if not args.fastboot:
         time.sleep(5)  # Pause for 5 seconds

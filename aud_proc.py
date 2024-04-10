@@ -271,7 +271,7 @@ def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, pitches):
         return 0  # no audio
 
 
-def get_pitch(audiobuffer, p_detection):
+def get_pitch(audio_buffer, p_detection):
     """
     This function gets the audio data from the provided stream and uses the
     provided pitch detection object to analyze the pitch of the audio.
@@ -284,8 +284,8 @@ def get_pitch(audiobuffer, p_detection):
     pitch : Detected pitch in Hz.
     """
 
-    # Convert the audiobuffer to an array
-    samples = np.fromstring(audiobuffer, dtype=aubio.float_type)
+    # Convert the audio_buffer to an array
+    samples = np.fromstring(audio_buffer, dtype=aubio.float_type)
     # Use the pitch detection object to get the pitch
     pitch = p_detection(samples)[0]
 
@@ -303,11 +303,6 @@ pDetection.set_tolerance(0.8)
 # Initialize Aubio beat detection
 aubio_onset = aubio.onset("complex", buffer_size, hop_size, sample_rate)
 
-# Design the audio filters
-thx_sos, thx_zi = design_filter(thx_band[0], thx_band[1], sample_rate)
-low_sos, low_zi = design_filter(low_band[0], low_band[1], sample_rate)
-mid_sos, mid_zi = design_filter(mid_band[0], mid_band[1], sample_rate)
-high_sos, high_zi = design_filter(high_band[0], high_band[1], sample_rate)
 
 # Initialize PyAudio
 p = pyaudio.PyAudio()
@@ -348,7 +343,6 @@ high_volumes = collections.deque(maxlen=average_samples)
 
 last_counts = collections.deque(maxlen=5)
 previous_count_over = 0
-heavy_counter = 0
 delta_values = collections.deque(maxlen=20)
 
 dominant_frequencies = collections.deque(maxlen=average_samples)
@@ -359,3 +353,107 @@ pitches = collections.deque(maxlen=average_samples)
 
 done_chase = collections.deque(maxlen=int(250))
 
+
+def process_audio_buffer(line_in, buffer_size, volumes, low_volumes, mid_volumes, high_volumes, heavyvols, max_values,
+                         delta_values, last_counts, heaviness_values):
+    """
+    Processes the audio signal and returns relevant metrics.
+
+    Args:
+        line_in: PyAudio stream object.
+        buffer_size: Size of the buffer for the audio stream.
+        low_sos, mid_sos, high_sos, thx_sos: SOS filter coefficients.
+        volumes, low_volumes, mid_volumes, high_volumes, heavyvols,
+        max_values, delta_values, last_counts, heaviness_values: Histories for various metrics.
+        low_zi, mid_zi, high_zi, thx_zi: Initial states for the filters.
+
+        Returns:
+            dict: A dictionary with the calculated audio metrics.
+    """
+
+    # Design the audio filters
+    thx_sos, thx_zi = design_filter(thx_band[0], thx_band[1], sample_rate)
+    low_sos, low_zi = design_filter(low_band[0], low_band[1], sample_rate)
+    mid_sos, mid_zi = design_filter(mid_band[0], mid_band[1], sample_rate)
+    high_sos, high_zi = design_filter(high_band[0], high_band[1], sample_rate)
+
+    heavy_counter = 0
+
+    this_audio_buffer = line_in.read(int(buffer_size / 2), exception_on_overflow=False)
+    signal_input = np.frombuffer(this_audio_buffer, dtype=np.float32)
+    signal_max = np.max(signal_input)
+
+    signal, gain_factor = adjust_gain(volumes, signal_input)
+
+    current_volume = np.sqrt(np.mean(signal ** 2))
+    volumes.append(current_volume)
+
+    mean_volume = np.mean(volumes)
+
+    relative_volume = 0 if mean_volume == 0 else current_volume / mean_volume
+    relative_volume = min(1, max(0, relative_volume))
+
+    low_signal, low_zi = sosfilt(low_sos, signal, zi=low_zi)
+    low_volumes.append(np.sqrt(np.mean(low_signal ** 2)))
+
+    mid_signal, mid_zi = sosfilt(mid_sos, signal, zi=mid_zi)
+    mid_volumes.append(np.sqrt(np.mean(mid_signal ** 2)))
+
+    high_signal, high_zi = sosfilt(high_sos, signal, zi=high_zi)
+    high_volumes.append(np.sqrt(np.mean(high_signal ** 2)))
+
+    low_mean = np.mean(low_volumes)
+    mid_mean = np.mean(mid_volumes)
+    high_mean = np.mean(high_volumes)
+
+    low_relative = np.mean(low_signal) / low_mean if low_mean != 0 else 0
+    low_relative = min(1, max(0, low_relative))
+
+    energy = np.sum(signal ** 2)
+    relative_energy = energy / len(signal)
+
+    thx_signal, thx_zi = sosfilt(thx_sos, signal, zi=thx_zi)
+    thx_signal = thx_signal.astype(np.float32)
+    heavyvols.append(np.max(thx_signal))
+    delta_value = np.max(thx_signal) - np.min(thx_signal)
+    max_values.append(np.max(thx_signal))
+    delta_values.append(delta_value)
+    count_over = sum(1 for value in max_values if value > 0.08)
+    last_counts.append(count_over)
+    heavy, heavy_counter = is_heavy(signal, delta_values, count_over, max_values, last_counts, heavy_counter)
+    heaviness = calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter)
+    heaviness_values.append(heaviness)
+
+    return {
+        "signal": signal,
+        "thx_signal": thx_signal,
+        "low_signal": low_signal,
+        "mid_signal": mid_signal,
+        "high_signal": high_signal,
+        "low_mean": low_mean,
+        "mid_mean": mid_mean,
+        "high_mean": high_mean,
+        "signal_max": signal_max,
+        "relative_volume": relative_volume,
+        "low_relative": low_relative,
+        "energy": energy,
+        "relative_energy": relative_energy,
+        "heavy": heavy,
+        "heaviness": heaviness,
+        "heavy_counter": heavy_counter,
+        # Zustände zurückgeben, falls nötig
+        "volumes": volumes,
+        "low_volumes": low_volumes,
+        "mid_volumes": mid_volumes,
+        "high_volumes": high_volumes,
+        "heavyvols": heavyvols,
+        "max_values": max_values,
+        "delta_values": delta_values,
+        "last_counts": last_counts,
+        "heaviness_values": heaviness_values,
+        # Filterzustände zurückgeben
+        "low_zi": low_zi,
+        "mid_zi": mid_zi,
+        "high_zi": high_zi,
+        "thx_zi": thx_zi
+    }
