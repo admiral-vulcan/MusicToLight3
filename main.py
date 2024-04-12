@@ -34,7 +34,7 @@ parser = argparse.ArgumentParser(description='MusicToLight3')
 parser.add_argument('--fastboot', action='store_true', help='Activates Fastboot-Mode. Deactivates calibrating.')
 args = parser.parse_args()
 
-use_hdmi = False
+use_hdmi = True
 
 runtime_bit = 0
 runtime_byte = 0
@@ -275,8 +275,6 @@ try:
 
         if heavy:
             laser_fast_dance(x, y, nd_color_name)
-            if use_hdmi:
-                hdmi_video_stop()
             no_drop_count = 0
             led_music_visualizer(low_relative, st_color_name, nd_color_name)
             scan_opened(1)
@@ -308,8 +306,7 @@ try:
             if use_hdmi:
                 if play_videos == "auto":
                     video_path = "/musictolight/vids/"
-                    # hdmi_video_start()
-                    hdmi_play_video(video_path)
+                    # hdmi_play_video(video_path)
                     if not is_video_playing():
                         # Generate visualization matrix based on signal
                         hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
@@ -319,7 +316,6 @@ try:
                         hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
 
                 else:
-                    hdmi_video_stop()
                     # Generate visualization matrix based on signal
                     hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
                     transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
@@ -391,8 +387,6 @@ try:
 except KeyboardInterrupt:
     laser_off()
     set_all_pixels_color(0, 0, 0)  # Clear any existing colors
-    if use_hdmi:
-        hdmi_video_stop()
     # Cleanup functions to ensure a safe shutdown
     if use_hdmi:
         hdmi_outro_animation()
@@ -403,8 +397,6 @@ except KeyboardInterrupt:
     set_eurolite_t36(5, 0, 0, 0, 0, 0)  # Reset the eurolite device
     line_in.close()
     p.terminate()
-    if use_hdmi:
-        hdmi_video_stop()
 
     # Ensure any HDMI thread finishes before program exit
     if use_hdmi and current_hdmi_thread and current_hdmi_thread.is_alive():

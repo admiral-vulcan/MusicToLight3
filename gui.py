@@ -21,7 +21,7 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 redis_client.set('strobe_mode', 'auto')
 redis_client.set('smoke_mode', 'auto')
 redis_client.set('panic_mode', 'off')
-redis_client.set('play_videos_mode', 'auto')
+redis_client.set('play_videos_mode', 'off')
 
 strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
 smoke_mode = (redis_client.get('smoke_mode') or b'').decode('utf-8')

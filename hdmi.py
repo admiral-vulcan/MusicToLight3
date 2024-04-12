@@ -20,6 +20,7 @@ import cv2
 import pygame
 import numpy as np
 from helpers import *
+from pygame.math import Vector2
 
 # Globale Variablen für den Video-Mode
 video_playing = False
@@ -101,11 +102,14 @@ def hdmi_draw_centered_text(text):
     pygame.display.flip()
 
 
+text_cache = {}  # Dictionary to store pre-rendered text surfaces
+
+
 @hdmi_in_thread
 def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255)):
     """Draw a matrix of numbers with various colors and effects."""
     colors = [low, mid, top]
-    global screen, font, zero_color
+    global screen, font, text_cache  # Access text cache
     if len(matrix) != 15 or any(len(row) != 9 for row in matrix):
         raise ValueError("Matrix must be 15x9.")
 
@@ -120,9 +124,18 @@ def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255)
         for y, number in enumerate(column):
             base_color = colors[y // 3]
             color = adjust_color(base_color)
-            if number == 0:
-                color = zero_color
-            text = font.render(str(number), True, color)
+            text_key = (number, color)  # Key for text cache
+
+            if number == 0:  # Special handling for zeroes
+                color = (75, 75, 75)  # Set color to dark gray
+                text_key = (number, color)  # Adjust text cache key for gray zeroes
+
+            if text_key not in text_cache:
+                text = font.render(str(number), True, color)
+                text_cache[text_key] = text
+            else:
+                text = text_cache[text_key]  # Retrieve pre-rendered text
+
             pos_x = border_x + x * spacing_x + random.randint(-5, 5)
             pos_y = screen_height - border_y - y * spacing_y + random.randint(-5, 5)
             screen.blit(text, (pos_x, pos_y))
@@ -227,110 +240,7 @@ def hdmi_outro_animation():
             current_cycle += 1
 
 
-def hdmi_video_stop():
-    global video_playing, video_start_time, wait_for_new_video
-    wait_for_new_video = False
-    current_time = time.time()
-
-    # Überprüfe, ob das Video bereits für die Mindestdauer gespielt hat
-    if video_start_time and (current_time - video_start_time) < minimum_video_duration:
-        # Wenn die Mindestdauer noch nicht erreicht ist, wird der Stop-Vorgang verzögert
-        # print("Video wird fortgesetzt, Mindestdauer noch nicht erreicht.")
-        return False  # Gib False zurück, um anzuzeigen, dass das Video nicht gestoppt wurde
-    else:
-        # Die Mindestdauer ist erreicht, das Video kann gestoppt werden
-        video_playing = False
-        video_start_time = None  # Setze die Startzeit zurück
-        return True  # Gib True zurück, um anzuzeigen, dass das Video gestoppt wurde
-
-
-def hdmi_video_start():
-    global video_playing
-    video_playing = True
-
-
-@hdmi_in_thread
-def hdmi_play_video(video_directory):
-    global video_playing, video_list, video_position, video_start_time, current_video_file, last_switch_time, autoplay, wait_for_new_video
-
-    if wait_for_new_video:
-        return
-
-    video_playing = True
-    video_start_time = time.time()  # Speichere die Startzeit
-
-    if not video_list:
-        video_list = get_video_list(video_directory)
-
-    if not current_video_file:
-        last_switch_time = time.time()
-        current_video_file = video_list[0]
-
-    video_path = os.path.join(video_directory, video_list[0])
-    cap = cv2.VideoCapture(video_path)
-
-    if video_position is not None:
-        # Setze die Position des Videos auf die gespeicherte Position
-        cap.set(cv2.CAP_PROP_POS_FRAMES, video_position)
-
-    ret, frame = cap.read()
-    if not ret:
-        print("Fehler beim Lesen des Videos.")
-        cap.release()
-        return
-
-    height, width, _ = frame.shape
-    window = pygame.display.set_mode((width, height))
-    clock = pygame.time.Clock()
-    frame_rate = 25  # Ziel-Frame-Rate
-
-    while cap.isOpened() and video_playing:
-        ret, frame = cap.read()
-
-        if not ret:
-            # Wenn das Video zu Ende ist, setze video_position zurück und verschiebe das Video in der Liste
-            video_position = 0
-            video_list.append(video_list.pop(0))
-            current_video_file = video_list[0]  # Aktualisiere den aktuellen Dateinamen
-            last_switch_time = time.time()  # Setze den Timer für den nächsten Wechsel zurück
-            if not autoplay:
-                wait_for_new_video = True
-                video_playing = False
-                return
-            break
-
-        # Aktualisiere die aktuelle Position des Videos
-        video_position = cap.get(cv2.CAP_PROP_POS_FRAMES)
-
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame_surface = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
-
-        window.blit(frame_surface, (0, 0))
-        pygame.display.flip()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                cap.release()
-                pygame.quit()
-                return
-
-        clock.tick(frame_rate)
-
-    cap.release()
-    video_playing = False
-    current_hdmi_thread = None
-
-    current_time = time.time()
-    # Überprüfen, ob das Video gewechselt werden sollte
-    if last_switch_time and (current_time - last_switch_time) >= switch_interval:
-        # Verschiebe das aktuelle Video ans Ende der Liste und setze die Zeit zurück
-        # print("Neues Video ausgewählt, das alte lief schon lang genug.")
-        video_list.append(video_list.pop(0))
-        last_switch_time = time.time()  # Setze den Timer für den nächsten Wechsel zurück
-        current_video_file = video_list[0]  # Aktualisiere den aktuellen Dateinamen
-        video_position = None
-
-
-def is_video_playing():
+def is_video_playing():  # deprecated, compatibility reasons
     global video_playing
     return video_playing
+
