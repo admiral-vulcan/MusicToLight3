@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="tidied up the code a bit, added hdmi switch">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="removed videos as they never worked good on the raspi 4">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/gui.py" beforeDir="false" afterPath="M:/gui.py" afterDir="false" />
-      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
+      <change beforePath="M:/com_udp.py" beforeDir="false" afterPath="M:/com_udp.py" afterDir="false" />
+      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
       <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -110,14 +110,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00028" summary="added color selection, translation, and (drop-color-) calculation">
-      <option name="closed" value="true" />
-      <created>1693601942072</created>
-      <option name="number" value="00028" />
-      <option name="presentableId" value="LOCAL-00028" />
-      <option name="project" value="LOCAL" />
-      <updated>1693601942072</updated>
     </task>
     <task id="LOCAL-00029" summary="added lamp near smoke machine and a set all pixels color function">
       <option name="closed" value="true" />
@@ -503,7 +495,15 @@
       <option name="project" value="LOCAL" />
       <updated>1712701305281</updated>
     </task>
-    <option name="localTasksCounter" value="77" />
+    <task id="LOCAL-00077" summary="removed videos as they never worked good on the raspi 4">
+      <option name="closed" value="true" />
+      <created>1712929642352</created>
+      <option name="number" value="00077" />
+      <option name="presentableId" value="LOCAL-00077" />
+      <option name="project" value="LOCAL" />
+      <updated>1712929642352</updated>
+    </task>
+    <option name="localTasksCounter" value="78" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -518,7 +518,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added dark mood if not beat and not drop for 500 loops" />
     <MESSAGE value="bugfix: hdmi colors mixed up" />
     <MESSAGE value="changed the led algo completely" />
     <MESSAGE value="added led back side" />
@@ -543,6 +542,7 @@
     <MESSAGE value="bug searching: still smoke erratic behaviour" />
     <MESSAGE value="bugfix: now sending smoker signal via UDP" />
     <MESSAGE value="tidied up the code a bit" />
-    <option name="LAST_COMMIT_MESSAGE" value="tidied up the code a bit" />
+    <MESSAGE value="removed videos as they never worked good on the raspi 4" />
+    <option name="LAST_COMMIT_MESSAGE" value="removed videos as they never worked good on the raspi 4" />
   </component>
 </project>

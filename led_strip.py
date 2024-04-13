@@ -13,38 +13,85 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # import cProfile
-from rpi_ws281x import *
+from rpi_ws281x import Color
 from collections import deque
-import time
 import random
 import pyaudio
 import numpy as np
+from com_udp import *
 from helpers import *
 from eurolite_t36 import *
+import socket
+import time
+
+
+class UDPNeoPixel:
+    def __init__(self, num_leds):
+        self.num_leds = num_leds
+        self.colors = [(0, 0, 0)] * num_leds  # Initialisiere alle LEDs auf ausgeschaltet (schwarz)
+        self.ip_address = '192.168.1.153'
+        self.port = 4210
+
+    def numPixels(self):
+        """ Gibt die Anzahl der LEDs zurück. """
+        return self.num_leds
+
+    def setPixelColor(self, i, color):
+        """ Setzt die Farbe einer einzelnen LED.
+
+        Args:
+            i (int): Index der LED.
+            color (tuple or int): RGB-Tupel oder Ganzzahl, die eine Farbe darstellt.
+        """
+        if isinstance(color, tuple) and len(color) == 3:
+            if 0 <= i < self.num_leds:
+                self.colors[i] = color
+        elif isinstance(color, int):
+            r = (color >> 16) & 0xFF
+            g = (color >> 8) & 0xFF
+            b = color & 0xFF
+            self.colors[i] = (r, g, b)
+
+    def show(self):
+        """ Sendet die Farbinformationen aller LEDs über UDP als binäre Daten. """
+        message = bytearray(b'mls_')  # Präfix für die Nachricht
+        message.extend(self.num_leds.to_bytes(2, byteorder='little'))  # Anzahl der LEDs als zwei Bytes
+
+        for r, g, b in self.colors:
+            # Stelle sicher, dass R, G, B Werte korrekt sind
+            message.extend([int(r) % 256, int(g) % 256, int(b) % 256])  # Jede Farbe als ein Byte
+
+        # Sende die Nachricht über UDP
+        send_udp_message(self.ip_address, self.port, message)
+
 
 # Global variable for saving the timestamp of the last strip.show() call
 last_show_time = 0
 
 # LED-strip configuration:
 LED_COUNT = 270  # Anzahl der LED-Pixel.
-LED_PIN = 18  # GPIO-Pin, der mit dem Datenpin des LED-Streifens verbunden ist.
-LED_FREQ_HZ = 800000  # LED-Signalfrequenz in Hz (normalerweise 800khz)
-LED_DMA = 10  # DMA-Kanal, der für die Signalgenerierung verwendet wird (kann 0-14 sein).
-LED_BRIGHTNESS = 255  # Eingestellte Helligkeit (0 für dunkelste und 255 für hellste)
-LED_INVERT = False  # True zum Invertieren des Signals (bei Verwendung von NPN-Transistor-Level-Shifter)
-LED_CHANNEL = 0  # set to '1' for GPIOs 13, 19, 41, 45 or 53
+# LED_PIN = 18  # GPIO-Pin, der mit dem Datenpin des LED-Streifens verbunden ist.
+# LED_FREQ_HZ = 800000  # LED-Signalfrequenz in Hz (normalerweise 800khz)
+# LED_DMA = 10  # DMA-Kanal, der für die Signalgenerierung verwendet wird (kann 0-14 sein).
+# LED_BRIGHTNESS = 255  # Eingestellte Helligkeit (0 für dunkelste und 255 für hellste)
+# LED_INVERT = False  # True zum Invertieren des Signals (bei Verwendung von NPN-Transistor-Level-Shifter)
+# LED_CHANNEL = 0  # set to '1' for GPIOs 13, 19, 41, 45 or 53
 
 # Create NeoPixel object with appropriate configuration.
-strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
+# strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
+strip = UDPNeoPixel(LED_COUNT)
 # Intialize the library (must be called once before other functions).
-strip.begin()
+# strip.begin()
 current_time = 0
 global_led_state = [(0, 0, 0) for _ in range(strip.numPixels())]
 
 recent_audio_inputs = deque(maxlen=int(3))  # adjust as needed, originally 20
 
+# Global variable to keep track of current LED colors
+current_colors = [(0, 0, 0)] * strip.numPixels()
 
-def star_chase(c, wait_ms):
+
+def led_star_chase(c, wait_ms):
     NUMCHASE = 30
     NUMPIX = int(strip.numPixels() / 2)
     for j in range(NUMCHASE):
@@ -76,7 +123,7 @@ def star_chase(c, wait_ms):
     set_eurolite_t36(5, 0, 0, 0, 255, 0)
 
 
-def set_all_pixels_color(red, green, blue):
+def led_set_all_pixels_color(red, green, blue):
     """
     Set the color of all pixels on the strip.
 
@@ -96,32 +143,6 @@ def set_all_pixels_color(red, green, blue):
     strip.show()
 
 
-def color_flow_old(pos, audio_input, reduce=2):
-    """Draw a color flow that moves across display."""
-    """Old version. Can be deleted in later revisions."""
-    recent_audio_inputs.append(audio_input)
-    mean_vol = safe_mean(recent_audio_inputs)
-    # print(mean_vol)
-
-    for i in range(int(strip.numPixels() / 2)):
-        # tricky math! we use each pixel as a fraction of the full 96-color wheel
-        # (int(strip.numPixels() / 2) steps) % 96 to make the wheel progress
-        wheel_pos = ((i * 256 // int(strip.numPixels() / 2)) + pos) % 256
-        r, b = wheel(wheel_pos, reduce)
-
-        # Clip values to 0-4095 range to prevent overflows
-        r = min(max(int(r * 50 * mean_vol), 0), 4095)
-        b = min(max(int(b * 50 * mean_vol), 0), 4095)
-
-        # Set the pixel color
-        strip.setPixelColor(i, Color(r, 0, b))
-    strip.show()
-
-
-# Global variable to keep track of current LED colors
-current_colors = [(0, 0, 0)] * strip.numPixels()
-
-
 def smooth_transition(current, target, step=5):
     """Smoothly transition from current color to target color."""
     r = int(current[0] + min(max(target[0] - current[0], -step), step))
@@ -131,7 +152,7 @@ def smooth_transition(current, target, step=5):
 
 
 @led_in_thread
-def color_flow(pos, audio_input, reduce=2, first_color="blue", second_color="red"):
+def led_color_flow(pos, audio_input, reduce=2, first_color="blue", second_color="red"):
     """Draw a color flow that moves across display."""
     global current_colors
 
@@ -263,22 +284,6 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
     for i, color in enumerate(led_array):
         strip.setPixelColor(i, Color(*color))
 
-    active_leds = sum(1 for color in led_array if color != (0, 0, 0))
+    # active_leds = sum(1 for color in led_array if color != (0, 0, 0))
 
-    # Bedingungen für das Aktualisieren der Anzeige basierend auf der Anzahl der Datenpunkte (data)
-    if active_leds < 15:
-        # Wenn die Datenmenge sehr klein ist, aktualisiere bei jedem Durchgang
-        strip.show()
-        last_show_time = current_time
-    elif active_leds < 30 and (active_leds - 1) % 2 == 0:
-        # Für eine mäßige Datenmenge und wenn der letzte Datenpunkt auf eine gerade Zahl fällt, aktualisiere die Anzeige
-        strip.show()
-        last_show_time = current_time
-    elif (active_leds - 1) % 5 == 0:
-        # Für größere Datenmengen aktualisiere nur, wenn der letzte Datenpunkt ein Vielfaches von 5 ist
-        strip.show()
-        last_show_time = current_time
-    else:
-        # Wenn keine der Bedingungen zutrifft, führe eine Standardaktualisierung durch
-        strip.show()
-
+    strip.show()

@@ -58,7 +58,7 @@ print("        Initializing devices.")
 print("")
 
 # initialise devices
-set_all_pixels_color(0, 0, 0)
+led_set_all_pixels_color(0, 0, 0)
 if use_hdmi:
     init_hdmi()
 
@@ -102,7 +102,7 @@ try:
         # Handle panic mode
         if panic_mode == 'on':
             # Turn on led strip, eurolite (floor) set on all white
-            set_all_pixels_color(255, 255, 255)
+            led_set_all_pixels_color(255, 255, 255)
             set_eurolite_t36(5, 255, 255, 255, 255, 0)
             # Blacken HDMI display
             if use_hdmi:
@@ -116,7 +116,7 @@ try:
                 send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_45_255_255_255_255_255_255_255")
                 time.sleep(0.105)
             # Restore default display after panicking
-            set_all_pixels_color(0, 0, 0)
+            led_set_all_pixels_color(0, 0, 0)
             set_eurolite_t36(5, 0, 0, 0, 255, 0)
             send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
             if use_hdmi:
@@ -329,21 +329,21 @@ try:
 
                 if not heavy and (0 < sum(drop_history) < 32 and drop):
                     # () or (0 < sum(drop_history) < 32 and drop)
-                    color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
+                    led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
                 elif not heavy:
-                    color_flow(runtime_bit, signal_max, 20, st_color_name, nd_color_name)
+                    led_color_flow(runtime_bit, signal_max, 20, st_color_name, nd_color_name)
                     no_drop_count += 1
                     if no_drop_count < 500:
                         scan_closed(1)
                         scan_closed(2)
                     else:
-                        color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
+                        led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
 
                 # Manage animations and lights for persistent drops
                 if sum(drop_history) >= 32 and drop:
                     heaviness_history.clear()
                     if 1 not in done_chase:
-                        set_all_pixels_color(0, 0, 0)
+                        led_set_all_pixels_color(0, 0, 0)
                         laser_off()
                         scan_closed(1)
                         scan_closed(2)
@@ -356,7 +356,7 @@ try:
                             send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_on")
                         # hdmi_outro_animation()
                         laser_star_chase()
-                        star_chase(Color(127, 127, 127), 52)
+                        led_star_chase(Color(127, 127, 127), 52)
 
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, 0, 0, 0, 255, 0)
@@ -379,19 +379,19 @@ try:
                     # pitches.clear()
                     drop_history.clear()
                     heaviness_history.clear()
-                    color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
+                    led_color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
         # print(is_video_playing())
 
 
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
     laser_off()
-    set_all_pixels_color(0, 0, 0)  # Clear any existing colors
+    led_set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     # Cleanup functions to ensure a safe shutdown
     if use_hdmi:
         hdmi_outro_animation()
     print("\nEnding program...")
-    set_all_pixels_color(0, 0, 0)  # Clear any existing colors
+    led_set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     scan_closed(1)
     scan_closed(2)
     set_eurolite_t36(5, 0, 0, 0, 0, 0)  # Reset the eurolite device
