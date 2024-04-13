@@ -29,8 +29,8 @@ os.environ['ALSA_LOG_LEVEL'] = 'error'
 
 # Filter configurations
 thx_band = (1, 80)  # 120
-low_band = (1, 120)  # 300
-mid_band = (500, 2000)
+low_band = (1, 300)  # 300
+mid_band = (300, 2000)
 high_band = (2000, 16000)
 
 # PyAudio settings
