@@ -34,6 +34,7 @@ current_led_thread = None
 # Global variable to store the timestamp of the last run of the HDMI thread
 last_run_time = None
 
+
 # Set the GPIO mode to BCM and disable warnings
 # GPIO.setmode(GPIO.BCM)
 # GPIO.setwarnings(False)
@@ -51,8 +52,8 @@ def calc_address(num):
     """
     return (num * 6) - 6
 
-def map_value(value, in_min, in_max, out_min, out_max):
 
+def map_value(value, in_min, in_max, out_min, out_max):
     """
     Map a value from one range to another.
 
@@ -213,6 +214,11 @@ def reduce_signal(signal, target_length=15):
 
 
 def generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean):
+    # Prüfe, ob die Signale groß genug sind, um fortzufahren
+    if any(len(signal) < 0.1 for signal in [low_signal, mid_signal, high_signal]):
+        # Gebe eine leere Matrix zurück, wenn nicht genügend Daten vorhanden sind
+        return [[0]*9 for _ in range(15)]
+
     matrix = []
 
     # Werte unter 0,01 zu 0 ändern und auf 2 Nachkommastellen runden
