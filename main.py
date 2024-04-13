@@ -48,7 +48,7 @@ runtime_byte = 0
 runtime_kb = 0
 runtime_mb = 0
 
-no_drop_count = 0
+no_drop_count = 1
 
 previous_heavy = True
 
@@ -149,6 +149,7 @@ try:
         if strobe_mode == 'on':
             # Stop any ongoing HDMI display
             if use_hdmi:
+                hdmi_video_stop()
                 kill_current_hdmi()
             # Prepare for strobing by turning off other lights
             scan_closed(1)
@@ -161,6 +162,8 @@ try:
             if use_hdmi:
                 hdmi_draw_black()  # Consider removal
             while strobe_mode == 'on':
+                if use_hdmi:
+                    hdmi_video_stop()
                 led_strobe_effect(1, 75)
                 strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
             # Restore default display after strobing
@@ -241,6 +244,7 @@ try:
             scan_closed(1)
             scan_closed(2)
             if use_hdmi:
+                hdmi_video_stop()
                 hdmi_draw_black()
             led_strobe_effect(10, 75)
             if use_hdmi:
@@ -270,6 +274,8 @@ try:
         # Handle actions for heavy signal
 
         if heavy:
+            if use_hdmi:
+                hdmi_video_stop()
             laser_fast_dance(x, y, nd_color_name)
             no_drop_count = 0
             led_music_visualizer(low_relative, st_color_name, nd_color_name)
@@ -302,7 +308,7 @@ try:
             if use_hdmi:
                 if play_videos == "auto":
                     video_path = "/musictolight/vids/"
-                    # hdmi_play_video(video_path)
+                    hdmi_play_video(video_path)
                     if not is_video_playing():
                         # Generate visualization matrix based on signal
                         hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
@@ -351,6 +357,8 @@ try:
                         if smoke_mode == 'auto':
                             send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_on")
                         # hdmi_outro_animation()
+                        if use_hdmi:
+                            hdmi_video_stop()
                         laser_star_chase()
                         led_star_chase(Color(127, 127, 127), 52)
 
@@ -400,7 +408,10 @@ except KeyboardInterrupt:
     led_set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     # Cleanup functions to ensure a safe shutdown
     if use_hdmi:
+        hdmi_video_stop()
+        kill_current_hdmi()
         hdmi_outro_animation()
+        kill_current_hdmi()
     print("\nEnding program...")
     led_set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     scan_closed(1)

@@ -220,13 +220,14 @@ def generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, hig
     # Für jedes Signal: reduziere auf 15 Werte und bestimme für jeden Wert, ob er über (1) oder unter (0) dem Mittelwert liegt.
     for signal, mean in [(low_signal, low_mean), (mid_signal, mid_mean), (high_signal, high_mean)]:
         reduced_signal = reduce_signal(signal)
+        # TODO check booster multiplier
         for i in range(3):  # für jede der drei Reihen für ein bestimmtes Signal
             if i == 0:  # obere Zeile
-                value_booster = 2.5
+                value_booster = 50
             elif i == 1:  # mittlere Zeile
                 value_booster = 1.25
             else:  # untere Zeile
-                value_booster = 0.5
+                value_booster = 500
 
             matrix.append([1 if (value * value_booster) > mean else 0 for value in reduced_signal])
 
