@@ -48,7 +48,7 @@ runtime_byte = 0
 runtime_kb = 0
 runtime_mb = 0
 
-no_drop_count = 1
+no_drop_count = 0
 
 previous_heavy = True
 
@@ -84,8 +84,8 @@ else:
     scan_reset(1)
     scan_reset(2)
 
-    if use_hdmi:
-        hdmi_intro_animation()
+    # if use_hdmi:
+        # hdmi_intro_animation()
 
 print("        Listening... Press Ctrl+C to stop.")
 print("")
@@ -410,7 +410,7 @@ except KeyboardInterrupt:
     if use_hdmi:
         hdmi_video_stop()
         kill_current_hdmi()
-        hdmi_outro_animation()
+        # hdmi_outro_animation()
         kill_current_hdmi()
     print("\nEnding program...")
     led_set_all_pixels_color(0, 0, 0)  # Clear any existing colors

@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="re-added video functionality as it is working now">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: matrix hang if low or no signal">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
+      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
       <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -108,14 +110,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00036" summary="added error catching while sending UDP packages">
-      <option name="closed" value="true" />
-      <created>1693605285057</created>
-      <option name="number" value="00036" />
-      <option name="presentableId" value="LOCAL-00036" />
-      <option name="project" value="LOCAL" />
-      <updated>1693605285057</updated>
     </task>
     <task id="LOCAL-00037" summary="sped up scanners, bugfix: lamp sometimes didn't turn off at strobe">
       <option name="closed" value="true" />
@@ -501,7 +495,15 @@
       <option name="project" value="LOCAL" />
       <updated>1713023505930</updated>
     </task>
-    <option name="localTasksCounter" value="85" />
+    <task id="LOCAL-00085" summary="bugfix: matrix hang if low or no signal">
+      <option name="closed" value="true" />
+      <created>1713026435534</created>
+      <option name="number" value="00085" />
+      <option name="presentableId" value="LOCAL-00085" />
+      <option name="project" value="LOCAL" />
+      <updated>1713026435535</updated>
+    </task>
+    <option name="localTasksCounter" value="86" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -516,7 +518,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added video playback feature" />
     <MESSAGE value="performance upgrade" />
     <MESSAGE value="anti-stress-check in hdmi_in_threads decorator: the function shall not execute more often than once every 0.2 seconds" />
     <MESSAGE value="added documentation" />
@@ -541,6 +542,7 @@
     <MESSAGE value="optimized code a bit" />
     <MESSAGE value="optimized code a lot" />
     <MESSAGE value="re-added video functionality as it is working now" />
-    <option name="LAST_COMMIT_MESSAGE" value="re-added video functionality as it is working now" />
+    <MESSAGE value="bugfix: matrix hang if low or no signal" />
+    <option name="LAST_COMMIT_MESSAGE" value="bugfix: matrix hang if low or no signal" />
   </component>
 </project>

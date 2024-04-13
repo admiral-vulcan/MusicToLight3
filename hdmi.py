@@ -82,6 +82,7 @@ def adjust_color(color):
 
 def hdmi_draw_black():
     """Fill the screen with black color."""
+    global screen
     screen.fill((0, 0, 0))
     pygame.display.flip()
 
@@ -142,7 +143,6 @@ def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255)
     pygame.display.flip()
 
 
-@hdmi_in_thread
 def hdmi_intro_animation():
     """Play a screen animation simulating a matrix bootup."""
     global screen, font, zero_color
@@ -193,7 +193,6 @@ def hdmi_intro_animation():
             current_cycle += 1
 
 
-@hdmi_in_thread
 def hdmi_outro_animation():
     """Play a screen animation simulating a matrix shutdown."""
     global screen, font, zero_color
@@ -307,6 +306,7 @@ def hdmi_play_video(video_directory):
             current_video_file = video_list[0]  # Aktualisiere den aktuellen Dateinamen
             last_switch_time = time.time()  # Setze den Timer für den nächsten Wechsel zurück
             if not autoplay:
+                hdmi_draw_black()
                 wait_for_new_video = True
                 video_playing = False
                 return

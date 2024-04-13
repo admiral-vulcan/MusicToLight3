@@ -229,11 +229,11 @@ def generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, hig
         # TODO check booster multiplier
         for i in range(3):  # für jede der drei Reihen für ein bestimmtes Signal
             if i == 0:  # obere Zeile
-                value_booster = 50
+                value_booster = 5
             elif i == 1:  # mittlere Zeile
                 value_booster = 1.25
             else:  # untere Zeile
-                value_booster = 500
+                value_booster = 50
 
             matrix.append([1 if (value * value_booster) > mean else 0 for value in reduced_signal])
 
