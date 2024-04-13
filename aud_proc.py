@@ -179,10 +179,11 @@ def dominant_frequency(signal, sample_rate):
     return dominant_frequency_index * sample_rate / len(signal)
 
 
-def detect_drop(volume_mean, heavy, dominant_frequencies, heaviness_history, drop_history, drop_length=50,
+def detect_drop(volume_mean, heavy, dominant_frequencies, heaviness_history, drop_history, drop_length=40,
                 rise_threshold=15, volume_rise_threshold=0.08, dominant_frequencies_threshold=300, heavy_threshold=0.8,
                 drop_threshold=1, heavy_return_threshold=2):
     # Überprüfung auf ausreichende Datenlänge
+    print(len(dominant_frequencies))
     if len(dominant_frequencies) < drop_length or len(heaviness_history) < drop_length:
         return False
 
