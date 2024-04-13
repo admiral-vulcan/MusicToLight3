@@ -350,15 +350,13 @@ try:
                         scan_closed(1)
                         scan_closed(2)
                         if use_hdmi:
+                            hdmi_video_stop(True)
                             hdmi_draw_black()
                         laser_off()
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
                         if smoke_mode == 'auto':
                             send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_on")
-                        # hdmi_outro_animation()
-                        if use_hdmi:
-                            hdmi_video_stop()
                         laser_star_chase()
                         led_star_chase(Color(127, 127, 127), 52)
 
@@ -384,7 +382,6 @@ try:
                     drop_history.clear()
                     heaviness_history.clear()
                     led_color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
-        # print(is_video_playing())
 
         if profiling:
             # Stop profiling
@@ -408,9 +405,7 @@ except KeyboardInterrupt:
     led_set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     # Cleanup functions to ensure a safe shutdown
     if use_hdmi:
-        hdmi_video_stop()
-        kill_current_hdmi()
-        # hdmi_outro_animation()
+        hdmi_video_stop(True)
         kill_current_hdmi()
     print("\nEnding program...")
     led_set_all_pixels_color(0, 0, 0)  # Clear any existing colors

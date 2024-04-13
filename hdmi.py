@@ -239,13 +239,13 @@ def hdmi_outro_animation():
             current_cycle += 1
 
 
-def hdmi_video_stop():
+def hdmi_video_stop(now=False):
     global video_playing, video_start_time, wait_for_new_video
     wait_for_new_video = False
     current_time = time.time()
 
     # Überprüfe, ob das Video bereits für die Mindestdauer gespielt hat
-    if video_start_time and (current_time - video_start_time) < minimum_video_duration:
+    if video_start_time and (current_time - video_start_time) < minimum_video_duration and not now:
         # Wenn die Mindestdauer noch nicht erreicht ist, wird der Stop-Vorgang verzögert
         # print("Video wird fortgesetzt, Mindestdauer noch nicht erreicht.")
         return False  # Gib False zurück, um anzuzeigen, dass das Video nicht gestoppt wurde
