@@ -82,7 +82,6 @@ LED_COUNT = 270  # Anzahl der LED-Pixel.
 strip = UDPNeoPixel(LED_COUNT)
 # Intialize the library (must be called once before other functions).
 # strip.begin()
-current_time = 0
 global_led_state = [(0, 0, 0) for _ in range(strip.numPixels())]
 
 recent_audio_inputs = deque(maxlen=int(3))  # adjust as needed, originally 20
@@ -244,15 +243,12 @@ def adjust_brightness(color, factor):
 
 @led_in_thread
 def led_music_visualizer(data, first_color="blue", second_color="red"):
-    global last_show_time, current_time, global_led_state
+    global last_show_time, global_led_state
 
     first_r, first_g, first_b = get_rgb_from_color_name(first_color)
     second_r, second_g, second_b = get_rgb_from_color_name(second_color)
 
     num_leds = strip.numPixels()
-    # Erstellen eines Arrays zur Speicherung der Farbinformationen für jede LED
-    led_array = [(0, 0, 0) for _ in range(num_leds)]  # Startet mit allen LEDs ausgeschaltet
-
     num_leds_front = int(num_leds / 2)
     mid_point = int(num_leds / 2) // 2
     data = int(data * mid_point)
@@ -262,7 +258,6 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
     global_led_state = led_array
 
     for pos in range(data):
-        current_time = time.time()
 
         t = pos / mid_point
         brightness_factor = 0.75
@@ -283,7 +278,5 @@ def led_music_visualizer(data, first_color="blue", second_color="red"):
     # Aktualisieren des LED-Streifens basierend auf dem Array
     for i, color in enumerate(led_array):
         strip.setPixelColor(i, Color(*color))
-
-    # active_leds = sum(1 for color in led_array if color != (0, 0, 0))
 
     strip.show()

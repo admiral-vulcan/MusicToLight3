@@ -27,10 +27,51 @@ import sys
 
 os.environ['ALSA_LOG_LEVEL'] = 'error'
 
+# Filter configurations
+thx_band = (1, 80)  # 120
+low_band = (1, 120)  # 300
+mid_band = (500, 2000)
+high_band = (2000, 16000)
+
+# PyAudio settings
+buffer_size = 1024
+hop_size = buffer_size // 2
+pyaudio_format = pyaudio.paFloat32
+n_channels = 1
+sample_rate = 44100
+device_index = 0
+
+# Define the number of samples for average calculations
+average_samples = int(5 * (sample_rate / buffer_size))  # why??
+average_heavy_samples = average_samples
+
+# Initialize data collections
+volumes = collections.deque(maxlen=average_samples)
+heavyvols = collections.deque(maxlen=20)
+max_values = collections.deque(maxlen=20)
+heaviness_values = collections.deque(maxlen=average_samples)
+
+low_volumes = collections.deque(maxlen=average_samples)
+mid_volumes = collections.deque(maxlen=average_samples)
+high_volumes = collections.deque(maxlen=average_samples)
+
+last_counts = collections.deque(maxlen=5)
+previous_count_over = 0
+delta_values = collections.deque(maxlen=20)
+
+dominant_frequencies = collections.deque(maxlen=average_samples)
+heaviness_history = collections.deque(maxlen=average_samples)
+drop_history = collections.deque(maxlen=512)
+input_history = collections.deque(maxlen=average_samples)
+pitches = collections.deque(maxlen=average_samples)
+
+done_chase = collections.deque(maxlen=int(250))
+
 
 def get_second_highest(values):
     """
-    This function returns the second highest value in the given array.
+    Returns the second highest value in the given array using a partition-based selection algorithm.
+    This is more efficient than sorting for large arrays.
 
     Args:
     values : A NumPy array.
@@ -39,33 +80,34 @@ def get_second_highest(values):
     second_highest : Second highest value in the array.
     """
     if len(values) > 1:
-        # Use numpy partition to rearrange the array
-        values_partitioned = np.partition(values, -2)
-
-        # The second highest value is now at index -2
-        second_highest = values_partitioned[-2]
-
-        return second_highest
-    else:
-        return values[0]
+        return np.partition(values, -2)[-2]
+    return values[0] if values.size else None
 
 
-def adjust_gain_old(volumes, signal, target_volume=0.1, max_gain=5):
-    average_volume = safe_mean(volumes)
-    gain_factor = target_volume / average_volume if average_volume > 0 else 1.0
-    if gain_factor > max_gain:
-        gain_factor = max_gain
-    if signal.any() > 0:
-        print(signal)
-    return signal * gain_factor, gain_factor
+def adjust_gain(this_volumes, signal, target_volume=0.2, max_gain=100):
+    """
+    Adjusts the gain of the input signal based on the average volume to reach a target volume.
 
+    Args:
+    this_volumes : Array of volume levels.
+    signal : Input signal array.
+    target_volume : Target average volume level.
+    max_gain : Maximum allowable gain factor.
 
-def adjust_gain(volumes, signal, target_volume=0.1, max_gain=5):
+    Returns:
+    adjusted_signal : Signal after gain adjustment.
+    gain_factor : Applied gain factor.
+    """
     # Berechne den durchschnittlichen Lautstärkepegel
-    average_volume = safe_mean(volumes)
+    average_volume = safe_mean(this_volumes)
 
     # Berechne den Verstärkungsfaktor
-    gain_factor = target_volume / average_volume if average_volume > 0 else 1.0
+    if average_volume <= 0:
+        average_volume = 0.00001
+    if average_volume < target_volume:
+        gain_factor = target_volume / average_volume
+    else:
+        gain_factor = 1.0
 
     # Begrenze den Verstärkungsfaktor auf den maximal zulässigen Wert
     if gain_factor > max_gain:
@@ -73,7 +115,7 @@ def adjust_gain(volumes, signal, target_volume=0.1, max_gain=5):
 
     # Setze Werte mit einem Betrag kleiner als 0,01 auf 0
     signal = signal * 1
-    signal[np.abs(signal) < 0.01] = 0
+    signal[np.abs(signal) < 0.014] = 0
 
     # Wende den Verstärkungsfaktor auf das Signal an
     adjusted_signal = signal * gain_factor
@@ -91,6 +133,7 @@ def design_filter(lowcut, highcut, sample_rate, ripple_db=0.5, stop_atten_db=40,
 
 
 def is_heavy(signal, delta_values, count_over, max_values, last_counts, heavy_counter):
+    # bug: heavy_counter always zero
     if len(last_counts) == 5 and max(last_counts) - min(last_counts) >= 3:
         heavy_counter = 2
     return np.max(np.abs(signal)) > 0.05 and (count_over > 3 or heavy_counter > 0) and np.max(
@@ -117,7 +160,8 @@ def calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter):
     # return exponential_decrease(heaviness, 10)
 
 
-def dominant_frequency(signal, sample_rate):
+"""
+def dominant_frequency_old(signal, sample_rate):
     # Zentrierung des Signals
     signal_centered = signal - safe_mean(signal)
 
@@ -138,66 +182,75 @@ def dominant_frequency(signal, sample_rate):
     dominant_frequency_hz = dominant_frequency_index * sample_rate / len(signal_centered)
 
     return dominant_frequency_hz
+    """
 
+
+def dominant_frequency(signal, sample_rate):
+    """
+    Calculate the dominant frequency in a signal using fast Fourier transform.
+
+    Args:
+    signal : Numpy array of signal values.
+    sample_rate : Sampling rate of the signal.
+
+    Returns:
+    dominant_frequency_hz : Dominant frequency in Hertz.
+    """
+    if np.all(np.isclose(signal, 0, atol=0.01)):
+        return 0
+
+    fft_result = np.fft.rfft(signal - np.mean(signal))
+    dominant_frequency_index = np.argmax(np.abs(fft_result))
+    return dominant_frequency_index * sample_rate / len(signal)
 
 def detect_drop(volume_mean, heavy, dominant_frequencies, heaviness_history, drop_history, drop_length=50,
                 rise_threshold=15, volume_rise_threshold=0.08, dominant_frequencies_threshold=300, heavy_threshold=0.8,
                 drop_threshold=1, heavy_return_threshold=2):
-    # Check that we have enough data
+    # Überprüfung auf ausreichende Datenlänge
     if len(dominant_frequencies) < drop_length or len(heaviness_history) < drop_length:
-        # print("Not enough data. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
         return False
 
-    if volume_mean > volume_rise_threshold:
-        rise_threshold *= 1.5
+    # Anpassen des rise_threshold basierend auf volume_mean
+    effective_rise_threshold = rise_threshold * 1.5 if volume_mean > volume_rise_threshold else rise_threshold
 
-    # If there have been enough drops, stay in drop state until it's over
-    if sum(drop_history) >= drop_threshold and not heavy:
-        # print("In drop state due to previous drops. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
+    # Überprüfung, ob genügend Drops aufgetreten sind und ob nicht aktuell ein "heavy" Zustand ist
+    total_drops = sum(drop_history)
+    if total_drops >= drop_threshold and not heavy:
         return True
 
-    if sum(drop_history) > 0 and not heavy:
-        return True
+    # Letzte relevante Werte für Frequenzen und Heaviness
+    drop_dominant_frequencies = np.array(dominant_frequencies)[-drop_length:]
+    heavy_history = np.array(heaviness_history)[-drop_length:]
 
-    # Get the dominant frequencies during the drop
-    drop_dominant_frequencies = list(dominant_frequencies)[-drop_length:]
-
-    # Get the heaviness history
-    heavy_history = list(heaviness_history)[-drop_length:]
-
-    # Check if the drop is over: heavy is True twice in a row
-    if heavy_history[-heavy_return_threshold:] == [True] * heavy_return_threshold:
-        # print("No drop/drop ended. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
+    # Überprüfung des Endes des Drops: heavy ist True zweimal hintereinander
+    if heavy_history[-heavy_return_threshold:].all():
         return False
 
-    # Check for the start of the drop: heavy becomes False and there was at least one True in heavy_history
-    if heavy or True not in heavy_history:
-        # print("No transition from heavy to non-heavy. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
+    # Überprüfung des Starts des Drops: Übergang von heavy zu nicht-heavy
+    if heavy or not heavy_history[:-heavy_return_threshold].any():
         return False
 
-    # Check that there were enough heavies before the drop
-    if sum(heavy_history) < heavy_threshold:
-        # print("Not enough heaviness before the drop. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
+    # Sicherstellen, dass vor dem Drop genügend 'heavy' Zustände vorhanden waren
+    if heavy_history.sum() < heavy_threshold * drop_length:
         return False
 
-    # Check that the average dominant frequency during the drop is above 400 Hz/dominant_frequencies_threshold
-    if safe_mean(drop_dominant_frequencies) <= dominant_frequencies_threshold:
-        # print("Average dominant frequency during the drop is below 350 Hz. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
+    # Überprüfung, ob die durchschnittliche dominante Frequenz während des Drops oberhalb des Schwellenwertes liegt
+    if drop_dominant_frequencies.mean() <= dominant_frequencies_threshold:
         return False
 
-    # Calculate the rise in dominant frequencies
+    # Berechnung des Anstiegs der dominanten Frequenzen
     frequency_rise = drop_dominant_frequencies[-1] - drop_dominant_frequencies[-2]
 
-    # Check that the rise in dominant frequencies is above the threshold
-    if frequency_rise < rise_threshold:
-        # print("Rise in dominant frequencies is below the threshold. Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
+    # Überprüfung, ob der Frequenzanstieg über dem effektiven Schwellenwert liegt
+    if frequency_rise < effective_rise_threshold:
         return False
 
-    # If all conditions are met, return True
-    # print("Drop detected! Average dominant frequency: {:.3f}".format(safe_mean(dominant_frequencies)))
+    # Wenn alle Bedingungen erfüllt sind
     return True
 
 
+
+"""  # never used
 def calculate_dynamics(low_volumes, mid_volumes, high_volumes):
     # calculate mean volumes
     mean_low = safe_mean(low_volumes)
@@ -217,12 +270,14 @@ def calculate_dynamics(low_volumes, mid_volumes, high_volumes):
     dynamics = total_mean / total_std
 
     return dynamics
+    """
 
 
 this_category = -1  # unknown
 
 
-def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, pitches):
+"""never used
+def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, this_pitches):
     global this_category
     if raw_mean > 0.007:
         # Calculate mean volume in each frequency band
@@ -236,20 +291,19 @@ def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, pitches):
         high_std_volume = np.std(high_volumes)
 
         # Calculate maximum and minimum pitches
-        this_pitches = pitches
         max_pitch = get_second_highest(this_pitches)
         min_pitch = np.min(this_pitches)
 
         # Print debug info
-        """
-        print(f"Low mean volume: {low_mean_volume}")
-        print(f"Mid mean volume: {mid_mean_volume}")
-        print(f"High mean volume: {high_mean_volume}")
-        print(f"Low std volume: {low_std_volume}")
-        print(f"Mid std volume: {mid_std_volume}")
-        print(f"Max pitch: {max_pitch}")
-        print(f"Min pitch: {min_pitch}")
-        """
+        
+        # print(f"Low mean volume: {low_mean_volume}")
+        # print(f"Mid mean volume: {mid_mean_volume}")
+        # print(f"High mean volume: {high_mean_volume}")
+        # print(f"Low std volume: {low_std_volume}")
+        # print(f"Mid std volume: {mid_std_volume}")
+        # print(f"Max pitch: {max_pitch}")
+        # print(f"Min pitch: {min_pitch}")
+        
         # print(f"High std volume: {high_std_volume}")
 
         # If the mid volume is higher than high volume, and high volume standard deviation is relatively low, then classify as 'Melancholic'
@@ -269,8 +323,10 @@ def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, pitches):
             return this_category
     else:
         return 0  # no audio
+    """
 
 
+# never used
 def get_pitch(audio_buffer, p_detection):
     """
     This function gets the audio data from the provided stream and uses the
@@ -296,12 +352,13 @@ def get_pitch(audio_buffer, p_detection):
 # meter = Meter(sample_rate)
 
 # Initialize pitch detection
-pDetection = aubio.pitch("default", buffer_size, hop_size, sample_rate)
-pDetection.set_unit("Hz")
-pDetection.set_tolerance(0.8)
+# pDetection = aubio.pitch("default", buffer_size, hop_size, sample_rate)
+# pDetection.set_unit("Hz")
+# pDetection.set_tolerance(0.8)
 
 # Initialize Aubio beat detection
-aubio_onset = aubio.onset("complex", buffer_size, hop_size, sample_rate)
+# Methods: <default|energy|hfc|complex|phase|specdiff|kl|mkl|specflux>
+aubio_onset = aubio.onset("default", buffer_size, hop_size, sample_rate)
 
 
 # Initialize PyAudio
@@ -326,32 +383,6 @@ if desired_device_index is not None:
 else:
     print("No suitable audio device found!")
     exit()
-
-# Define the number of samples for average calculations
-average_samples = int(5 * sample_rate / buffer_size)
-average_heavy_samples = int(sample_rate / buffer_size)
-
-# Initialize data collections
-volumes = collections.deque(maxlen=average_samples)
-heavyvols = collections.deque(maxlen=20)
-max_values = collections.deque(maxlen=20)
-heaviness_values = collections.deque(maxlen=average_samples)
-
-low_volumes = collections.deque(maxlen=average_samples)
-mid_volumes = collections.deque(maxlen=average_samples)
-high_volumes = collections.deque(maxlen=average_samples)
-
-last_counts = collections.deque(maxlen=5)
-previous_count_over = 0
-delta_values = collections.deque(maxlen=20)
-
-dominant_frequencies = collections.deque(maxlen=average_samples)
-heaviness_history = collections.deque(maxlen=average_samples)
-drop_history = collections.deque(maxlen=512)
-input_history = collections.deque(maxlen=average_samples)
-pitches = collections.deque(maxlen=average_samples)
-
-done_chase = collections.deque(maxlen=int(250))
 
 
 def process_audio_buffer(line_in, buffer_size, volumes, low_volumes, mid_volumes, high_volumes, heavyvols, max_values,
