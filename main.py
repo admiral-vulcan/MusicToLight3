@@ -38,6 +38,9 @@ parser = argparse.ArgumentParser(description='MusicToLight3')
 parser.add_argument('--fastboot', action='store_true', help='Activates Fastboot-Mode. Deactivates calibrating.')
 args = parser.parse_args()
 
+profiling = False  # performance analysis
+execution_counter = 0
+
 use_hdmi = True
 
 runtime_bit = 0
@@ -93,9 +96,6 @@ global strobe_mode
 global smoke_mode
 global panic_mode
 global play_videos
-
-profiling = True
-execution_counter = 0
 
 # Start main loop
 try:
