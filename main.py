@@ -29,6 +29,10 @@ from gui import *
 
 import argparse
 
+import cProfile
+import pstats
+import io
+
 # Parse arguments from console
 parser = argparse.ArgumentParser(description='MusicToLight3')
 parser.add_argument('--fastboot', action='store_true', help='Activates Fastboot-Mode. Deactivates calibrating.')
@@ -89,11 +93,20 @@ global strobe_mode
 global smoke_mode
 global panic_mode
 global play_videos
+
+profiling = True
+execution_counter = 0
+
 # Start main loop
 try:
     while True:
-        commands = get_gui_commands()
+        if profiling:
+            # Start profiling
+            execution_counter += 1
+            profiler = cProfile.Profile()
+            profiler.enable()
 
+        commands = get_gui_commands()
         strobe_mode = commands['strobe_mode']
         smoke_mode = commands['smoke_mode']
         panic_mode = commands['panic_mode']
@@ -170,8 +183,7 @@ try:
         # Uncomment below for debugging runtime counters
         # print(runtime_mb, runtime_kb, runtime_byte, runtime_bit)
 
-        audio_buffer = process_audio_buffer(line_in, buffer_size, volumes, low_volumes, mid_volumes, high_volumes,
-                                            heavyvols, max_values, delta_values, last_counts, heaviness_values)
+        audio_buffer = process_audio_buffer()
 
         signal = audio_buffer['signal']
         thx_signal = audio_buffer['thx_signal']
@@ -183,6 +195,7 @@ try:
         high_mean = audio_buffer['high_mean']
         signal_max = audio_buffer['signal_max']
         relative_volume = audio_buffer['relative_volume']
+        mean_volume = audio_buffer['mean_volume']
         low_relative = audio_buffer['low_relative']
         energy = audio_buffer['energy']
         relative_energy = audio_buffer['relative_energy']
@@ -205,29 +218,12 @@ try:
         high_zi = audio_buffer['high_zi']
         thx_zi = audio_buffer['thx_zi']
 
-        """ New Psyco-Acoustic-Analysis """
-        # LUFS-loudness-analysis
-        # loudness = meter.integrated_loudness(signal)
-
-        # Fast Fourier Transformation
-        # fft_magnitude, fft_frequencies = perform_fft(signal, sample_rate)
-
-        # Psycho acoustic weighting based on Fletcher-Munson
-        # weighted_fft_magnitude = apply_fletcher_munson_curve(fft_magnitude, fft_frequencies)
-
-        # Find dominant harmony by Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003
-        """ magic happens here """
-        # dominant_harmony = find_dominant_harmony_in_timeframe(signal, sample_rate)
-
-        # debug
-        # print(dominant_harmony)
-
         """ Old Acoustic Calculations """
         # Dominant frequency analysis
         dominant_freq = dominant_frequency(signal, sample_rate)
         dominant_frequencies.append(dominant_freq)
         heaviness_history.append(heavy)
-        drop = detect_drop(safe_mean(volumes), heavy, dominant_frequencies, heaviness_history, drop_history)
+        drop = detect_drop(mean_volume, heavy, dominant_frequencies, heaviness_history, drop_history)
         drop_history.append(drop)
 
         # Beat detection
@@ -381,6 +377,21 @@ try:
                     heaviness_history.clear()
                     led_color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
         # print(is_video_playing())
+
+        if profiling:
+            # Stop profiling
+            profiler.disable()
+
+            # Create a stream to capture profiling data
+            s = io.StringIO()
+
+            # Nur jede 100. Ausführung in die Datei schreiben
+            if execution_counter % 100 == 0:
+                # Erstelle einen Dateinamen basierend auf dem Zähler, um eindeutige Dateien zu haben
+                filename = f"/musictolight/stats/profile_{execution_counter // 100}.prof"
+                with open(filename, 'w') as file:
+                    ps = pstats.Stats(profiler, stream=file).sort_stats('time')  # oder cumulative
+                    ps.print_stats()
 
 
 # Catch a keyboard interrupt to ensure graceful exit and cleanup

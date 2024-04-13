@@ -42,8 +42,7 @@ sample_rate = 44100
 device_index = 0
 
 # Define the number of samples for average calculations
-average_samples = int(5 * (sample_rate / buffer_size))  # why??
-average_heavy_samples = average_samples
+average_samples = int(sample_rate / buffer_size)  # why??
 
 # Initialize data collections
 volumes = collections.deque(maxlen=average_samples)
@@ -84,7 +83,7 @@ def get_second_highest(values):
     return values[0] if values.size else None
 
 
-def adjust_gain(this_volumes, signal, target_volume=0.2, max_gain=100):
+def adjust_gain(mean_volume, signal, target_volume=0.2, max_gain=100):
     """
     Adjusts the gain of the input signal based on the average volume to reach a target volume.
 
@@ -99,7 +98,8 @@ def adjust_gain(this_volumes, signal, target_volume=0.2, max_gain=100):
     gain_factor : Applied gain factor.
     """
     # Berechne den durchschnittlichen Lautstärkepegel
-    average_volume = safe_mean(this_volumes)
+    # average_volume = safe_mean(this_volumes)
+    average_volume = mean_volume
 
     # Berechne den Verstärkungsfaktor
     if average_volume <= 0:
@@ -160,31 +160,6 @@ def calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter):
     # return exponential_decrease(heaviness, 10)
 
 
-"""
-def dominant_frequency_old(signal, sample_rate):
-    # Zentrierung des Signals
-    signal_centered = signal - safe_mean(signal)
-
-    # Überprüfung, ob das Signal nahe Null ist
-    if np.max(np.abs(signal_centered)) < 0.01:  # 0.01 ist ein kleiner Schwellenwert, den Sie anpassen können
-        return 0
-
-    # Fourier-Transformation des zentrierten Signals
-    fft_result = np.fft.rfft(signal_centered)
-
-    # Absolutwerte der komplexen FFT-Ergebnisse, um die Amplitude jeder Frequenz zu erhalten
-    amplitudes = np.abs(fft_result)
-
-    # Bestimmung der Frequenz mit der höchsten Amplitude
-    dominant_frequency_index = np.argmax(amplitudes)
-
-    # Umwandlung des Indexes in die tatsächliche Frequenz
-    dominant_frequency_hz = dominant_frequency_index * sample_rate / len(signal_centered)
-
-    return dominant_frequency_hz
-    """
-
-
 def dominant_frequency(signal, sample_rate):
     """
     Calculate the dominant frequency in a signal using fast Fourier transform.
@@ -202,6 +177,7 @@ def dominant_frequency(signal, sample_rate):
     fft_result = np.fft.rfft(signal - np.mean(signal))
     dominant_frequency_index = np.argmax(np.abs(fft_result))
     return dominant_frequency_index * sample_rate / len(signal)
+
 
 def detect_drop(volume_mean, heavy, dominant_frequencies, heaviness_history, drop_history, drop_length=50,
                 rise_threshold=15, volume_rise_threshold=0.08, dominant_frequencies_threshold=300, heavy_threshold=0.8,
@@ -249,117 +225,9 @@ def detect_drop(volume_mean, heavy, dominant_frequencies, heaviness_history, dro
     return True
 
 
-
-"""  # never used
-def calculate_dynamics(low_volumes, mid_volumes, high_volumes):
-    # calculate mean volumes
-    mean_low = safe_mean(low_volumes)
-    mean_mid = safe_mean(mid_volumes)
-    mean_high = safe_mean(high_volumes)
-
-    # calculate standard deviation of volumes
-    std_low = np.std(low_volumes)
-    std_mid = np.std(mid_volumes)
-    std_high = np.std(high_volumes)
-
-    # calculate total mean and total standard deviation
-    total_mean = 0 + mean_mid + mean_high
-    total_std = 0 + std_mid + std_high
-
-    # A higher total mean and a lower total standard deviation would indicate a more dynamic song
-    dynamics = total_mean / total_std
-
-    return dynamics
-    """
-
-
-this_category = -1  # unknown
-
-
-"""never used
-def categorize_song(raw_mean, low_volumes, mid_volumes, high_volumes, this_pitches):
-    global this_category
-    if raw_mean > 0.007:
-        # Calculate mean volume in each frequency band
-        low_mean_volume = safe_mean(low_volumes)
-        mid_mean_volume = safe_mean(mid_volumes)
-        high_mean_volume = safe_mean(high_volumes)
-
-        # Calculate volume standard deviation in each frequency band
-        low_std_volume = np.std(low_volumes)
-        mid_std_volume = np.std(mid_volumes)
-        high_std_volume = np.std(high_volumes)
-
-        # Calculate maximum and minimum pitches
-        max_pitch = get_second_highest(this_pitches)
-        min_pitch = np.min(this_pitches)
-
-        # Print debug info
-        
-        # print(f"Low mean volume: {low_mean_volume}")
-        # print(f"Mid mean volume: {mid_mean_volume}")
-        # print(f"High mean volume: {high_mean_volume}")
-        # print(f"Low std volume: {low_std_volume}")
-        # print(f"Mid std volume: {mid_std_volume}")
-        # print(f"Max pitch: {max_pitch}")
-        # print(f"Min pitch: {min_pitch}")
-        
-        # print(f"High std volume: {high_std_volume}")
-
-        # If the mid volume is higher than high volume, and high volume standard deviation is relatively low, then classify as 'Melancholic'
-        if mid_mean_volume > high_mean_volume and high_std_volume < 0.01 and min_pitch > 0 and max_pitch < 2000:
-            this_category = 1  # relaxed music
-            return this_category
-
-        # If low volume is significantly higher than mid and high volumes and the standard deviation of the low volumes is high, then classify as 'Techno'
-        elif (min_pitch == 0 and max_pitch > 4000) or (
-                low_mean_volume > mid_mean_volume * 3 and low_mean_volume > high_mean_volume * 3 and low_std_volume > mid_std_volume):
-            this_category = 2  # energetic music
-            return this_category
-
-        # If none of the above conditions are met, classify as 'Mixed'
-        else:
-            # this_category = 'Mixed'
-            return this_category
-    else:
-        return 0  # no audio
-    """
-
-
-# never used
-def get_pitch(audio_buffer, p_detection):
-    """
-    This function gets the audio data from the provided stream and uses the
-    provided pitch detection object to analyze the pitch of the audio.
-
-    Args:
-    stream : A PyAudio Stream object.
-    pDetection : An Aubio pitch detection object.
-
-    Returns:
-    pitch : Detected pitch in Hz.
-    """
-
-    # Convert the audio_buffer to an array
-    samples = np.fromstring(audio_buffer, dtype=aubio.float_type)
-    # Use the pitch detection object to get the pitch
-    pitch = p_detection(samples)[0]
-
-    return pitch
-
-
-# Initialize LUFS-loudness recognition NOT USED YET ;)
-# meter = Meter(sample_rate)
-
-# Initialize pitch detection
-# pDetection = aubio.pitch("default", buffer_size, hop_size, sample_rate)
-# pDetection.set_unit("Hz")
-# pDetection.set_tolerance(0.8)
-
 # Initialize Aubio beat detection
 # Methods: <default|energy|hfc|complex|phase|specdiff|kl|mkl|specflux>
 aubio_onset = aubio.onset("default", buffer_size, hop_size, sample_rate)
-
 
 # Initialize PyAudio
 p = pyaudio.PyAudio()
@@ -385,8 +253,7 @@ else:
     exit()
 
 
-def process_audio_buffer(line_in, buffer_size, volumes, low_volumes, mid_volumes, high_volumes, heavyvols, max_values,
-                         delta_values, last_counts, heaviness_values):
+def process_audio_buffer():
     """
     Processes the audio signal and returns relevant metrics.
 
@@ -401,7 +268,6 @@ def process_audio_buffer(line_in, buffer_size, volumes, low_volumes, mid_volumes
         Returns:
             dict: A dictionary with the calculated audio metrics.
     """
-
     # Design the audio filters
     thx_sos, thx_zi = design_filter(thx_band[0], thx_band[1], sample_rate)
     low_sos, low_zi = design_filter(low_band[0], low_band[1], sample_rate)
@@ -414,12 +280,12 @@ def process_audio_buffer(line_in, buffer_size, volumes, low_volumes, mid_volumes
     signal_input = np.frombuffer(this_audio_buffer, dtype=np.float32)
     signal_max = np.max(signal_input)
 
-    signal, gain_factor = adjust_gain(volumes, signal_input)
-
-    current_volume = np.sqrt(np.mean(signal ** 2))
+    current_volume = np.sqrt(np.mean(signal_input ** 2))
     volumes.append(current_volume)
 
-    mean_volume = np.mean(volumes)
+    mean_volume = safe_mean(volumes)
+
+    signal, gain_factor = adjust_gain(mean_volume, signal_input)
 
     relative_volume = 0 if mean_volume == 0 else current_volume / mean_volume
     relative_volume = min(1, max(0, relative_volume))
@@ -466,6 +332,7 @@ def process_audio_buffer(line_in, buffer_size, volumes, low_volumes, mid_volumes
         "high_mean": high_mean,
         "signal_max": signal_max,
         "relative_volume": relative_volume,
+        "mean_volume": mean_volume,
         "low_relative": low_relative,
         "energy": energy,
         "relative_energy": relative_energy,

@@ -4,11 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added .idea to gitignore">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="optimized code a bit">
+      <change beforePath="M:/.gitignore" beforeDir="false" afterPath="M:/.gitignore" afterDir="false" />
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
       <change beforePath="M:/aud_proc.py" beforeDir="false" afterPath="M:/aud_proc.py" afterDir="false" />
+      <change beforePath="M:/com_udp.py" beforeDir="false" afterPath="M:/com_udp.py" afterDir="false" />
       <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
-      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
+      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
+      <change beforePath="M:/scanner.py" beforeDir="false" afterPath="M:/scanner.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -110,22 +113,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00031" summary="added fastboot mode and panic mode, implemented UDP communication, color calculation, and other small things">
-      <option name="closed" value="true" />
-      <created>1693602163710</created>
-      <option name="number" value="00031" />
-      <option name="presentableId" value="LOCAL-00031" />
-      <option name="project" value="LOCAL" />
-      <updated>1693602163710</updated>
-    </task>
-    <task id="LOCAL-00032" summary="performance optimizations">
-      <option name="closed" value="true" />
-      <created>1693603444380</created>
-      <option name="number" value="00032" />
-      <option name="presentableId" value="LOCAL-00032" />
-      <option name="project" value="LOCAL" />
-      <updated>1693603444380</updated>
     </task>
     <task id="LOCAL-00033" summary="performance optimizations">
       <option name="closed" value="true" />
@@ -503,7 +490,23 @@
       <option name="project" value="LOCAL" />
       <updated>1712969514778</updated>
     </task>
-    <option name="localTasksCounter" value="80" />
+    <task id="LOCAL-00080" summary="optimized code a bit">
+      <option name="closed" value="true" />
+      <created>1712979219618</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
+      <option name="project" value="LOCAL" />
+      <updated>1712979219618</updated>
+    </task>
+    <task id="LOCAL-00081" summary="optimized code a bit">
+      <option name="closed" value="true" />
+      <created>1712979438806</created>
+      <option name="number" value="00081" />
+      <option name="presentableId" value="LOCAL-00081" />
+      <option name="project" value="LOCAL" />
+      <updated>1712979438806</updated>
+    </task>
+    <option name="localTasksCounter" value="82" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -518,7 +521,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added led back side" />
     <MESSAGE value="added more rolling led effect" />
     <MESSAGE value="found bug, added comment for later fix" />
     <MESSAGE value="added video playback feature" />
@@ -543,6 +545,7 @@
     <MESSAGE value="removed videos as they never worked good on the raspi 4" />
     <MESSAGE value="allocated Adafruit Neopixel completely to Arduinos in network via UDP" />
     <MESSAGE value="added .idea to gitignore" />
-    <option name="LAST_COMMIT_MESSAGE" value="added .idea to gitignore" />
+    <MESSAGE value="optimized code a bit" />
+    <option name="LAST_COMMIT_MESSAGE" value="optimized code a bit" />
   </component>
 </project>

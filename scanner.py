@@ -73,7 +73,6 @@ def scan_strobe(num, sec=None):
         set_dmx_value(address + 5, 20)
 
 
-
 def scan_axis(num, x, y):
     """
     Move the scanner to the given position.
@@ -109,6 +108,7 @@ def scan_axis(num, x, y):
     set_dmx_value(address + 1, x)
     set_dmx_value(address + 2, y)
     time.sleep(0.01)
+
 
 def scan_gobo(num, go, rotation):
     """

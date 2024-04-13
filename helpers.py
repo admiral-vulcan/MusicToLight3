@@ -20,9 +20,10 @@ import threading
 import time
 import ctypes
 from queue import Queue
+from collections import deque
 
-# Global list to store active scanner threads
-active_scan_threads = []
+# Global list to store active scanner threads, max 10
+active_scan_threads = deque(maxlen=10)
 
 # Global variable to store the current HDMI thread
 current_hdmi_thread = None
@@ -50,8 +51,8 @@ def calc_address(num):
     """
     return (num * 6) - 6
 
-
 def map_value(value, in_min, in_max, out_min, out_max):
+
     """
     Map a value from one range to another.
 
@@ -215,12 +216,6 @@ def generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, hig
     matrix = []
 
     # Werte unter 0,01 zu 0 ändern und auf 2 Nachkommastellen runden
-    def process_signal(signal):
-        return [0 if value < 0.01 else round(value, 2) for value in signal]
-
-    low_signal = process_signal(low_signal)
-    mid_signal = process_signal(mid_signal)
-    high_signal = process_signal(high_signal)
 
     # Für jedes Signal: reduziere auf 15 Werte und bestimme für jeden Wert, ob er über (1) oder unter (0) dem Mittelwert liegt.
     for signal, mean in [(low_signal, low_mean), (mid_signal, mid_mean), (high_signal, high_mean)]:
