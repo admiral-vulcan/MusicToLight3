@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: star chase and smoke never reached threshold drop_length">
-      <change beforePath="M:/aud_proc.py" beforeDir="false" afterPath="M:/aud_proc.py" afterDir="false" />
-      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: star chase sometimes didn't turn off video">
+      <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,14 +107,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00039" summary="deleted runtime counters">
-      <option name="closed" value="true" />
-      <created>1693946647708</created>
-      <option name="number" value="00039" />
-      <option name="presentableId" value="LOCAL-00039" />
-      <option name="project" value="LOCAL" />
-      <updated>1693946647708</updated>
     </task>
     <task id="LOCAL-00040" summary="added feature: settable colors">
       <option name="closed" value="true" />
@@ -502,7 +492,15 @@
       <option name="project" value="LOCAL" />
       <updated>1713029758500</updated>
     </task>
-    <option name="localTasksCounter" value="88" />
+    <task id="LOCAL-00088" summary="bugfix: star chase sometimes didn't turn off video">
+      <option name="closed" value="true" />
+      <created>1713030394535</created>
+      <option name="number" value="00088" />
+      <option name="presentableId" value="LOCAL-00088" />
+      <option name="project" value="LOCAL" />
+      <updated>1713030394536</updated>
+    </task>
+    <option name="localTasksCounter" value="89" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -517,7 +515,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added documentation" />
     <MESSAGE value="added laser_show, many bugfixes" />
     <MESSAGE value="added laser colors that are not supported" />
     <MESSAGE value="changed smoker switch to wireless 433 MHz signal" />
@@ -542,6 +539,7 @@
     <MESSAGE value="bugfix: matrix hang if low or no signal" />
     <MESSAGE value="bugfix: video showed last frame if it ended by itself" />
     <MESSAGE value="bugfix: star chase and smoke never reached threshold drop_length" />
-    <option name="LAST_COMMIT_MESSAGE" value="bugfix: star chase and smoke never reached threshold drop_length" />
+    <MESSAGE value="bugfix: star chase sometimes didn't turn off video" />
+    <option name="LAST_COMMIT_MESSAGE" value="bugfix: star chase sometimes didn't turn off video" />
   </component>
 </project>
