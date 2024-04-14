@@ -1,4 +1,4 @@
-# MusicToLight3  Copyright (C) 2023  Felix Rau.
+# MusicToLight3  Copyright (C) 2024  Felix Rau.
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -54,7 +54,7 @@ previous_heavy = True
 
 print("")
 print("\nProgram ended gracefully.\n")
-print("MusicToLight3  Copyright (C) 2023  Felix Rau")
+print("MusicToLight3  Copyright (C) 2024  Felix Rau")
 print("This program is licensed under the terms of the ")
 print("GNU General Public License version 3.")
 print("It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
@@ -71,7 +71,7 @@ if use_hdmi:
 
 if use_hdmi:
     hdmi_draw_centered_text(
-        "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\n"
+        "MusicToLight3  Copyright (C) 2024  Felix Rau\n\n\n"
         "This program is licensed under the terms of the \n"
         "GNU General Public License version 3.\n"
         "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\n"
@@ -223,10 +223,10 @@ try:
 
         """ Old Acoustic Calculations """
         # Dominant frequency analysis
-        dominant_freq = dominant_frequency(signal, sample_rate)
+        dominant_freq = dominant_frequency(signal)
         dominant_frequencies.append(dominant_freq)
         heaviness_history.append(heavy)
-        drop = detect_drop(mean_volume, heavy, dominant_frequencies, heaviness_history, drop_history)
+        drop = detect_drop(mean_volume, heavy)
         drop_history.append(drop)
 
         # Beat detection
@@ -424,7 +424,7 @@ except KeyboardInterrupt:
     # Display the license and copyright information on HDMI
     if use_hdmi:
         hdmi_draw_centered_text(
-            "MusicToLight3  Copyright (C) 2023  Felix Rau\n\n\n"
+            "MusicToLight3  Copyright (C) 2024  Felix Rau\n\n\n"
             "This program is licensed under the terms of the \n"
             "GNU General Public License version 3.\n"
             "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n"
@@ -435,7 +435,7 @@ except KeyboardInterrupt:
 
     # Print the license and copyright information to the console
     print("\nProgram ended gracefully.\n")
-    print("MusicToLight3  Copyright (C) 2023  Felix Rau")
+    print("MusicToLight3  Copyright (C) 2024  Felix Rau")
     print("This program is licensed under the terms of the ")
     print("GNU General Public License version 3.")
     print("It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
