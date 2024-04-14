@@ -444,4 +444,3 @@ def detect_drop(volume_mean, heavy, drop_length=40, rise_threshold=15, volume_ri
 
     # If all conditions are met, a drop is detected
     return True
-

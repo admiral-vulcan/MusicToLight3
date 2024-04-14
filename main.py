@@ -221,7 +221,7 @@ try:
         high_zi = audio_buffer['high_zi']
         thx_zi = audio_buffer['thx_zi']
 
-        """ Old Acoustic Calculations """
+        """ Acoustic Calculations """
         # Dominant frequency analysis
         dominant_freq = dominant_frequency(signal)
         dominant_frequencies.append(dominant_freq)
