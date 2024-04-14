@@ -217,7 +217,7 @@ def generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, hig
     # Prüfe, ob die Signale groß genug sind, um fortzufahren
     if any(len(signal) < 0.1 for signal in [low_signal, mid_signal, high_signal]):
         # Gebe eine leere Matrix zurück, wenn nicht genügend Daten vorhanden sind
-        return [[0]*9 for _ in range(15)]
+        return [[0] * 9 for _ in range(15)]
 
     matrix = []
 
@@ -441,3 +441,43 @@ def find_dominant_harmony_in_timeframe(queue, signal, sample_rate):
 
     # Put the result into the queue
     queue.put(dominant_harmony)
+
+
+def lin_lerp(a, b, t):
+    """
+    Performs a linear interpolation between two values a and b, based on the factor t.
+
+    Args:
+        a (int/float): The start value for the interpolation.
+        b (int/float): The end value for the interpolation.
+        t (float): A factor between 0 and 1 that determines the weight of b relative to a.
+
+    Returns:
+        int: The interpolated value between a and b.
+
+    Description:
+        The function computes the value at a specific point between a and b, linearly based on t.
+        When t is 0, the function returns a. When t is 1, it returns b. At t=0.5, it returns the average of a and b.
+    """
+    return int(a * (1 - t) + b * t)
+
+
+def exp_lerp(a, b, t, exponent=3):
+    """
+    Performs an exponential interpolation between two values a and b, based on the factor t.
+
+    Args:
+        a (int/float): The start value for the interpolation.
+        b (int/float): The end value for the interpolation.
+        t (float): A factor between 0 and 1 that determines the weight of b relative to a.
+        exponent (int): The exponent used to adjust the curve of the interpolation.
+
+    Returns:
+        int: The exponentially interpolated value between a and b.
+
+    Description:
+        The function computes the value at a specific point between a and b, exponentially based on t and an exponent.
+        The exponent controls the curvature of the interpolation. Higher values make the change more sudden towards the end.
+        This is useful for easing animations or transitions where linear interpolation does not provide the desired effect.
+    """
+    return int(a * ((1 - t) ** exponent) + b * (t ** exponent))

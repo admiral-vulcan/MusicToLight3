@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="changed year to 2024">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="rearranged code and optimized comments">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/aud_proc.py" beforeDir="false" afterPath="M:/aud_proc.py" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
+      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
+      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,22 +109,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00041" summary="added feature: dominant harmony based on Fast Fourier Transformation and Psycho acoustic weighting based on ISO 226:2003">
-      <option name="closed" value="true" />
-      <created>1694128012886</created>
-      <option name="number" value="00041" />
-      <option name="presentableId" value="LOCAL-00041" />
-      <option name="project" value="LOCAL" />
-      <updated>1694128012886</updated>
-    </task>
-    <task id="LOCAL-00042" summary="bugfix: user set smoke mode didn't switch eurolite-lamp to primary color">
-      <option name="closed" value="true" />
-      <created>1694866905344</created>
-      <option name="number" value="00042" />
-      <option name="presentableId" value="LOCAL-00042" />
-      <option name="project" value="LOCAL" />
-      <updated>1694866905344</updated>
     </task>
     <task id="LOCAL-00043" summary="bugfix: hdmi didn't take custom colors">
       <option name="closed" value="true" />
@@ -502,7 +486,23 @@
       <option name="project" value="LOCAL" />
       <updated>1713109064981</updated>
     </task>
-    <option name="localTasksCounter" value="90" />
+    <task id="LOCAL-00090" summary="rearanged code and optimized comments">
+      <option name="closed" value="true" />
+      <created>1713119749954</created>
+      <option name="number" value="00090" />
+      <option name="presentableId" value="LOCAL-00090" />
+      <option name="project" value="LOCAL" />
+      <updated>1713119749954</updated>
+    </task>
+    <task id="LOCAL-00091" summary="rearranged code and optimized comments">
+      <option name="closed" value="true" />
+      <created>1713119829583</created>
+      <option name="number" value="00091" />
+      <option name="presentableId" value="LOCAL-00091" />
+      <option name="project" value="LOCAL" />
+      <updated>1713119829583</updated>
+    </task>
+    <option name="localTasksCounter" value="92" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -517,8 +517,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added laser colors that are not supported" />
-    <MESSAGE value="changed smoker switch to wireless 433 MHz signal" />
     <MESSAGE value="bugfix: smoker wouldn't turn on automatically" />
     <MESSAGE value="made leds brighter and faster" />
     <MESSAGE value="set new dmx address" />
@@ -542,6 +540,8 @@
     <MESSAGE value="bugfix: star chase and smoke never reached threshold drop_length" />
     <MESSAGE value="bugfix: star chase sometimes didn't turn off video" />
     <MESSAGE value="changed year to 2024" />
-    <option name="LAST_COMMIT_MESSAGE" value="changed year to 2024" />
+    <MESSAGE value="rearanged code and optimized comments" />
+    <MESSAGE value="rearranged code and optimized comments" />
+    <option name="LAST_COMMIT_MESSAGE" value="rearranged code and optimized comments" />
   </component>
 </project>
