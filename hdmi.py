@@ -83,6 +83,8 @@ def adjust_color(color):
 def hdmi_draw_black():
     """Fill the screen with black color."""
     global screen
+    hdmi_video_stop(True)
+    time.sleep(0.005)
     screen.fill((0, 0, 0))
     pygame.display.flip()
 
@@ -263,7 +265,7 @@ def hdmi_video_start():
 
 @hdmi_in_thread
 def hdmi_play_video(video_directory):
-    global video_playing, video_list, video_position, video_start_time, current_video_file, last_switch_time, autoplay, wait_for_new_video
+    global screen, video_playing, video_list, video_position, video_start_time, current_video_file, last_switch_time, autoplay, wait_for_new_video
 
     if wait_for_new_video:
         return
@@ -291,8 +293,6 @@ def hdmi_play_video(video_directory):
         cap.release()
         return
 
-    height, width, _ = frame.shape
-    window = pygame.display.set_mode((width, height))
     clock = pygame.time.Clock()
     frame_rate = 25  # Ziel-Frame-Rate
 
@@ -318,7 +318,7 @@ def hdmi_play_video(video_directory):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame_surface = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
 
-        window.blit(frame_surface, (0, 0))
+        screen.blit(frame_surface, (0, 0))
         pygame.display.flip()
 
         for event in pygame.event.get():
