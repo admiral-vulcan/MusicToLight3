@@ -6,8 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="rearranged code and optimized comments">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
-      <change beforePath="M:/led_strip.py" beforeDir="false" afterPath="M:/led_strip.py" afterDir="false" />
+      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,14 +108,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00043" summary="bugfix: hdmi didn't take custom colors">
-      <option name="closed" value="true" />
-      <created>1694867904635</created>
-      <option name="number" value="00043" />
-      <option name="presentableId" value="LOCAL-00043" />
-      <option name="project" value="LOCAL" />
-      <updated>1694867904635</updated>
     </task>
     <task id="LOCAL-00044" summary="renamed theater chase to star chase">
       <option name="closed" value="true" />
@@ -502,7 +493,15 @@
       <option name="project" value="LOCAL" />
       <updated>1713119829583</updated>
     </task>
-    <option name="localTasksCounter" value="92" />
+    <task id="LOCAL-00092" summary="rearranged code and optimized comments">
+      <option name="closed" value="true" />
+      <created>1713122718548</created>
+      <option name="number" value="00092" />
+      <option name="presentableId" value="LOCAL-00092" />
+      <option name="project" value="LOCAL" />
+      <updated>1713122718549</updated>
+    </task>
+    <option name="localTasksCounter" value="93" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

@@ -25,7 +25,7 @@ from pygame.math import Vector2
 # Globale Variablen für den Video-Mode
 video_playing = False
 video_start_time = None
-minimum_video_duration = 3  # Mindestdauer in Sekunden
+minimum_video_duration = 6  # Mindestdauer in Sekunden
 video_list = []
 video_position = None
 current_video_file = None
