@@ -257,6 +257,7 @@ def terminate_thread(thread):
 
 
 def kill_current_hdmi():
+    # global current_hdmi_thread
     terminate_thread(current_hdmi_thread)
 
 

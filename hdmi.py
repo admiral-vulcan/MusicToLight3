@@ -24,7 +24,7 @@ from pygame.math import Vector2
 
 # Globale Variablen für den Video-Mode
 video_playing = False
-video_start_time = None
+video_start_time = 0.0
 minimum_video_duration = 6  # Mindestdauer in Sekunden
 video_list = []
 video_position = None
@@ -33,6 +33,8 @@ last_switch_time = None
 autoplay = False
 wait_for_new_video = False
 switch_interval = 5 * 60  # Intervall in Minuten, wann ein neues Video ausgewählt werden soll
+last_flip = 0
+video_stopped = 0
 
 
 def get_video_list(directory):
@@ -82,16 +84,17 @@ def adjust_color(color):
 
 def hdmi_draw_black():
     """Fill the screen with black color."""
-    global screen
+    global screen, last_flip
     hdmi_video_stop(True)
     time.sleep(0.005)
     screen.fill((0, 0, 0))
     pygame.display.flip()
+    last_flip = time.time()
 
 
 def hdmi_draw_centered_text(text):
     """Draw text centered on the screen."""
-    global screen, font
+    global screen, font, last_flip
 
     lines = text.split('\n')
     total_height = sum([font.size(line)[1] for line in lines])
@@ -103,6 +106,7 @@ def hdmi_draw_centered_text(text):
         screen.blit(text_surface, (center_x, start_y))
         start_y += font.size(line)[1]
     pygame.display.flip()
+    last_flip = time.time()
 
 
 text_cache = {}  # Dictionary to store pre-rendered text surfaces
@@ -112,7 +116,7 @@ text_cache = {}  # Dictionary to store pre-rendered text surfaces
 def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255)):
     """Draw a matrix of numbers with various colors and effects."""
     colors = [low, mid, top]
-    global screen, font, text_cache  # Access text cache
+    global screen, font, text_cache, last_flip
     if len(matrix) != 15 or any(len(row) != 9 for row in matrix):
         raise ValueError("Matrix must be 15x9.")
 
@@ -147,7 +151,7 @@ def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255)
 
 def hdmi_intro_animation():
     """Play a screen animation simulating a matrix bootup."""
-    global screen, font, zero_color
+    global screen, font, zero_color, last_flip
 
     n = 4  # frequency
     current_cycle = 0
@@ -190,6 +194,7 @@ def hdmi_intro_animation():
             draw_column(column, group)
 
             pygame.display.flip()
+            last_flip = time.time()
             pygame.time.wait(int(60 / n))
 
             current_cycle += 1
@@ -197,7 +202,7 @@ def hdmi_intro_animation():
 
 def hdmi_outro_animation():
     """Play a screen animation simulating a matrix shutdown."""
-    global screen, font, zero_color
+    global screen, font, zero_color, last_flip
 
     n = 4  # frequency
     current_cycle = 0
@@ -236,13 +241,14 @@ def hdmi_outro_animation():
                 draw_column(visible_column, group)
 
             pygame.display.flip()
+            last_flip = time.time()
             pygame.time.wait(int(100 / n))
 
             current_cycle += 1
 
 
 def hdmi_video_stop(now=False):
-    global video_playing, video_start_time, wait_for_new_video
+    global video_playing, video_start_time, wait_for_new_video, video_stopped
     wait_for_new_video = False
     current_time = time.time()
 
@@ -254,7 +260,16 @@ def hdmi_video_stop(now=False):
     else:
         # Die Mindestdauer ist erreicht, das Video kann gestoppt werden
         video_playing = False
-        video_start_time = None  # Setze die Startzeit zurück
+        video_stopped = time.time()
+        if time.time() - last_flip < 0.05:
+            # print("wait a bit for hmdi")
+            time.sleep(0.05)
+            video_playing = False
+        if time.time() - last_flip < 0.05:
+            # print("kill hmdi")
+            kill_current_hdmi()
+            time.sleep(0.05)
+
         return True  # Gib True zurück, um anzuzeigen, dass das Video gestoppt wurde
 
 
@@ -265,9 +280,10 @@ def hdmi_video_start():
 
 @hdmi_in_thread
 def hdmi_play_video(video_directory):
-    global screen, video_playing, video_list, video_position, video_start_time, current_video_file, last_switch_time, autoplay, wait_for_new_video
+    global screen, video_playing, video_list, video_position, video_start_time, current_video_file, last_switch_time, \
+        autoplay, wait_for_new_video, last_flip, video_stopped
 
-    if wait_for_new_video:
+    if wait_for_new_video or time.time() - video_stopped < 1.0:
         return
 
     video_playing = True
@@ -320,6 +336,7 @@ def hdmi_play_video(video_directory):
 
         screen.blit(frame_surface, (0, 0))
         pygame.display.flip()
+        last_flip = time.time()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

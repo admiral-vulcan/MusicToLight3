@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="min video time now 6 seconds">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: screen / windows was built twice and caused crashes">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
       <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
+      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -108,14 +109,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00045" summary="minor performance upgrades">
-      <option name="closed" value="true" />
-      <created>1694868737038</created>
-      <option name="number" value="00045" />
-      <option name="presentableId" value="LOCAL-00045" />
-      <option name="project" value="LOCAL" />
-      <updated>1694868737038</updated>
     </task>
     <task id="LOCAL-00046" summary="added dark mood if not beat and not drop for 500 loops">
       <option name="closed" value="true" />
@@ -501,7 +494,15 @@
       <option name="project" value="LOCAL" />
       <updated>1713373543859</updated>
     </task>
-    <option name="localTasksCounter" value="94" />
+    <task id="LOCAL-00094" summary="bugfix: screen / windows was built twice and caused crashes">
+      <option name="closed" value="true" />
+      <created>1713375761531</created>
+      <option name="number" value="00094" />
+      <option name="presentableId" value="LOCAL-00094" />
+      <option name="project" value="LOCAL" />
+      <updated>1713375761531</updated>
+    </task>
+    <option name="localTasksCounter" value="95" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -516,7 +517,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="made leds brighter and faster" />
     <MESSAGE value="set new dmx address" />
     <MESSAGE value="added smooth led dimming" />
     <MESSAGE value="deleted deprecated code" />
@@ -541,6 +541,7 @@
     <MESSAGE value="rearanged code and optimized comments" />
     <MESSAGE value="rearranged code and optimized comments" />
     <MESSAGE value="min video time now 6 seconds" />
-    <option name="LAST_COMMIT_MESSAGE" value="min video time now 6 seconds" />
+    <MESSAGE value="bugfix: screen / windows was built twice and caused crashes" />
+    <option name="LAST_COMMIT_MESSAGE" value="bugfix: screen / windows was built twice and caused crashes" />
   </component>
 </project>
