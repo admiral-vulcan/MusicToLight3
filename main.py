@@ -50,7 +50,7 @@ runtime_mb = 0
 
 no_drop_count = 0
 
-signal_noise = 0.0075
+signal_noise = 0.0076
 
 previous_heavy = True
 
@@ -329,6 +329,7 @@ try:
 
             # Handle light actions based on signal strength and history
             if signal_max > signal_noise:
+                # print(signal_max)
                 input_history.append(1.0)
 
                 if not heavy and (0 < sum(drop_history) < 32 and drop):
