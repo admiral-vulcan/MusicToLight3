@@ -50,6 +50,8 @@ runtime_mb = 0
 
 no_drop_count = 0
 
+signal_noise = 0.0075
+
 previous_heavy = True
 
 print("")
@@ -326,7 +328,7 @@ try:
                     hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
 
             # Handle light actions based on signal strength and history
-            if signal_max > 0.007:
+            if signal_max > signal_noise:
                 input_history.append(1.0)
 
                 if not heavy and (0 < sum(drop_history) < 32 and drop):
