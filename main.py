@@ -332,10 +332,9 @@ try:
                 # print(signal_max)
                 input_history.append(1.0)
 
-                if not heavy and (0 < sum(drop_history) < 32 and drop):
-                    # () or (0 < sum(drop_history) < 32 and drop)
+                if 0 < sum(drop_history) < 32 and drop:
                     led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
-                elif not heavy:
+                else:
                     led_color_flow(runtime_bit, signal_max, 20, st_color_name, nd_color_name)
                     no_drop_count += 1
                     if no_drop_count < 500:
