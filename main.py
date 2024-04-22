@@ -43,6 +43,8 @@ execution_counter = 0
 
 use_hdmi = True
 
+main_led_set = [None] * 3
+
 runtime_bit = 0
 runtime_byte = 0
 runtime_kb = 0
@@ -86,8 +88,6 @@ else:
     scan_reset(1)
     scan_reset(2)
 
-    # if use_hdmi:
-        # hdmi_intro_animation()
 
 print("        Listening... Press Ctrl+C to stop.")
 print("")
@@ -134,8 +134,8 @@ try:
             led_set_all_pixels_color(0, 0, 0)
             set_eurolite_t36(5, 0, 0, 0, 255, 0)
             send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
-            if use_hdmi:
-                hdmi_intro_animation()
+            # if use_hdmi:
+                # hdmi_intro_animation()
             scan_opened(1)
             scan_opened(2)
 
@@ -163,14 +163,16 @@ try:
             # Unnecessary line as turning off lights is handled above, consider removal
             if use_hdmi:
                 hdmi_draw_black()  # Consider removal
-            while strobe_mode == 'on':
+            while strobe_mode == 'on' and panic_mode != 'on':
+                send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
                 if use_hdmi:
                     hdmi_video_stop()
                 led_strobe_effect(1, 75)
                 strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
+                panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
             # Restore default display after strobing
-            if use_hdmi:
-                hdmi_intro_animation()
+            # if use_hdmi:
+                # hdmi_intro_animation()
             scan_opened(1)
             scan_opened(2)
 
@@ -241,6 +243,7 @@ try:
             if smoke_mode != 'on':
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
             laser_off()
+            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
             if use_hdmi:
                 kill_current_hdmi()
             scan_closed(1)
@@ -249,8 +252,8 @@ try:
                 hdmi_video_stop()
                 hdmi_draw_black()
             led_strobe_effect(10, 75)
-            if use_hdmi:
-                hdmi_intro_animation()
+            # if use_hdmi:
+                # hdmi_intro_animation()
             done_chase.clear()
 
         # Color transformations based on signal energy
@@ -271,8 +274,9 @@ try:
         # send to Arduino
         udp_led = int(y / 8.5)  # for 30 LEDs
         # num_led, brightness, startR, startG, startB, endR, endG, endB
-        udp_message = f"led_{udp_led}_255_{st_r}_{st_g}_{st_b}_{nd_r}_{nd_g}_{nd_b}"
-        send_udp_message(UDP_IP_ADDRESS, UDP_PORT, udp_message)
+        if udp_led > 0:
+            udp_message = f"led_{udp_led}_255_{st_r}_{st_g}_{st_b}_{nd_r}_{nd_g}_{nd_b}"
+            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, udp_message)
         # Handle actions for heavy signal
 
         if heavy:
@@ -281,6 +285,8 @@ try:
             laser_fast_dance(x, y, nd_color_name)
             no_drop_count = 0
             led_music_visualizer(low_relative, st_color_name, nd_color_name)
+            # main_led_set = low_relative, st_color_name, nd_color_name
+            # print("setting main LED")
             scan_opened(1)
             scan_opened(2)
             scan_in_thread(scan_axis, (1, y, x))  # Front scanner
@@ -331,17 +337,19 @@ try:
             if signal_max > signal_noise:
                 # print(signal_max)
                 input_history.append(1.0)
-
                 if 0 < sum(drop_history) < 32 and drop:
-                    led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
+                    # led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
+                    no_drop_count = no_drop_count
+
                 else:
-                    led_color_flow(runtime_bit, signal_max, 20, st_color_name, nd_color_name)
+                    # led_color_flow(runtime_bit, signal_max, 20, st_color_name, nd_color_name)
                     no_drop_count += 1
+                    # led_music_visualizer(0, st_color_name, nd_color_name)
                     if no_drop_count < 500:
                         scan_closed(1)
                         scan_closed(2)
-                    else:
-                        led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
+                    # else:
+                        # led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
 
                 # Manage animations and lights for persistent drops
                 if sum(drop_history) >= 32 and drop:
@@ -355,6 +363,7 @@ try:
                             hdmi_video_stop(True)
                             hdmi_draw_black()
                         laser_off()
+                        send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
                         if smoke_mode == 'auto':
@@ -370,6 +379,8 @@ try:
 
                     send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_off")
                     done_chase.append(1)
+                else:
+                    led_music_visualizer(0, st_color_name, nd_color_name)
             else:
                 input_history.append(0.0)
 
@@ -383,6 +394,7 @@ try:
                     # pitches.clear()
                     drop_history.clear()
                     heaviness_history.clear()
+                    send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
                     led_color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
 
         if profiling:
@@ -404,6 +416,7 @@ try:
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
     laser_off()
+    send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
     led_set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     # Cleanup functions to ensure a safe shutdown
     if use_hdmi:

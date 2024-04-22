@@ -21,6 +21,7 @@ import numpy as np
 from com_udp import *
 from helpers import *
 from eurolite_t36 import *
+from gui import *
 import socket
 import time
 
@@ -359,13 +360,14 @@ def led_strobe_effect(duration_seconds, frequency_ms):
     """
     global strip
 
+    panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
     end_time = time.time() + duration_seconds
     # Turn off all LEDs initially
     for i in range(strip.numPixels()):
         strip.setPixelColor(i, Color(0, 0, 0))
     strip.show()
 
-    while time.time() < end_time:
+    while time.time() < end_time and panic_mode != 'on':
         # Turn all LEDs to white
         for i in range(strip.numPixels()):
             strip.setPixelColor(i, Color(220, 220, 255))  # Slightly off-white color
@@ -381,6 +383,7 @@ def led_strobe_effect(duration_seconds, frequency_ms):
 
         # Pause for half the frequency duration
         time.sleep(frequency_ms / 1000.0)
+        panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
 
 
 def adjust_brightness(color, factor):
