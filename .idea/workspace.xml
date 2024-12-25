@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added spectrum analyser as led2, changed resolution to 720p, changed signal noise threshold">
-      <change beforePath="M:/.gitignore" beforeDir="false" afterPath="M:/.gitignore" afterDir="false" />
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added colors...">
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/gui.py" beforeDir="false" afterPath="M:/gui.py" afterDir="false" />
       <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -119,22 +117,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00052" summary="added video playback feature">
-      <option name="closed" value="true" />
-      <created>1699112356298</created>
-      <option name="number" value="00052" />
-      <option name="presentableId" value="LOCAL-00052" />
-      <option name="project" value="LOCAL" />
-      <updated>1699112356299</updated>
-    </task>
-    <task id="LOCAL-00053" summary="performance upgrade">
-      <option name="closed" value="true" />
-      <created>1701277353645</created>
-      <option name="number" value="00053" />
-      <option name="presentableId" value="LOCAL-00053" />
-      <option name="project" value="LOCAL" />
-      <updated>1701277353645</updated>
     </task>
     <task id="LOCAL-00054" summary="anti-stress-check in hdmi_in_threads decorator: the function shall not execute more often than once every 0.2 seconds">
       <option name="closed" value="true" />
@@ -512,7 +494,23 @@
       <option name="project" value="LOCAL" />
       <updated>1735160457429</updated>
     </task>
-    <option name="localTasksCounter" value="101" />
+    <task id="LOCAL-00101" summary="added chill mode and color choice">
+      <option name="closed" value="true" />
+      <created>1735167882740</created>
+      <option name="number" value="00101" />
+      <option name="presentableId" value="LOCAL-00101" />
+      <option name="project" value="LOCAL" />
+      <updated>1735167882740</updated>
+    </task>
+    <task id="LOCAL-00102" summary="added colors...">
+      <option name="closed" value="true" />
+      <created>1735169322237</created>
+      <option name="number" value="00102" />
+      <option name="presentableId" value="LOCAL-00102" />
+      <option name="project" value="LOCAL" />
+      <updated>1735169322237</updated>
+    </task>
+    <option name="localTasksCounter" value="103" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -527,8 +525,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="bugfix: smoke erratic behaviour" />
-    <MESSAGE value="added threading to led function: color_flow" />
     <MESSAGE value="bug searching: still smoke erratic behaviour" />
     <MESSAGE value="bugfix: now sending smoker signal via UDP" />
     <MESSAGE value="tidied up the code a bit" />
@@ -552,6 +548,8 @@
     <MESSAGE value="bugfix: noise gate was too low &amp; code optimization" />
     <MESSAGE value="bugfix: panic-mode didn't stop strobe and change in led-stripe behaviour" />
     <MESSAGE value="added spectrum analyser as led2, changed resolution to 720p, changed signal noise threshold" />
-    <option name="LAST_COMMIT_MESSAGE" value="added spectrum analyser as led2, changed resolution to 720p, changed signal noise threshold" />
+    <MESSAGE value="added chill mode and color choice" />
+    <MESSAGE value="added colors..." />
+    <option name="LAST_COMMIT_MESSAGE" value="added colors..." />
   </component>
 </project>

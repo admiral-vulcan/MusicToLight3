@@ -359,6 +359,10 @@ try:
             send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, udp_message)
         # Handle actions for heavy signal
 
+        if chill_mode == 'on':
+            # led_music_visualizer(low_relative, st_color_name, nd_color_name)
+            led_color_flow(runtime_bit, signal_max, 3, st_color_name, nd_color_name)
+
         if heavy and chill_mode != 'on':
             sentSpectrumAnalyzerOff = False
             if use_hdmi:
@@ -419,7 +423,8 @@ try:
                 send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
                 send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
                 send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
-                led_set_all_pixels_color(0, 0, 0)
+                if chill_mode != 'on':
+                    led_set_all_pixels_color(0, 0, 0)
                 sentSpectrumAnalyzerOff = True
 
             scan_go_home(1)
@@ -515,7 +520,8 @@ try:
                     send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "smoke_off")
                     done_chase.append(1)
                 else:
-                    led_music_visualizer(0, st_color_name, nd_color_name)
+                    if chill_mode != 'on':
+                        led_music_visualizer(0, st_color_name, nd_color_name)
             else:
                 input_history.append(0.0)
 
@@ -537,7 +543,8 @@ try:
                     drop_history.clear()
                     heaviness_history.clear()
                     send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
-                    led_color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
+                    if chill_mode != 'on':
+                        led_color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
 
 
         if profiling:
