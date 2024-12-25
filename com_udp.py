@@ -14,6 +14,7 @@
 
 import socket
 import threading
+import struct
 from functools import wraps
 
 # Wörterbuch, das Locks für jede IP-Adresse speichert
@@ -21,7 +22,8 @@ ip_locks = {}
 
 # Data of secondary LED strip and smoker:
 UDP_LED_COUNT = 45
-UDP_IP_ADDRESS = "192.168.1.152"  # musictolight-led1
+UDP_IP_ADDRESS_LED1 = "192.168.1.152"  # musictolight-led1 (Beamer)
+UDP_IP_ADDRESS_LED2 = "192.168.1.154"  # musictolight-led2 (SpectrumAnalyzer)
 UDP_PORT = 4210
 
 
@@ -59,3 +61,21 @@ def send_udp_message_prepare(ip_address, port, message):
 def send_udp_message(ip_address, port, message):
     thread = threading.Thread(target=send_udp_message_prepare, args=(ip_address, port, message))
     thread.start()
+
+
+def send_spectrum_analyzer_data(ip_address, mode, intensity, color_start, color_end, num_leds_list):
+    # Stelle sicher, dass num_leds_list genau 12 Werte enthält
+    if len(num_leds_list) != 12:
+        raise ValueError("num_leds_list muss 12 Werte enthalten.")
+
+    # Erstellen des Datenpakets
+    # Verwende 'B' für einen einzelnen Byte-Wert und '12B' für die 12 Byte-Werte der num_leds_list
+    message = struct.pack('BBBB12B', mode, intensity, color_start, color_end, *num_leds_list)
+
+    # Debug-Ausgabe, um zu sehen, wie das Paket aussieht
+    # print("Gesendetes Paket: ", list(message))
+
+    # Senden des UDP-Pakets
+    send_udp_message(ip_address, UDP_PORT, message)
+
+

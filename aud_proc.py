@@ -307,8 +307,8 @@ def is_heavy(this_signal, count_over, heavy_counter):
     # Determine if the signal is 'heavy' by checking the maximum absolute signal value,
     # frequency of conditions being met, and a threshold from delta_values
     this_is_heavy = (np.max(np.abs(this_signal)) > 0.05 and
-                (count_over > 3 or heavy_counter > 0) and
-                np.max(delta_values) > 0.3)
+                     (count_over > 3 or heavy_counter > 0) and
+                     np.max(delta_values) > 0.3)
     return this_is_heavy, heavy_counter
 
 
@@ -444,3 +444,79 @@ def detect_drop(volume_mean, heavy, drop_length=40, rise_threshold=15, volume_ri
 
     # If all conditions are met, a drop is detected
     return True
+
+
+def calculate_band_intensities(signal, sample_rate=44100, buffer_size=128):
+    signal = signal[:buffer_size]  # Nur die ersten buffer_size Samples verwenden
+    fft_result = np.fft.rfft(signal)
+    fft_magnitude = np.abs(fft_result)
+    freqs = np.fft.rfftfreq(len(signal), 1 / sample_rate)
+
+    # Definiere 12 Frequenzbänder (Beispielhaft)
+    bands = [0, 300, 600, 1000, 1500, 2000, 3000, 4000, 5000, 8000, 12000, 16000, 20000]
+    band_indices = [np.where((freqs >= bands[i]) & (freqs < bands[i + 1]))[0] for i in range(len(bands) - 1)]
+
+    band_intensities = [np.sqrt(np.mean(fft_magnitude[indices] ** 2)) for indices in band_indices]
+    return band_intensities
+
+
+class BandScaler:
+    def __init__(self, num_bands=12, base_history_length=400, min_scale=0.02, max_scale=2,
+                 fast_adjust_threshold=0.5, slow_adjust_threshold=0.2):
+        self.num_bands = num_bands
+        self.base_history_length = base_history_length  # Grundwert für die History-Länge
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+        self.fast_adjust_threshold = fast_adjust_threshold  # Ab dieser Lautstärke passt sich die History schneller an
+        self.slow_adjust_threshold = slow_adjust_threshold  # Unter dieser Lautstärke passt sich die History langsamer an
+
+        # Initialisiere eine Liste von Deques, um die historischen Daten für jedes Band zu speichern
+        self.band_histories = [deque(maxlen=base_history_length) for _ in range(num_bands)]
+
+    def update_and_scale(self, band_intensities):
+        scaled_intensities = []
+
+        for i in range(self.num_bands):
+            # Füge die aktuelle Intensität zur Historie des Bands hinzu
+            current_intensity = band_intensities[i]
+
+            # Dynamisch die History-Länge anpassen, basierend auf der Lautstärke
+            if current_intensity > self.fast_adjust_threshold:
+                # Laute Töne -> kürzere History
+                new_history_length = int(self.base_history_length / 2)  # Halbierung der History-Länge bei lauten Tönen
+            elif current_intensity < self.slow_adjust_threshold:
+                # Leise Töne -> längere History
+                new_history_length = int(
+                    self.base_history_length * 1.5)  # Verlängerung der History-Länge bei leisen Tönen
+            else:
+                # Normalfall -> Basis-History-Länge
+                new_history_length = self.base_history_length
+
+            # Stelle sicher, dass die Deque die angepasste Länge hat
+            self.band_histories[i] = deque(self.band_histories[i], maxlen=new_history_length)
+            self.band_histories[i].append(current_intensity)
+
+            # Berechne den Durchschnitt der Historie für das Band
+            avg_intensity = np.mean(self.band_histories[i])
+
+            # Berechne den Skalierungsfaktor für das Band
+            scale_factor = np.clip(1 / (avg_intensity + 1e-6), self.min_scale, self.max_scale)
+
+            # Skaliere die aktuelle Intensität basierend auf dem Skalierungsfaktor
+            scaled_intensity = current_intensity * scale_factor
+            scaled_intensities.append(scaled_intensity)
+
+        return scaled_intensities
+
+
+band_scaler = BandScaler()
+
+
+def process_audio_and_scale(signal):
+    # Berechne die Bandintensitäten
+    band_intensities = calculate_band_intensities(signal)
+
+    # Skaliere die Bandintensitäten dynamisch
+    scaled_intensities = band_scaler.update_and_scale(band_intensities)
+
+    return scaled_intensities

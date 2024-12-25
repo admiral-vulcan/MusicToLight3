@@ -4,10 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: screen / windows was built twice and caused crashes">
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: panic-mode didn't stop strobe and change in led-stripe behaviour">
+      <change beforePath="M:/.idea/misc.xml" beforeDir="false" afterPath="M:/.idea/misc.xml" afterDir="false" />
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="M:/aud_proc.py" beforeDir="false" afterPath="M:/aud_proc.py" afterDir="false" />
+      <change beforePath="M:/com_udp.py" beforeDir="false" afterPath="M:/com_udp.py" afterDir="false" />
       <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
       <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
+      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,14 +34,15 @@
     &quot;assignee&quot;: &quot;admiral-vulcan&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">
-    <option name="selectedUrlAndAccountId">
-      <UrlAndAccount>
-        <option name="accountId" value="63daccbf-549a-47dd-8239-0ac4a908ff91" />
-        <option name="url" value="https://github.com/admiral-vulcan/MusicToLight3.git" />
-      </UrlAndAccount>
-    </option>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="63daccbf-549a-47dd-8239-0ac4a908ff91" />
   </component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/admiral-vulcan/MusicToLight3.git&quot;,
+    &quot;accountId&quot;: &quot;63daccbf-549a-47dd-8239-0ac4a908ff91&quot;
+  }
+}</component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -60,8 +65,8 @@
     &quot;ToolWindowPython Packages.ShowToolbar&quot;: &quot;false&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Python311&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+    &quot;last_opened_file_path&quot;: &quot;M:/&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;
   }
 }</component>
   <component name="PyConsoleOptionsProvider">
@@ -81,6 +86,7 @@
   <component name="RunManager">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="M" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -101,6 +107,13 @@
       <method v="2" />
     </configuration>
   </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-6a3326d57233-c546a90a8094-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.24807.21" />
+      </set>
+    </attachedChunks>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -109,46 +122,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00046" summary="added dark mood if not beat and not drop for 500 loops">
-      <option name="closed" value="true" />
-      <created>1694881972036</created>
-      <option name="number" value="00046" />
-      <option name="presentableId" value="LOCAL-00046" />
-      <option name="project" value="LOCAL" />
-      <updated>1694881972036</updated>
-    </task>
-    <task id="LOCAL-00047" summary="bugfix: hdmi colors mixed up">
-      <option name="closed" value="true" />
-      <created>1694978280411</created>
-      <option name="number" value="00047" />
-      <option name="presentableId" value="LOCAL-00047" />
-      <option name="project" value="LOCAL" />
-      <updated>1694978280411</updated>
-    </task>
-    <task id="LOCAL-00048" summary="changed the led algo completely">
-      <option name="closed" value="true" />
-      <created>1694984772948</created>
-      <option name="number" value="00048" />
-      <option name="presentableId" value="LOCAL-00048" />
-      <option name="project" value="LOCAL" />
-      <updated>1694984772948</updated>
-    </task>
-    <task id="LOCAL-00049" summary="added led back side">
-      <option name="closed" value="true" />
-      <created>1694996273895</created>
-      <option name="number" value="00049" />
-      <option name="presentableId" value="LOCAL-00049" />
-      <option name="project" value="LOCAL" />
-      <updated>1694996273895</updated>
-    </task>
-    <task id="LOCAL-00050" summary="added more rolling led effect">
-      <option name="closed" value="true" />
-      <created>1696809772977</created>
-      <option name="number" value="00050" />
-      <option name="presentableId" value="LOCAL-00050" />
-      <option name="project" value="LOCAL" />
-      <updated>1696809772977</updated>
     </task>
     <task id="LOCAL-00051" summary="found bug, added comment for later fix">
       <option name="closed" value="true" />
@@ -502,7 +475,47 @@
       <option name="project" value="LOCAL" />
       <updated>1713375761531</updated>
     </task>
-    <option name="localTasksCounter" value="95" />
+    <task id="LOCAL-00095" summary="bugfix: video didn't go out on star chase">
+      <option name="closed" value="true" />
+      <created>1713437816105</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
+      <option name="project" value="LOCAL" />
+      <updated>1713437816105</updated>
+    </task>
+    <task id="LOCAL-00096" summary="bugfix: noise gate was too low">
+      <option name="closed" value="true" />
+      <created>1713733604766</created>
+      <option name="number" value="00096" />
+      <option name="presentableId" value="LOCAL-00096" />
+      <option name="project" value="LOCAL" />
+      <updated>1713733604766</updated>
+    </task>
+    <task id="LOCAL-00097" summary="bugfix: noise gate was too low">
+      <option name="closed" value="true" />
+      <created>1713734448486</created>
+      <option name="number" value="00097" />
+      <option name="presentableId" value="LOCAL-00097" />
+      <option name="project" value="LOCAL" />
+      <updated>1713734448486</updated>
+    </task>
+    <task id="LOCAL-00098" summary="bugfix: noise gate was too low &amp; code optimization">
+      <option name="closed" value="true" />
+      <created>1713734748033</created>
+      <option name="number" value="00098" />
+      <option name="presentableId" value="LOCAL-00098" />
+      <option name="project" value="LOCAL" />
+      <updated>1713734748033</updated>
+    </task>
+    <task id="LOCAL-00099" summary="bugfix: panic-mode didn't stop strobe and change in led-stripe behaviour">
+      <option name="closed" value="true" />
+      <created>1713815443959</created>
+      <option name="number" value="00099" />
+      <option name="presentableId" value="LOCAL-00099" />
+      <option name="project" value="LOCAL" />
+      <updated>1713815443959</updated>
+    </task>
+    <option name="localTasksCounter" value="100" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -517,10 +530,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="set new dmx address" />
-    <MESSAGE value="added smooth led dimming" />
-    <MESSAGE value="deleted deprecated code" />
-    <MESSAGE value="optimized led refresh" />
     <MESSAGE value="bugfix: laser chase was longer then led chase" />
     <MESSAGE value="bugfix: smoke erratic behaviour" />
     <MESSAGE value="added threading to led function: color_flow" />
@@ -542,6 +551,10 @@
     <MESSAGE value="rearranged code and optimized comments" />
     <MESSAGE value="min video time now 6 seconds" />
     <MESSAGE value="bugfix: screen / windows was built twice and caused crashes" />
-    <option name="LAST_COMMIT_MESSAGE" value="bugfix: screen / windows was built twice and caused crashes" />
+    <MESSAGE value="bugfix: video didn't go out on star chase" />
+    <MESSAGE value="bugfix: noise gate was too low" />
+    <MESSAGE value="bugfix: noise gate was too low &amp; code optimization" />
+    <MESSAGE value="bugfix: panic-mode didn't stop strobe and change in led-stripe behaviour" />
+    <option name="LAST_COMMIT_MESSAGE" value="bugfix: panic-mode didn't stop strobe and change in led-stripe behaviour" />
   </component>
 </project>

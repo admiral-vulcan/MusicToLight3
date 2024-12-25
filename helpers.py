@@ -302,6 +302,20 @@ def interpret_color(color):
     return closest_color
 
 
+def translate_color(color):
+    color_mapping = {
+        "red": 1,
+        "green": 2,
+        "blue": 3,
+        "yellow": 4,
+        "purple": 5,
+        "cyan": 6,
+        "white": 7,
+        "orange": 8
+    }
+    return color_mapping.get(color.lower(), None)
+
+
 def laser_color_to_int(color):
     """
     Convert a color string to an integer value based on a predefined table.

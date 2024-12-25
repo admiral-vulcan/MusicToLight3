@@ -52,9 +52,10 @@ runtime_mb = 0
 
 no_drop_count = 0
 
-signal_noise = 0.0076
+signal_noise = 0.009
 
 previous_heavy = True
+sentSpectrumAnalyzerOff = False
 
 print("")
 print("\nProgram ended gracefully.\n")
@@ -69,7 +70,16 @@ print("        Initializing devices.")
 print("")
 
 # initialise devices
+
+# spectrum analyzer all off
+mode = 0
+intensity = 255
+color_start = 7
+color_end = 7
+num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
 led_set_all_pixels_color(0, 0, 0)
+
 if use_hdmi:
     init_hdmi()
 
@@ -87,7 +97,6 @@ if args.fastboot:
 else:
     scan_reset(1)
     scan_reset(2)
-
 
 print("        Listening... Press Ctrl+C to stop.")
 print("")
@@ -108,6 +117,14 @@ try:
             profiler = cProfile.Profile()
             profiler.enable()
 
+        # mode = 2  # Spectrum Analyzer mode
+        # intensity = 128  # Mittelstarke Helligkeit
+        # color_start = 3  # Blau
+        # color_end = 1  # Rot
+        # num_leds_list = [random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25)]
+
+        # send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+
         commands = get_gui_commands()
         strobe_mode = commands['strobe_mode']
         smoke_mode = commands['smoke_mode']
@@ -116,6 +133,14 @@ try:
 
         # Handle panic mode
         if panic_mode == 'on':
+            # spectrim analyser all on white
+            mode = 1
+            intensity = 255
+            color_start = 7
+            color_end = 7
+            num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+
             # Turn on led strip, eurolite (floor) set on all white
             led_set_all_pixels_color(255, 255, 255)
             set_eurolite_t36(5, 255, 255, 255, 255, 0)
@@ -128,24 +153,39 @@ try:
             while panic_mode == 'on':
                 # Refresh state of panic mode
                 panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
-                send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_45_255_255_255_255_255_255_255")
+                send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_45_255_255_255_255_255_255_255")
+                # spectrim analyser all on white
+                mode = 1
+                intensity = 255
+                color_start = 7
+                color_end = 7
+                num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
                 time.sleep(0.105)
             # Restore default display after panicking
             led_set_all_pixels_color(0, 0, 0)
             set_eurolite_t36(5, 0, 0, 0, 255, 0)
-            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+            send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+            # spectrim analyser all off
+            mode = 0
+            intensity = 255
+            color_start = 7
+            color_end = 7
+            num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+
             # if use_hdmi:
-                # hdmi_intro_animation()
+            # hdmi_intro_animation()
             scan_opened(1)
             scan_opened(2)
 
         # Handle smoke mode
         if smoke_mode == 'on':
             set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
-            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_on")
+            send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "smoke_on")
             # set_eurolite_t36(5, 0, 0, 0, 255, 0)
         else:
-            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_off")
+            send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "smoke_off")
 
         # Handle strobe mode when explicitly set to "on"
         if strobe_mode == 'on':
@@ -156,7 +196,18 @@ try:
             # Prepare for strobing by turning off other lights
             scan_closed(1)
             scan_closed(2)
-            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+            send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+
+            # spectrum analyzer all off (send twice)
+            mode = 0
+            intensity = 255
+            color_start = 7
+            color_end = 7
+            num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+            send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+            led_set_all_pixels_color(0, 0, 0)
+
             laser_off()
             if smoke_mode != 'on':
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
@@ -164,7 +215,8 @@ try:
             if use_hdmi:
                 hdmi_draw_black()  # Consider removal
             while strobe_mode == 'on' and panic_mode != 'on':
-                send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+                send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+
                 if use_hdmi:
                     hdmi_video_stop()
                 led_strobe_effect(1, 75)
@@ -172,7 +224,7 @@ try:
                 panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
             # Restore default display after strobing
             # if use_hdmi:
-                # hdmi_intro_animation()
+            # hdmi_intro_animation()
             scan_opened(1)
             scan_opened(2)
 
@@ -243,7 +295,18 @@ try:
             if smoke_mode != 'on':
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
             laser_off()
-            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+
+            # spectrum analyzer all off (send twice)
+            mode = 0
+            intensity = 255
+            color_start = 7
+            color_end = 7
+            num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+            send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+            led_set_all_pixels_color(0, 0, 0)
+
+            send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
             if use_hdmi:
                 kill_current_hdmi()
             scan_closed(1)
@@ -253,7 +316,7 @@ try:
                 hdmi_draw_black()
             led_strobe_effect(10, 75)
             # if use_hdmi:
-                # hdmi_intro_animation()
+            # hdmi_intro_animation()
             done_chase.clear()
 
         # Color transformations based on signal energy
@@ -267,6 +330,8 @@ try:
         scan_gobo(2, 7, 150)  # same as above
         scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
         scan_in_thread(scan_color, (2, interpret_color(secondary_color)))
+        color_number_first = translate_color(st_color_name)
+        color_number_second = translate_color(nd_color_name)
 
         if smoke_mode != 'on':
             set_eurolite_t36(5, x * nd_r / 255, x * nd_g / 255, x * nd_b / 255, 255, 0)  # TODO color calculation
@@ -276,15 +341,34 @@ try:
         # num_led, brightness, startR, startG, startB, endR, endG, endB
         if udp_led > 0:
             udp_message = f"led_{udp_led}_255_{st_r}_{st_g}_{st_b}_{nd_r}_{nd_g}_{nd_b}"
-            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, udp_message)
+            send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, udp_message)
         # Handle actions for heavy signal
 
         if heavy:
+            sentSpectrumAnalyzerOff = False
             if use_hdmi:
                 hdmi_video_stop()
             laser_fast_dance(x, y, nd_color_name)
             no_drop_count = 0
             led_music_visualizer(low_relative, st_color_name, nd_color_name)
+            # band_intensities = calculate_band_intensities(signal)
+            dynamic_intensities = process_audio_and_scale(signal)
+            mode = 2  # Spectrum Analyzer mode
+
+            intensity_byte = int(relative_energy * 1000)
+            if intensity_byte > 255:
+                intensity_byte = 255
+            elif intensity_byte < 3:
+                intensity_byte = 3
+
+            intensity = intensity_byte
+            color_start = color_number_first  # Blau
+            color_end = color_number_second  # Rot
+            # print("Band Intensities:", band_intensities)
+            num_leds_list = [int(np.clip(intensity * 25, 1, 25)) for intensity in dynamic_intensities]
+            #  num_leds_list = [random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25), random.randrange(1, 25)]
+            send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+
             # main_led_set = low_relative, st_color_name, nd_color_name
             # print("setting main LED")
             scan_opened(1)
@@ -310,16 +394,33 @@ try:
                 hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
 
         else:
+            if not sentSpectrumAnalyzerOff:
+                # spectrum analyzer all off (send 3 times)
+                mode = 0
+                intensity = 255
+                color_start = 7
+                color_end = 7
+                num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+                send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+                send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+                led_set_all_pixels_color(0, 0, 0)
+                sentSpectrumAnalyzerOff = True
+
             scan_go_home(1)
             scan_go_home(2)
             laser_slow_dance()
+            # band_intensities = calculate_band_intensities(signal)
+            dynamic_intensities = process_audio_and_scale(signal)
+
             if use_hdmi:
                 if play_videos == "auto":
                     video_path = "/musictolight/vids/"
                     hdmi_play_video(video_path)
                     if not is_video_playing():
                         # Generate visualization matrix based on signal
-                        hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean)
+                        hdmi_matrix = generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean,
+                                                      high_mean)
                         transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
 
                         # Update HDMI display with computed matrix
@@ -336,6 +437,15 @@ try:
             # Handle light actions based on signal strength and history
             if signal_max > signal_noise:
                 # print(signal_max)
+                mode = 2  # Spectrum Analyzer mode
+
+                intensity = 3
+                color_start = color_number_first  # Blau
+                color_end = color_number_second  # Rot
+                # print("Band Intensities:", band_intensities)
+                num_leds_list = [int(np.clip(intensity * 25, 1, 25)) for intensity in dynamic_intensities]
+                send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+
                 input_history.append(1.0)
                 if 0 < sum(drop_history) < 32 and drop:
                     # led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
@@ -349,12 +459,22 @@ try:
                         scan_closed(1)
                         scan_closed(2)
                     # else:
-                        # led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
+                    # led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
 
                 # Manage animations and lights for persistent drops
                 if sum(drop_history) >= 32 and drop:
                     heaviness_history.clear()
                     if 1 not in done_chase:
+
+                        # spectrum analyzer snowfall
+                        mode = 3
+                        intensity = 255
+                        color_start = 7
+                        color_end = 7
+                        num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end,
+                                                    num_leds_list)
+                        led_set_all_pixels_color(0, 0, 0)
                         led_set_all_pixels_color(0, 0, 0)
                         laser_off()
                         scan_closed(1)
@@ -363,11 +483,11 @@ try:
                             hdmi_video_stop(True)
                             hdmi_draw_black()
                         laser_off()
-                        send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+                        send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
                         if smoke_mode != 'on':
                             set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
                         if smoke_mode == 'auto':
-                            send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_on")
+                            send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "smoke_on")
                         laser_star_chase()
                         led_star_chase(Color(127, 127, 127), 52)
 
@@ -377,12 +497,19 @@ try:
                         scan_opened(1)
                         scan_opened(2)
 
-                    send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "smoke_off")
+                    send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "smoke_off")
                     done_chase.append(1)
                 else:
                     led_music_visualizer(0, st_color_name, nd_color_name)
             else:
                 input_history.append(0.0)
+
+                mode = 4
+                intensity = 255
+                color_start = 7
+                color_end = 7
+                num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
 
                 # Reset state when average input is low
                 if safe_mean(input_history) < 0.5:
@@ -394,8 +521,9 @@ try:
                     # pitches.clear()
                     drop_history.clear()
                     heaviness_history.clear()
-                    send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+                    send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
                     led_color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
+
 
         if profiling:
             # Stop profiling
@@ -416,7 +544,20 @@ try:
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
     laser_off()
-    send_udp_message(UDP_IP_ADDRESS, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+    send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
+
+    # spectrum analyzer all off (send 3 times)
+    mode = 0
+    intensity = 255
+    color_start = 7
+    color_end = 7
+    num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+    send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+    send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
+    led_set_all_pixels_color(0, 0, 0)
+    sentSpectrumAnalyzerOff = True
+
     led_set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     # Cleanup functions to ensure a safe shutdown
     if use_hdmi:
