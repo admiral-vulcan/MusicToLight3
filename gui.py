@@ -116,6 +116,8 @@ def get_gui_commands():
         dict: A dictionary containing the GUI commands.
     """
     redis_get_colors()
+    if (redis_client.get('chill_mode') or b'').decode('utf-8') == 'on':
+        redis_client.set('strobe_mode', 'off')
     gui_commands = {
         'strobe_mode': (redis_client.get('strobe_mode') or b'').decode('utf-8'),
         'smoke_mode': (redis_client.get('smoke_mode') or b'').decode('utf-8'),

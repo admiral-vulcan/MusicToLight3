@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added colors...">
-      <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added nice flow in led strip in chill mode">
+      <change beforePath="M:/gui.py" beforeDir="false" afterPath="M:/gui.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -117,14 +116,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00054" summary="anti-stress-check in hdmi_in_threads decorator: the function shall not execute more often than once every 0.2 seconds">
-      <option name="closed" value="true" />
-      <created>1701695012931</created>
-      <option name="number" value="00054" />
-      <option name="presentableId" value="LOCAL-00054" />
-      <option name="project" value="LOCAL" />
-      <updated>1701695012931</updated>
     </task>
     <task id="LOCAL-00055" summary="added documentation">
       <option name="closed" value="true" />
@@ -510,7 +501,15 @@
       <option name="project" value="LOCAL" />
       <updated>1735169322237</updated>
     </task>
-    <option name="localTasksCounter" value="103" />
+    <task id="LOCAL-00103" summary="added nice flow in led strip in chill mode">
+      <option name="closed" value="true" />
+      <created>1735170826867</created>
+      <option name="number" value="00103" />
+      <option name="presentableId" value="LOCAL-00103" />
+      <option name="project" value="LOCAL" />
+      <updated>1735170826867</updated>
+    </task>
+    <option name="localTasksCounter" value="104" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -525,7 +524,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="bug searching: still smoke erratic behaviour" />
     <MESSAGE value="bugfix: now sending smoker signal via UDP" />
     <MESSAGE value="tidied up the code a bit" />
     <MESSAGE value="removed videos as they never worked good on the raspi 4" />
@@ -550,6 +548,7 @@
     <MESSAGE value="added spectrum analyser as led2, changed resolution to 720p, changed signal noise threshold" />
     <MESSAGE value="added chill mode and color choice" />
     <MESSAGE value="added colors..." />
-    <option name="LAST_COMMIT_MESSAGE" value="added colors..." />
+    <MESSAGE value="added nice flow in led strip in chill mode" />
+    <option name="LAST_COMMIT_MESSAGE" value="added nice flow in led strip in chill mode" />
   </component>
 </project>
