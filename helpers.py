@@ -286,7 +286,8 @@ def interpret_color(color):
         "green": (0, 128, 0),
         "orange": (255, 165, 0),
         "blue": (0, 0, 255),
-        "pink": (255, 192, 203)
+        "pink": (255, 192, 203),
+        "cyan": (0, 255, 255)
     }
 
     # Find the closest known color
@@ -309,6 +310,7 @@ def translate_color(color):
         "blue": 3,
         "yellow": 4,
         "purple": 5,
+        "pink": 5,  # better purple than nothing
         "cyan": 6,
         "white": 7,
         "orange": 8
@@ -335,7 +337,8 @@ def laser_color_to_int(color):
         "white": 60,
         # not supported but... let's deal with them:
         "orange": 20,  # like yellow
-        "pink": 50  # like purple
+        "pink": 50,  # like purple
+        "cyan": 45  # like blue
     }
 
     return color_table.get(color.lower())
@@ -351,7 +354,8 @@ def get_rgb_from_color_name(color_name):
         "green": (0, 128, 0),
         "orange": (255, 165, 0),
         "blue": (0, 0, 255),
-        "pink": (255, 192, 203)
+        "pink": (255, 192, 203),
+        "cyan": (0, 255, 255)
     }
     return colors.get(color_name.lower(), (255, 255, 255))  # Default to white if color name is not found
 
