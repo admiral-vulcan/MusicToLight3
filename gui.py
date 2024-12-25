@@ -18,19 +18,30 @@ from helpers import *
 
 # Setting up communication with web server via Redis
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
-redis_client.set('strobe_mode', 'auto')
+
+# defining GUI variables
+redis_client.set('strobe_mode', 'off')
 redis_client.set('smoke_mode', 'auto')
 redis_client.set('panic_mode', 'off')
 redis_client.set('play_videos_mode', 'auto')
 
+redis_client.set('chill_mode', 'off')
+
+redis_client.set('st_color_name', 'blue')
+redis_client.set('nd_color_name', 'red')
+
+# processing GUI variables
 strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
 smoke_mode = (redis_client.get('smoke_mode') or b'').decode('utf-8')
 panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
 play_videos = (redis_client.get('play_videos_mode') or b'').decode('utf-8')
 
+chill_mode = (redis_client.get('chill_mode') or b'').decode('utf-8')
+
 # Set master colors (TODO should later be changeable via web interface)
-st_color_name = "blue"
-nd_color_name = "red"
+st_color_name = (redis_client.get('st_color_name') or b'').decode('utf-8')
+nd_color_name = (redis_client.get('nd_color_name') or b'').decode('utf-8')
+
 st_prim_color = get_rgb_from_color_name(st_color_name)
 nd_prim_color = get_rgb_from_color_name(nd_color_name)
 
@@ -57,25 +68,45 @@ redis_client.set('st_prim_color', json.dumps(st_prim_color))
 redis_client.set('nd_prim_color', json.dumps(nd_prim_color))
 redis_client.set('secondary_color', json.dumps(secondary_color))
 
+previous_st_color = None
+previous_nd_color = None
 
 def redis_get_colors():
-    """
-    Retrieve the color values from Redis and assign them to the global variables.
-    """
-    global st_prim_color
-    global nd_prim_color
-    global secondary_color
-    global st_r, st_g, st_b
-    global nd_r, nd_g, nd_b
+    global st_prim_color, nd_prim_color, secondary_color
+    global st_r, st_g, st_b, nd_r, nd_g, nd_b
+    global previous_st_color, previous_nd_color
+    global st_color_name
+    global nd_color_name
 
-    st_prim_color = tuple(json.loads(redis_client.get('st_prim_color')))
-    nd_prim_color = tuple(json.loads(redis_client.get('nd_prim_color')))
-    secondary_color = tuple(json.loads(redis_client.get('secondary_color')))
+    # Abrufen der neuen Farbwerte
+    current_st_color = redis_client.get('st_color_name').decode('utf-8')
+    current_nd_color = redis_client.get('nd_color_name').decode('utf-8')
 
-    # Translate to RGB-Bytes
-    st_r, st_g, st_b = st_prim_color
-    nd_r, nd_g, nd_b = nd_prim_color
+    # Nur aktualisieren, wenn sich die Farben geändert haben
+    if current_st_color != previous_st_color or current_nd_color != previous_nd_color:
+        st_color_name = current_st_color
+        nd_color_name = current_nd_color
+        st_prim_color = get_rgb_from_color_name(current_st_color)
+        nd_prim_color = get_rgb_from_color_name(current_nd_color)
 
+        # Berechnungen für secondary_color
+        average_color = tuple((a + b) // 2 for a, b in zip(st_prim_color, nd_prim_color))
+        max_val = max(average_color)
+        factor = 255 / max_val if max_val != 0 else 0
+        secondary_color = tuple(int(val * factor) for val in average_color)
+
+        # Redis aktualisieren
+        redis_client.set('st_prim_color', json.dumps(st_prim_color))
+        redis_client.set('nd_prim_color', json.dumps(nd_prim_color))
+        redis_client.set('secondary_color', json.dumps(secondary_color))
+
+        # Update der globalen RGB-Bytes
+        st_r, st_g, st_b = st_prim_color
+        nd_r, nd_g, nd_b = nd_prim_color
+
+        # Speichere die aktuellen Farben für den Vergleich
+        previous_st_color = current_st_color
+        previous_nd_color = current_nd_color
 
 def get_gui_commands():
     """
@@ -89,7 +120,19 @@ def get_gui_commands():
         'strobe_mode': (redis_client.get('strobe_mode') or b'').decode('utf-8'),
         'smoke_mode': (redis_client.get('smoke_mode') or b'').decode('utf-8'),
         'panic_mode': (redis_client.get('panic_mode') or b'').decode('utf-8'),
+        'chill_mode': (redis_client.get('chill_mode') or b'').decode('utf-8'),
         'play_videos': (redis_client.get('play_videos_mode') or b'').decode('utf-8'),
+        'st_color_name': st_color_name,
+        'nd_color_name': nd_color_name,
+        'st_prim_color': st_prim_color,
+        'nd_prim_color': nd_prim_color,
+        'secondary_color': secondary_color,
+        'st_r': st_r,
+        'st_g': st_g,
+        'st_b': st_b,
+        'nd_r': nd_r,
+        'nd_g': nd_g,
+        'nd_b': nd_b,
     }
     return gui_commands
 

@@ -4,13 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="bugfix: panic-mode didn't stop strobe and change in led-stripe behaviour">
-      <change beforePath="M:/.idea/misc.xml" beforeDir="false" afterPath="M:/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="8cf7cce0-8a74-46e8-a312-7414508eb62f" name="Changes" comment="added spectrum analyser as led2, changed resolution to 720p, changed signal noise threshold">
+      <change beforePath="M:/.gitignore" beforeDir="false" afterPath="M:/.gitignore" afterDir="false" />
       <change beforePath="M:/.idea/workspace.xml" beforeDir="false" afterPath="M:/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="M:/aud_proc.py" beforeDir="false" afterPath="M:/aud_proc.py" afterDir="false" />
-      <change beforePath="M:/com_udp.py" beforeDir="false" afterPath="M:/com_udp.py" afterDir="false" />
-      <change beforePath="M:/hdmi.py" beforeDir="false" afterPath="M:/hdmi.py" afterDir="false" />
-      <change beforePath="M:/helpers.py" beforeDir="false" afterPath="M:/helpers.py" afterDir="false" />
+      <change beforePath="M:/gui.py" beforeDir="false" afterPath="M:/gui.py" afterDir="false" />
       <change beforePath="M:/main.py" beforeDir="false" afterPath="M:/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -122,14 +119,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1689201858316</updated>
-    </task>
-    <task id="LOCAL-00051" summary="found bug, added comment for later fix">
-      <option name="closed" value="true" />
-      <created>1697380146690</created>
-      <option name="number" value="00051" />
-      <option name="presentableId" value="LOCAL-00051" />
-      <option name="project" value="LOCAL" />
-      <updated>1697380146706</updated>
     </task>
     <task id="LOCAL-00052" summary="added video playback feature">
       <option name="closed" value="true" />
@@ -515,7 +504,15 @@
       <option name="project" value="LOCAL" />
       <updated>1713815443959</updated>
     </task>
-    <option name="localTasksCounter" value="100" />
+    <task id="LOCAL-00100" summary="added spectrum analyser as led2, changed resolution to 720p, changed signal noise threshold">
+      <option name="closed" value="true" />
+      <created>1735160457429</created>
+      <option name="number" value="00100" />
+      <option name="presentableId" value="LOCAL-00100" />
+      <option name="project" value="LOCAL" />
+      <updated>1735160457429</updated>
+    </task>
+    <option name="localTasksCounter" value="101" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -530,7 +527,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="bugfix: laser chase was longer then led chase" />
     <MESSAGE value="bugfix: smoke erratic behaviour" />
     <MESSAGE value="added threading to led function: color_flow" />
     <MESSAGE value="bug searching: still smoke erratic behaviour" />
@@ -555,6 +551,7 @@
     <MESSAGE value="bugfix: noise gate was too low" />
     <MESSAGE value="bugfix: noise gate was too low &amp; code optimization" />
     <MESSAGE value="bugfix: panic-mode didn't stop strobe and change in led-stripe behaviour" />
-    <option name="LAST_COMMIT_MESSAGE" value="bugfix: panic-mode didn't stop strobe and change in led-stripe behaviour" />
+    <MESSAGE value="added spectrum analyser as led2, changed resolution to 720p, changed signal noise threshold" />
+    <option name="LAST_COMMIT_MESSAGE" value="added spectrum analyser as led2, changed resolution to 720p, changed signal noise threshold" />
   </component>
 </project>

@@ -107,6 +107,9 @@ global strobe_mode
 global smoke_mode
 global panic_mode
 global play_videos
+global chill_mode
+global st_color_name
+global nd_color_name
 
 # Start main loop
 try:
@@ -129,7 +132,19 @@ try:
         strobe_mode = commands['strobe_mode']
         smoke_mode = commands['smoke_mode']
         panic_mode = commands['panic_mode']
+        chill_mode = commands['chill_mode']
         play_videos = commands['play_videos']
+        st_color_name = commands['st_color_name']
+        nd_color_name = commands['nd_color_name']
+        st_prim_color = commands['st_prim_color']
+        nd_prim_color = commands['nd_prim_color']
+        secondary_color = commands['secondary_color']
+        st_r = commands['st_r']
+        st_g = commands['st_g']
+        st_b = commands['st_b']
+        nd_r = commands['nd_r']
+        nd_g = commands['nd_g']
+        nd_b = commands['nd_b']
 
         # Handle panic mode
         if panic_mode == 'on':
@@ -344,7 +359,7 @@ try:
             send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, udp_message)
         # Handle actions for heavy signal
 
-        if heavy:
+        if heavy and chill_mode != 'on':
             sentSpectrumAnalyzerOff = False
             if use_hdmi:
                 hdmi_video_stop()
