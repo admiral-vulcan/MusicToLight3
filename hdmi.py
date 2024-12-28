@@ -30,7 +30,7 @@ video_list = []
 video_position = None
 current_video_file = None
 last_switch_time = None
-autoplay = False
+autoplay = True  # An die GUI anheften!
 wait_for_new_video = False
 switch_interval = 5 * 60  # Intervall in Minuten, wann ein neues Video ausgewählt werden soll
 last_flip = 0
@@ -315,18 +315,21 @@ def hdmi_play_video(video_directory):
     while cap.isOpened() and video_playing:
         ret, frame = cap.read()
 
-        if not ret:
-            # Wenn das Video zu Ende ist, setze video_position zurück und verschiebe das Video in der Liste
+        if not ret:  # Wenn das Video zu Ende ist
             video_position = 0
-            video_list.append(video_list.pop(0))
+            video_list.append(video_list.pop(0))  # Verschiebe das aktuelle Video ans Ende der Liste
             current_video_file = video_list[0]  # Aktualisiere den aktuellen Dateinamen
             last_switch_time = time.time()  # Setze den Timer für den nächsten Wechsel zurück
-            if not autoplay:
+            cap.release()  # Schließe die aktuelle Video-Capture-Instanz
+
+            if autoplay:
+                # Starte das nächste Video direkt
+                return hdmi_play_video(video_directory)
+            else:
                 hdmi_draw_black()
                 wait_for_new_video = True
                 video_playing = False
                 return
-            break
 
         # Aktualisiere die aktuelle Position des Videos
         video_position = cap.get(cv2.CAP_PROP_POS_FRAMES)
