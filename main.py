@@ -405,9 +405,9 @@ try:
                 current_high = np.sqrt(np.mean(high_signal ** 2))
 
                 #Thresholds for glitch mode trigger
-                if low_mean > 0.19 or current_low > 0.23 or current_high >= high_mean * 2 or current_mid >= mid_mean * 2:
+                if low_mean > 0.19 or current_low > 0.23 or current_high >= high_mean * 2.2 or current_mid >= mid_mean * 2.2:
                     glitch_mode = "maximum_chaos"
-                elif low_mean > 0.17 or current_low > 0.2 or current_high >= high_mean * 1.5 or current_mid >= mid_mean * 1.5:
+                elif low_mean > 0.17 or current_low > 0.2 or current_high >= high_mean * 1.7 or current_mid >= mid_mean * 1.7:
                     glitch_mode = "medium"
                 else:
                     glitch_mode = "off"
