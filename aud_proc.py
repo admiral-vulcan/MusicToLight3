@@ -1,4 +1,4 @@
-# MusicToLight3  Copyright (C) 2024  Felix Rau.
+# MusicToLight3  Copyright (C) 2025  Felix Rau.
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -12,20 +12,55 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-import os
 import pyaudio
 import collections
-import math
 import numpy as np
 import aubio
 from scipy.signal import ellip, sosfilt, sos2zpk, lfilter_zi
 from helpers import *
-from pyloudnorm import Meter
-from scipy.fft import fft
-import sys
 
-os.environ['ALSA_LOG_LEVEL'] = 'error'
+class AudioAnalyzer:
+    def __init__(self, sample_rate=44100, buffer_size=1024):
+        # Anzahl Samples für die rollenden Mittelwerte (wie average_samples)
+        average_samples = int(sample_rate / buffer_size)
+
+        # History-Collections wie bisher, aber jetzt als self.<name>
+        self.volumes = collections.deque(maxlen=average_samples)
+        self.heavyvols = collections.deque(maxlen=20)
+        self.max_values = collections.deque(maxlen=20)
+        self.heaviness_values = collections.deque(maxlen=average_samples)
+        self.low_volumes = collections.deque(maxlen=average_samples)
+        self.mid_volumes = collections.deque(maxlen=average_samples)
+        self.high_volumes = collections.deque(maxlen=average_samples)
+        self.last_counts = collections.deque(maxlen=5)
+        self.previous_count_over = 0
+        self.delta_values = collections.deque(maxlen=20)
+        self.dominant_frequencies = collections.deque(maxlen=average_samples)
+        self.heaviness_history = collections.deque(maxlen=average_samples)
+        self.drop_history = collections.deque(maxlen=512)
+        self.input_history = collections.deque(maxlen=average_samples)
+        self.pitches = collections.deque(maxlen=average_samples)
+        self.done_chase = collections.deque(maxlen=250)
+
+
+analyzer = AudioAnalyzer(sample_rate=44100, buffer_size=1024)
+
+def reset_analyzer_histories():
+    analyzer.volumes.clear()
+    analyzer.low_volumes.clear()
+    analyzer.mid_volumes.clear()
+    analyzer.high_volumes.clear()
+    analyzer.heavyvols.clear()
+    analyzer.max_values.clear()
+    analyzer.delta_values.clear()
+    analyzer.last_counts.clear()
+    analyzer.heaviness_values.clear()
+    analyzer.dominant_frequencies.clear()
+    analyzer.heaviness_history.clear()
+    analyzer.drop_history.clear()
+    analyzer.input_history.clear()
+    analyzer.pitches.clear()
+    analyzer.done_chase.clear()
 
 # Filter configurations
 thx_band = (1, 80)  # 120
@@ -43,28 +78,6 @@ device_index = 0
 
 # Define the number of samples for average calculations
 average_samples = int(sample_rate / buffer_size)  # why??
-
-# Initialize data collections
-volumes = collections.deque(maxlen=average_samples)
-heavyvols = collections.deque(maxlen=20)
-max_values = collections.deque(maxlen=20)
-heaviness_values = collections.deque(maxlen=average_samples)
-
-low_volumes = collections.deque(maxlen=average_samples)
-mid_volumes = collections.deque(maxlen=average_samples)
-high_volumes = collections.deque(maxlen=average_samples)
-
-last_counts = collections.deque(maxlen=5)
-previous_count_over = 0
-delta_values = collections.deque(maxlen=20)
-
-dominant_frequencies = collections.deque(maxlen=average_samples)
-heaviness_history = collections.deque(maxlen=average_samples)
-drop_history = collections.deque(maxlen=512)
-input_history = collections.deque(maxlen=average_samples)
-pitches = collections.deque(maxlen=average_samples)
-
-done_chase = collections.deque(maxlen=int(250))
 
 # Initialize Aubio beat detection
 # Methods: <default|energy|hfc|complex|phase|specdiff|kl|mkl|specflux>
@@ -117,10 +130,10 @@ def process_audio_buffer():
 
     # Calculate the current volume and update the volume history
     current_volume = np.sqrt(np.mean(signal_input ** 2))
-    volumes.append(current_volume)
+    analyzer.volumes.append(current_volume)
 
     # Calculate the mean volume from historical data
-    mean_volume = safe_mean(volumes)
+    mean_volume = safe_mean(analyzer.volumes)
 
     # Adjust the gain of the signal based on the mean volume
     signal, gain_factor = adjust_gain(mean_volume, signal_input)
@@ -131,18 +144,18 @@ def process_audio_buffer():
 
     # Filter the signal into different frequency bands and calculate their volumes
     low_signal, low_zi = sosfilt(low_sos, signal, zi=low_zi)
-    low_volumes.append(np.sqrt(np.mean(low_signal ** 2)))
+    analyzer.low_volumes.append(np.sqrt(np.mean(low_signal ** 2)))
 
     mid_signal, mid_zi = sosfilt(mid_sos, signal, zi=mid_zi)
-    mid_volumes.append(np.sqrt(np.mean(mid_signal ** 2)))
+    analyzer.mid_volumes.append(np.sqrt(np.mean(mid_signal ** 2)))
 
     high_signal, high_zi = sosfilt(high_sos, signal, zi=high_zi)
-    high_volumes.append(np.sqrt(np.mean(high_signal ** 2)))
+    analyzer.high_volumes.append(np.sqrt(np.mean(high_signal ** 2)))
 
     # Calculate means of the volumes for different frequency bands
-    low_mean = np.mean(low_volumes)
-    mid_mean = np.mean(mid_volumes)
-    high_mean = np.mean(high_volumes)
+    low_mean = np.mean(analyzer.low_volumes)
+    mid_mean = np.mean(analyzer.mid_volumes)
+    high_mean = np.mean(analyzer.high_volumes)
 
     # Calculate the relative volume for the low frequency band
     low_relative = np.mean(low_signal) / low_mean if low_mean != 0 else 0
@@ -155,15 +168,15 @@ def process_audio_buffer():
     # Apply THX filter and analyze the output for heaviness
     thx_signal, thx_zi = sosfilt(thx_sos, signal, zi=thx_zi)
     thx_signal = thx_signal.astype(np.float32)
-    heavyvols.append(np.max(thx_signal))
+    analyzer.heavyvols.append(np.max(thx_signal))
     delta_value = np.max(thx_signal) - np.min(thx_signal)
-    max_values.append(np.max(thx_signal))
-    delta_values.append(delta_value)
-    count_over = sum(1 for value in max_values if value > 0.08)
-    last_counts.append(count_over)
+    analyzer.max_values.append(np.max(thx_signal))
+    analyzer.delta_values.append(delta_value)
+    count_over = sum(1 for value in analyzer.max_values if value > 0.08)
+    analyzer.last_counts.append(count_over)
     heavy, heavy_counter = is_heavy(signal, count_over, heavy_counter)
     heaviness = calculate_heaviness(delta_value, count_over, gain_factor, heavy_counter)
-    heaviness_values.append(heaviness)
+    analyzer.heaviness_values.append(heaviness)
 
     return {
         "signal": signal,
@@ -183,15 +196,15 @@ def process_audio_buffer():
         "heavy": heavy,
         "heaviness": heaviness,
         "heavy_counter": heavy_counter,
-        "volumes": volumes,
-        "low_volumes": low_volumes,
-        "mid_volumes": mid_volumes,
-        "high_volumes": high_volumes,
-        "heavyvols": heavyvols,
-        "max_values": max_values,
-        "delta_values": delta_values,
-        "last_counts": last_counts,
-        "heaviness_values": heaviness_values,
+        "volumes": analyzer.volumes,
+        "low_volumes": analyzer.low_volumes,
+        "mid_volumes": analyzer.mid_volumes,
+        "high_volumes": analyzer.high_volumes,
+        "heavyvols": analyzer.heavyvols,
+        "max_values": analyzer.max_values,
+        "delta_values": analyzer.delta_values,
+        "last_counts": analyzer.last_counts,
+        "heaviness_values": analyzer.heaviness_values,
         "low_zi": low_zi,
         "mid_zi": mid_zi,
         "high_zi": high_zi,
@@ -298,17 +311,15 @@ def is_heavy(this_signal, count_over, heavy_counter):
     bool : True if the signal is considered 'heavy', otherwise False.
     int : Updated heavy counter.
     """
-    global delta_values
-    global last_counts
     # Check if historical counts data can be evaluated
-    if len(last_counts) == 5 and max(last_counts) - min(last_counts) >= 3:
+    if len(analyzer.last_counts) == 5 and max(analyzer.last_counts) - min(analyzer.last_counts) >= 3:
         heavy_counter = 2  # Adjust the heavy counter based on historical data
 
     # Determine if the signal is 'heavy' by checking the maximum absolute signal value,
     # frequency of conditions being met, and a threshold from delta_values
     this_is_heavy = (np.max(np.abs(this_signal)) > 0.05 and
                      (count_over > 3 or heavy_counter > 0) and
-                     np.max(delta_values) > 0.3)
+                     np.max(analyzer.delta_values) > 0.3)
     return this_is_heavy, heavy_counter
 
 
@@ -399,25 +410,22 @@ def detect_drop(volume_mean, heavy, drop_length=40, rise_threshold=15, volume_ri
     Returns:
     bool : True if a drop is detected, otherwise False.
     """
-    global dominant_frequencies
-    global heaviness_history
-    global drop_history
 
     # Check if there is sufficient data to analyze for a drop
-    if len(dominant_frequencies) < drop_length or len(heaviness_history) < drop_length:
+    if len(analyzer.dominant_frequencies) < drop_length or len(analyzer.heaviness_history) < drop_length:
         return False
 
     # Adjust the rise threshold based on the current volume mean
     effective_rise_threshold = rise_threshold * 1.5 if volume_mean > volume_rise_threshold else rise_threshold
 
     # Check for enough drop events and that the current state is not 'heavy'
-    total_drops = sum(drop_history)
+    total_drops = sum(analyzer.drop_history)
     if total_drops >= drop_threshold and not heavy:
         return True
 
     # Get the last relevant values for frequencies and heaviness
-    drop_dominant_frequencies = np.array(dominant_frequencies)[-drop_length:]
-    heavy_history = np.array(heaviness_history)[-drop_length:]
+    drop_dominant_frequencies = np.array(analyzer.dominant_frequencies)[-drop_length:]
+    heavy_history = np.array(analyzer.heaviness_history)[-drop_length:]
 
     # Check for the end of a drop condition: two consecutive 'heavy' states
     if heavy_history[-heavy_return_threshold:].all():

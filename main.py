@@ -262,6 +262,7 @@ try:
 
         audio_buffer = process_audio_buffer()
 
+        # Direkt wichtige Rückgabewerte nehmen (bleiben erhalten!)
         signal = audio_buffer['signal']
         thx_signal = audio_buffer['thx_signal']
         low_signal = audio_buffer['low_signal']
@@ -278,38 +279,21 @@ try:
         relative_energy = audio_buffer['relative_energy']
         heavy = audio_buffer['heavy']
         heaviness = audio_buffer['heaviness']
-
-        volumes = audio_buffer['volumes']
-        low_volumes = audio_buffer['low_volumes']
-        mid_volumes = audio_buffer['mid_volumes']
-        high_volumes = audio_buffer['high_volumes']
-        heavyvols = audio_buffer['heavyvols']
-        max_values = audio_buffer['max_values']
-        delta_values = audio_buffer['delta_values']
-        last_counts = audio_buffer['last_counts']
-        heaviness_values = audio_buffer['heaviness_values']
         heavy_counter = audio_buffer['heavy_counter']
 
-        low_zi = audio_buffer['low_zi']
-        mid_zi = audio_buffer['mid_zi']
-        high_zi = audio_buffer['high_zi']
-        thx_zi = audio_buffer['thx_zi']
-
-        """ Acoustic Calculations """
+        # --- Acoustic Calculations ---
         # Dominant frequency analysis
         dominant_freq = dominant_frequency(signal)
-        dominant_frequencies.append(dominant_freq)
-        heaviness_history.append(heavy)
+        analyzer.dominant_frequencies.append(dominant_freq)
+        analyzer.heaviness_history.append(heavy)
         drop = detect_drop(mean_volume, heavy)
-        drop_history.append(drop)
+        analyzer.drop_history.append(drop)
 
         # Beat detection
         is_beat = aubio_onset(thx_signal)
-        # pitch = get_pitch(audio_buffer, pDetection)
-        # pitches.append(pitch)
 
         # Check for auto-strobe conditions and execute strobe if criteria met
-        if strobe_mode == 'auto' and heavy and 1 in list(done_chase)[-10:]:
+        if strobe_mode == 'auto' and heavy and 1 in list(analyzer.done_chase)[-10:]:
             if smoke_mode != 'on':
                 set_eurolite_t36(5, 0, 0, 0, 255, 0)
             laser_off()
@@ -335,7 +319,7 @@ try:
             led_strobe_effect(10, 75)
             # if use_hdmi:
             # hdmi_intro_animation()
-            done_chase.clear()
+            analyzer.done_chase.clear()
 
         # Color transformations based on signal energy
         red = min(int(energy * 10), 255)
@@ -343,7 +327,7 @@ try:
         x = int(exponential_decrease(red))
 
         # DMX and LED operations
-        done_chase.append(0)
+        analyzer.done_chase.append(0)
         scan_gobo(1, 7, 150)  # TODO - bug: go does nothing!
         scan_gobo(2, 7, 150)  # same as above
         scan_in_thread(scan_color, (1, interpret_color(st_prim_color)))
@@ -404,7 +388,7 @@ try:
 
             # Check if a beat is detected
             if is_beat:
-                drop_history.clear()
+                analyzer.drop_history.clear()
 
             # Decrement heavy counter if it's greater than 0
             if heavy_counter > 0:
@@ -479,8 +463,8 @@ try:
                 num_leds_list = [int(np.clip(intensity * 25, 1, 25)) for intensity in dynamic_intensities]
                 send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
 
-                input_history.append(1.0)
-                if 0 < sum(drop_history) < 32 and drop:
+                analyzer.input_history.append(1.0)
+                if 0 < sum(analyzer.drop_history) < 32 and drop:
                     # led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
                     no_drop_count = no_drop_count
 
@@ -495,9 +479,9 @@ try:
                     # led_color_flow(runtime_bit, signal_max, 2, st_color_name, nd_color_name)
 
                 # Manage animations and lights for persistent drops
-                if sum(drop_history) >= 32 and drop:
-                    heaviness_history.clear()
-                    if 1 not in done_chase:
+                if sum(analyzer.drop_history) >= 32 and drop:
+                    analyzer.heaviness_history.clear()
+                    if 1 not in analyzer.done_chase:
 
                         # spectrum analyzer snowfall
                         mode = 3
@@ -531,12 +515,12 @@ try:
                         scan_opened(2)
 
                     send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "smoke_off")
-                    done_chase.append(1)
+                    analyzer.done_chase.append(1)
                 else:
                     if chill_mode != 'on':
                         led_music_visualizer(0, st_color_name, nd_color_name)
             else:
-                input_history.append(0.0)
+                analyzer.input_history.append(0.0)
 
                 mode = 4
                 intensity = 255
@@ -546,15 +530,14 @@ try:
                 send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
 
                 # Reset state when average input is low
-                if safe_mean(input_history) < 0.5:
+                if safe_mean(analyzer.input_history) < 0.5:
                     drop = False
                     heavy = False
-                    low_volumes.clear()
-                    mid_volumes.clear()
-                    high_volumes.clear()
-                    # pitches.clear()
-                    drop_history.clear()
-                    heaviness_history.clear()
+                    analyzer.low_volumes.clear()
+                    analyzer.mid_volumes.clear()
+                    analyzer.high_volumes.clear()
+                    analyzer.drop_history.clear()
+                    analyzer.heaviness_history.clear()
                     send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
                     if chill_mode != 'on':
                         led_color_flow(runtime_bit, signal_max, 10, st_color_name, nd_color_name)  # Adjust brightness
@@ -595,6 +578,7 @@ except KeyboardInterrupt:
 
     led_set_all_pixels_color(0, 0, 0)  # Clear any existing colors
     # Cleanup functions to ensure a safe shutdown
+    reset_analyzer_histories()
     if use_hdmi:
         hdmi_video_stop(True)
         kill_current_hdmi()
