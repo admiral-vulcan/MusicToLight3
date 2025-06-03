@@ -557,7 +557,7 @@ try:
                 with open(filename, 'w') as file:
                     ps = pstats.Stats(profiler, stream=file).sort_stats('time')  # oder cumulative
                     ps.print_stats()
-
+        time.sleep(0.01)  # CPU cool down
 
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
