@@ -400,9 +400,14 @@ try:
                 transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
 
                 # Update HDMI display with computed matrix
-                if low_mean > 0.19:
+                current_low = np.sqrt(np.mean(low_signal ** 2))
+                current_mid = np.sqrt(np.mean(mid_signal ** 2))
+                current_high = np.sqrt(np.mean(high_signal ** 2))
+
+                #Thresholds for glitch mode trigger
+                if low_mean > 0.19 or current_low > 0.23 or current_high >= high_mean * 2 or current_mid >= mid_mean * 2:
                     glitch_mode = "maximum_chaos"
-                elif low_mean > 0.17:
+                elif low_mean > 0.17 or current_low > 0.2 or current_high >= high_mean * 1.5 or current_mid >= mid_mean * 1.5:
                     glitch_mode = "medium"
                 else:
                     glitch_mode = "off"
