@@ -213,31 +213,56 @@ def reduce_signal(signal, target_length=15):
     return reduced_signal[:target_length]
 
 
-def generate_matrix(low_signal, mid_signal, high_signal, low_mean, mid_mean, high_mean):
-    # Prüfe, ob die Signale groß genug sind, um fortzufahren
-    if any(len(signal) < 0.1 for signal in [low_signal, mid_signal, high_signal]):
-        # Gebe eine leere Matrix zurück, wenn nicht genügend Daten vorhanden sind
-        return [[0] * 9 for _ in range(15)]
+def generate_matrix(low_signal, mid_signal, high_signal,
+                    low_mean, mid_mean, high_mean):
+    """
+    Generates a 9xN matrix for visualization of audio signals in three frequency bands.
+    Each group of 3 rows represents one frequency band:
+      - Rows 1–3: High frequencies (rows 1 = hardest to trigger, 3 = easiest)
+      - Rows 4–6: Mid frequencies
+      - Rows 7–9: Low frequencies
+    Within each block, the top row is triggered only by strong signals,
+    the middle row by medium, and the bottom row by almost any signal.
+    Triggering is propagated downwards: when a row is set, all rows below are also set.
 
+    The matrix is returned upside-down (lowest frequencies at the bottom row).
+
+    Args:
+        low_signal, mid_signal, high_signal: Lists of values for each frequency band.
+        low_mean, mid_mean, high_mean: Mean values for each band (same scale as reduce_signal).
+
+    Returns:
+        List of 9 lists (rows), each containing N binary values.
+    """
+    def rows_for_band(signal, mean, thresh_factors):
+        reduced = reduce_signal(signal)  # Reduce to N values (e.g., one per column)
+        # Calculate thresholds for each row (top: hardest, bottom: easiest)
+        thresholds = [mean * f for f in thresh_factors]
+        rows = []
+        for thresh in thresholds:
+            # 1 if value is above threshold, else 0
+            rows.append([1 if v > thresh else 0 for v in reduced])
+
+        # Ensure monotonicity: propagate triggers downwards within block
+        for i in range(1, 3):
+            for j in range(len(rows[i])):
+                if rows[i-1][j] == 1:
+                    rows[i][j] = 1
+        return rows
+
+    # Thresholds are chosen per band to control sensitivity
+    highs = rows_for_band(high_signal, high_mean, [0.2, 0.1, 0.01])    # High frequencies, very sensitive
+    mids  = rows_for_band(mid_signal,  mid_mean,  [1.0, 0.5, 0.2])     # Mid frequencies, moderate sensitivity
+    lows  = rows_for_band(low_signal,  low_mean,  [1.2, 0.6, 0.1])     # Low frequencies, less sensitive
+
+    # Build the matrix: rows 0–2 highs, 3–5 mids, 6–8 lows
     matrix = []
+    matrix.extend(highs)
+    matrix.extend(mids)
+    matrix.extend(lows)
 
-    # Werte unter 0,01 zu 0 ändern und auf 2 Nachkommastellen runden
-
-    # Für jedes Signal: reduziere auf 15 Werte und bestimme für jeden Wert, ob er über (1) oder unter (0) dem Mittelwert liegt.
-    for signal, mean in [(low_signal, low_mean), (mid_signal, mid_mean), (high_signal, high_mean)]:
-        reduced_signal = reduce_signal(signal)
-        # TODO check booster multiplier
-        for i in range(3):  # für jede der drei Reihen für ein bestimmtes Signal
-            if i == 0:  # obere Zeile
-                value_booster = 5
-            elif i == 1:  # mittlere Zeile
-                value_booster = 1.25
-            else:  # untere Zeile
-                value_booster = 50
-
-            matrix.append([1 if (value * value_booster) > mean else 0 for value in reduced_signal])
-
-    return matrix
+    # Flip vertically: row 0 is now bottom, row 8 is top (for correct display)
+    return matrix[::-1]
 
 
 def terminate_thread(thread):

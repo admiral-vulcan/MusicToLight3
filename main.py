@@ -416,7 +416,14 @@ try:
                 transposed_hdmi_matrix = list(map(list, zip(*hdmi_matrix)))
 
                 # Update HDMI display with computed matrix
-                hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color)
+                if low_mean > 0.19:
+                    glitch_mode = "maximum_chaos"
+                elif low_mean > 0.17:
+                    glitch_mode = "medium"
+                else:
+                    glitch_mode = "off"
+
+                hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color, glitch_mode)
 
         else:
             if not sentSpectrumAnalyzerOff:

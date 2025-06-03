@@ -113,13 +113,14 @@ text_cache = {}  # Dictionary to store pre-rendered text surfaces
 
 
 @hdmi_in_thread
-def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255)):
-    """Draw a matrix of numbers with various colors and effects."""
-    colors = [low, mid, top]
+def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255), glitch_mode = "off"):
+    """Draw a matrix of numbers with glitch effects and overlays depending on glitch_mode."""
+    """glitch_mode can be "off", "medium", or "maximum_chaos"""
     global screen, font, text_cache, last_flip
     if len(matrix) != 15 or any(len(row) != 9 for row in matrix):
         raise ValueError("Matrix must be 15x9.")
 
+    colors = [low, mid, top]
     border_x = screen_width * 0.09
     border_y = screen_height * 0.11
     spacing_x = (screen_width - 2 * border_x) / 14.3
@@ -127,25 +128,71 @@ def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255)
 
     screen.fill((0, 0, 0))
 
+    # Draw the matrix
     for x, column in enumerate(matrix):
         for y, number in enumerate(column):
             base_color = colors[y // 3]
             color = adjust_color(base_color)
-            text_key = (number, color)  # Key for text cache
 
-            if number == 0:  # Special handling for zeroes
-                color = (75, 75, 75)  # Set color to dark gray
-                text_key = (number, color)  # Adjust text cache key for gray zeroes
+            if number == 0:
+                color = (75, 75, 75)
 
+            text_key = (number, color)
             if text_key not in text_cache:
-                text = font.render(str(number), True, color)
-                text_cache[text_key] = text
-            else:
-                text = text_cache[text_key]  # Retrieve pre-rendered text
+                text_cache[text_key] = font.render(str(number), True, color)
 
-            pos_x = border_x + x * spacing_x + random.randint(-5, 5)
-            pos_y = screen_height - border_y - y * spacing_y + random.randint(-5, 5)
+            text = text_cache[text_key]
+
+            pos_x = border_x + x * spacing_x + random.randint(-3, 3)
+            pos_y = screen_height - border_y - y * spacing_y + random.randint(-3, 3)
             screen.blit(text, (pos_x, pos_y))
+
+    # --- Image distortion (displacement of stripes) ---
+    if glitch_mode in ["medium", "maximum_chaos"] and random.random() < 1:
+        num_stripes = random.randint(1, 3 if glitch_mode == "medium" else 8)
+        for _ in range(num_stripes):
+            y = random.randint(0, screen_height - 1)
+            max_height = screen_height - y
+            height = min(random.randint(5, 20 if glitch_mode == "medium" else 60), max_height)
+            shift_x = random.randint(-10, 10 if glitch_mode == "medium" else 40)
+
+            if shift_x == 0 or height <= 0:
+                continue
+
+            try:
+                glitch_slice = screen.subsurface((0, y, screen_width, height)).copy()
+                screen.blit(glitch_slice, (shift_x, y))
+            except Exception as e:
+                print(f"Glitch draw failed at y={y}, h={height}: {e}")
+
+    # --- Overlay interference (dashes, blocks) ---
+    if glitch_mode in ["medium", "maximum_chaos"] and random.random() < (0.4 if glitch_mode == "medium" else 1):
+        glitch_overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+        num_blocks = random.randint(1, 3 if glitch_mode == "medium" else 6)
+        for _ in range(num_blocks):
+            glitch_type = random.choice(["stripe", "block", "shift"])
+            if glitch_type == "stripe":
+                y = random.randint(0, screen_height)
+                h = random.randint(2, 10)
+                alpha = random.randint(40, 90)
+                pygame.draw.rect(glitch_overlay, (200, 200, 255, alpha), (0, y, screen_width, h))
+            elif glitch_type == "block":
+                w = random.randint(30, 100)
+                h = random.randint(10, 50)
+                x = random.randint(0, screen_width - w)
+                y = random.randint(0, screen_height - h)
+                alpha = random.randint(30, 80)
+                pygame.draw.rect(glitch_overlay, (255, 255, 255, alpha), (x, y, w, h))
+            elif glitch_type == "shift":
+                w = random.randint(40, 120)
+                h = random.randint(10, 20)
+                x = random.randint(0, screen_width - w)
+                y = random.randint(0, screen_height - h)
+                alpha = random.randint(20, 60)
+                pygame.draw.rect(glitch_overlay, (10, 10, 10, alpha), (x, y, w, h))
+
+        screen.blit(glitch_overlay, (0, 0))
+
     pygame.display.flip()
 
 
