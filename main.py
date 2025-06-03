@@ -1,4 +1,4 @@
-# MusicToLight3  Copyright (C) 2024  Felix Rau.
+# MusicToLight3  Copyright (C) 2025  Felix Rau.
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -59,7 +59,7 @@ sentSpectrumAnalyzerOff = False
 
 print("")
 print("\nProgram ended gracefully.\n")
-print("MusicToLight3  Copyright (C) 2024  Felix Rau")
+print("MusicToLight3  Copyright (C) 2025  Felix Rau")
 print("This program is licensed under the terms of the ")
 print("GNU General Public License version 3.")
 print("It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
@@ -85,7 +85,7 @@ if use_hdmi:
 
 if use_hdmi:
     hdmi_draw_centered_text(
-        "MusicToLight3  Copyright (C) 2024  Felix Rau\n\n\n"
+        "MusicToLight3  Copyright (C) 2025  Felix Rau\n\n\n"
         "This program is licensed under the terms of the \n"
         "GNU General Public License version 3.\n"
         "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\n"
@@ -196,7 +196,10 @@ try:
 
         # Handle smoke mode
         if smoke_mode == 'on':
-            set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
+            if chill_mode == 'on':
+                set_eurolite_t36(5, st_r, st_g, st_b, 4, 0)
+            else:
+                set_eurolite_t36(5, st_r, st_g, st_b, 255, 0)
             send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "smoke_on")
             # set_eurolite_t36(5, 0, 0, 0, 255, 0)
         else:
@@ -349,7 +352,10 @@ try:
         color_number_second = translate_color(nd_color_name)
 
         if smoke_mode != 'on':
-            set_eurolite_t36(5, x * nd_r / 255, x * nd_g / 255, x * nd_b / 255, 255, 0)  # TODO color calculation
+            if chill_mode == 'on':
+                set_eurolite_t36(5, x * nd_r / 255, x * nd_g / 255, x * nd_b / 255, 4, 0)
+            else:
+                set_eurolite_t36(5, x * nd_r / 255, x * nd_g / 255, x * nd_b / 255, 255, 0)  # TODO color calculation & chill-mode
 
         # send to Arduino
         udp_led = int(y / 8.5)  # for 30 LEDs
@@ -602,7 +608,7 @@ except KeyboardInterrupt:
     # Display the license and copyright information on HDMI
     if use_hdmi:
         hdmi_draw_centered_text(
-            "MusicToLight3  Copyright (C) 2024  Felix Rau\n\n\n"
+            "MusicToLight3  Copyright (C) 2025  Felix Rau\n\n\n"
             "This program is licensed under the terms of the \n"
             "GNU General Public License version 3.\n"
             "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n"
@@ -613,7 +619,7 @@ except KeyboardInterrupt:
 
     # Print the license and copyright information to the console
     print("\nProgram ended gracefully.\n")
-    print("MusicToLight3  Copyright (C) 2024  Felix Rau")
+    print("MusicToLight3  Copyright (C) 2025  Felix Rau")
     print("This program is licensed under the terms of the ")
     print("GNU General Public License version 3.")
     print("It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
