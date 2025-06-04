@@ -260,7 +260,7 @@ def hdmi_intro_animation():
             pygame.time.wait(int(60 / n))
 
             current_cycle += 1
-            time.sleep(0.05)
+            time.sleep(0.02)
 
 
 def hdmi_outro_animation():
@@ -308,6 +308,7 @@ def hdmi_outro_animation():
             pygame.time.wait(int(100 / n))
 
             current_cycle += 1
+            time.sleep(0.02)
 
 
 def hdmi_video_stop(now=False):

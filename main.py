@@ -54,6 +54,7 @@ no_drop_count = 0
 
 signal_noise = 0.009
 
+heavy_ever_detected = False
 previous_heavy = True
 sentSpectrumAnalyzerOff = False
 
@@ -97,6 +98,7 @@ if use_hdmi:
 if args.fastboot:
     print('        Fastboot-Mode on. Devices are not calibrating.')
     print(' ')
+    time.sleep(1)
 else:
     scan_reset(1)
     scan_reset(2)
@@ -358,6 +360,7 @@ try:
             led_color_flow(runtime_bit, signal_max, 3, st_color_name, nd_color_name)
 
         if heavy and chill_mode != 'on':
+            heavy_ever_detected = True
             sentSpectrumAnalyzerOff = False
             if use_hdmi:
                 hdmi_video_stop()
@@ -452,7 +455,7 @@ try:
             dynamic_intensities = process_audio_and_scale(signal)
 
             if use_hdmi:
-                if play_videos == "auto":
+                if play_videos == "auto" and heavy_ever_detected:
                     video_path = "/musictolight/vids/"
                     hdmi_play_video(video_path)
                     if not is_video_playing():
@@ -582,6 +585,7 @@ try:
 
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
+    hdmi_outro_animation()
     laser_off()
     send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
 
@@ -627,7 +631,8 @@ except KeyboardInterrupt:
             "\n\nProgram ended gracefully.")
 
     if not args.fastboot:
-        time.sleep(5)  # Pause for 5 seconds
+        time.sleep(5)  # Pause for 4 seconds
+    time.sleep(1)
 
     # Print the license and copyright information to the console
     print("\nProgram ended gracefully.\n")
