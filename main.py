@@ -96,12 +96,12 @@ if use_hdmi:
         "Initialising devices...")
 
 if args.fastboot:
-    print('        Fastboot-Mode on. Devices are not calibrating.')
+    print('        Fastboot-Mode on.')
     print(' ')
     time.sleep(1)
 else:
-    scan_reset(1)
-    scan_reset(2)
+    time.sleep(3)
+
 
 print("        Listening... Press Ctrl+C to stop.")
 print("")
@@ -135,6 +135,7 @@ try:
         # send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
 
         commands = get_gui_commands()
+        calibrate = commands['calibrate']
         strobe_mode = commands['strobe_mode']
         smoke_mode = commands['smoke_mode']
         panic_mode = commands['panic_mode']
@@ -151,6 +152,12 @@ try:
         nd_r = commands['nd_r']
         nd_g = commands['nd_g']
         nd_b = commands['nd_b']
+
+        # Handle calibration
+        if calibrate == "on":
+            scan_reset(1)
+            scan_reset(2)
+            set_calibrate_off()
 
         # Handle panic mode
         if panic_mode == 'on':
@@ -585,7 +592,6 @@ try:
 
 # Catch a keyboard interrupt to ensure graceful exit and cleanup
 except KeyboardInterrupt:
-    hdmi_outro_animation()
     laser_off()
     send_udp_message(UDP_IP_ADDRESS_LED1, UDP_PORT, "led_0_0_0_0_0_0_0_0")
 
@@ -605,6 +611,8 @@ except KeyboardInterrupt:
     # Cleanup functions to ensure a safe shutdown
     reset_analyzer_histories()
     if use_hdmi:
+        if not is_video_playing():
+            hdmi_outro_animation()
         hdmi_video_stop(True)
         kill_current_hdmi()
     print("\nEnding program...")
@@ -631,8 +639,9 @@ except KeyboardInterrupt:
             "\n\nProgram ended gracefully.")
 
     if not args.fastboot:
-        time.sleep(5)  # Pause for 4 seconds
-    time.sleep(1)
+        time.sleep(3)  # Pause for 3 seconds
+    else:
+        time.sleep(1)
 
     # Print the license and copyright information to the console
     print("\nProgram ended gracefully.\n")

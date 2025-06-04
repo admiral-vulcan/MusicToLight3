@@ -1,4 +1,4 @@
-# MusicToLight3  Copyright (C) 2024  Felix Rau.
+# MusicToLight3  Copyright (C) 2025  Felix Rau.
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -20,6 +20,7 @@ from helpers import *
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 # defining GUI variables
+redis_client.set('calibrate', 'off')
 redis_client.set('strobe_mode', 'off')
 redis_client.set('smoke_mode', 'auto')
 redis_client.set('panic_mode', 'off')
@@ -31,6 +32,7 @@ redis_client.set('st_color_name', 'blue')
 redis_client.set('nd_color_name', 'red')
 
 # processing GUI variables
+calibrate = (redis_client.get('calibrate') or b'').decode('utf-8')
 strobe_mode = (redis_client.get('strobe_mode') or b'').decode('utf-8')
 smoke_mode = (redis_client.get('smoke_mode') or b'').decode('utf-8')
 panic_mode = (redis_client.get('panic_mode') or b'').decode('utf-8')
@@ -70,6 +72,9 @@ redis_client.set('secondary_color', json.dumps(secondary_color))
 
 previous_st_color = None
 previous_nd_color = None
+
+def set_calibrate_off():
+    redis_client.set('calibrate', 'off')
 
 def redis_get_colors():
     global st_prim_color, nd_prim_color, secondary_color
@@ -119,6 +124,7 @@ def get_gui_commands():
     if (redis_client.get('chill_mode') or b'').decode('utf-8') == 'on':
         redis_client.set('strobe_mode', 'off')
     gui_commands = {
+        'calibrate': (redis_client.get('calibrate') or b'').decode('utf-8'),
         'strobe_mode': (redis_client.get('strobe_mode') or b'').decode('utf-8'),
         'smoke_mode': (redis_client.get('smoke_mode') or b'').decode('utf-8'),
         'panic_mode': (redis_client.get('panic_mode') or b'').decode('utf-8'),
