@@ -62,7 +62,7 @@ def init_hdmi():
     pygame.mouse.set_visible(False)
 
     # Schriftart und Größe festlegen
-    font = pygame.font.SysFont(None, 72)
+    font = pygame.font.Font("/musictolight/fonts/ShareTechMono-Regular.ttf", 48)
 
 
 def quit_hdmi():
@@ -92,19 +92,23 @@ def hdmi_draw_black():
     last_flip = time.time()
 
 
-def hdmi_draw_centered_text(text):
-    """Draw text centered on the screen."""
+def hdmi_draw_centered_text(text, scale=0.66):
+    """Draw text centered on the screen, optional Skalierung."""
     global screen, font, last_flip
 
     lines = text.split('\n')
-    total_height = sum([font.size(line)[1] for line in lines])
+    total_height = sum([int(font.size(line)[1] * scale) for line in lines])
     start_y = (screen.get_height() - total_height) // 2
     screen.fill((0, 0, 0))
     for line in lines:
+        orig_w, orig_h = font.size(line)
         text_surface = font.render(line, True, (255, 255, 255))
-        center_x = (screen.get_width() - text_surface.get_width()) // 2
-        screen.blit(text_surface, (center_x, start_y))
-        start_y += font.size(line)[1]
+        scaled_surface = pygame.transform.smoothscale(
+            text_surface, (int(orig_w * scale), int(orig_h * scale))
+        )
+        center_x = (screen.get_width() - scaled_surface.get_width()) // 2
+        screen.blit(scaled_surface, (center_x, start_y))
+        start_y += scaled_surface.get_height()
     pygame.display.flip()
     last_flip = time.time()
 
@@ -142,6 +146,8 @@ def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255)
                 text_cache[text_key] = font.render(str(number), True, color)
 
             text = text_cache[text_key]
+            if glitch_mode in ["medium", "maximum_chaos"]:
+                text = apply_noise(text.copy(), intensity=75 if glitch_mode == "maximum_chaos" else 50)
 
             pos_x = border_x + x * spacing_x + random.randint(-3, 3)
             pos_y = screen_height - border_y - y * spacing_y + random.randint(-3, 3)
@@ -196,6 +202,15 @@ def hdmi_draw_matrix(matrix, top=(255, 0, 0), low=(0, 0, 255), mid=(255, 0, 255)
     pygame.display.flip()
 
 
+def apply_noise(surface, intensity=40):
+    """Overlay noise on a pygame surface."""
+    arr = pygame.surfarray.pixels3d(surface)
+    noise = np.random.randint(-intensity, intensity+1, arr.shape, dtype=np.int16)
+    arr[:] = np.clip(arr + noise, 0, 255).astype(np.uint8)
+    del arr  # Unlock surface
+    return surface
+
+
 def hdmi_intro_animation():
     """Play a screen animation simulating a matrix bootup."""
     global screen, font, zero_color, last_flip
@@ -245,6 +260,7 @@ def hdmi_intro_animation():
             pygame.time.wait(int(60 / n))
 
             current_cycle += 1
+            time.sleep(0.05)
 
 
 def hdmi_outro_animation():

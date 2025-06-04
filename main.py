@@ -57,6 +57,9 @@ signal_noise = 0.009
 previous_heavy = True
 sentSpectrumAnalyzerOff = False
 
+glitch_timer = 0
+glitch_mode = "off"
+
 print("")
 print("\nProgram ended gracefully.\n")
 print("MusicToLight3  Copyright (C) 2025  Felix Rau")
@@ -102,6 +105,7 @@ print("        Listening... Press Ctrl+C to stop.")
 print("")
 if use_hdmi:
     hdmi_draw_black()
+    hdmi_intro_animation()
 
 global strobe_mode
 global smoke_mode
@@ -404,12 +408,24 @@ try:
                 current_mid = np.sqrt(np.mean(mid_signal ** 2))
                 current_high = np.sqrt(np.mean(high_signal ** 2))
 
-                #Thresholds for glitch mode trigger
-                if low_mean > 0.19 or current_low > 0.23 or current_high >= high_mean * 2.2 or current_mid >= mid_mean * 2.2:
+                """Thresholds for glitch mode trigger"""
+                GLITCH_THRESHOLD_HIGH = 0.06  # z.B. 6% über mean
+                GLITCH_THRESHOLD_MID = 0.06
+
+                # Timer für kurze Glitches
+                glitch_timer = max(0, glitch_timer - 1)  # am Anfang des Loops
+
+                if low_mean > 0.24 or current_low > 0.27:
                     glitch_mode = "maximum_chaos"
-                elif low_mean > 0.17 or current_low > 0.2 or current_high >= high_mean * 1.7 or current_mid >= mid_mean * 1.7:
+                elif low_mean > 0.21 or current_low > 0.24:
                     glitch_mode = "medium"
-                else:
+                elif (current_high - high_mean) > GLITCH_THRESHOLD_HIGH or (
+                        current_mid - mid_mean) > GLITCH_THRESHOLD_MID:
+                    glitch_timer = 2  # glitch für 2 Schleifendurchgänge aktivieren
+
+                if glitch_timer > 0:
+                    glitch_mode = "glitch"
+                elif glitch_mode not in ["maximum_chaos", "medium"]:
                     glitch_mode = "off"
 
                 hdmi_draw_matrix(transposed_hdmi_matrix, st_prim_color, nd_prim_color, secondary_color, glitch_mode)
