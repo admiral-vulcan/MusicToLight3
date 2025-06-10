@@ -396,7 +396,7 @@ def main(mapping=False):
 
     if fullgrid_mode:
         # Grid without opacity map
-        print("Full grid mode: Zeige alle Kacheln!")
+        print("Full grid mode: Showing all tiles!")
         tiles = []
         cell_h = size[1] // ROWS
         cell_w = size[0] // COLS
