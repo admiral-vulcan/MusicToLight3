@@ -425,13 +425,13 @@ try:
                 # Timer für kurze Glitches
                 glitch_timer = max(0, glitch_timer - 1)  # am Anfang des Loops
 
-                if low_mean > 0.24 or current_low > 0.27:
+                if low_mean > 0.26 or current_low > 0.29:
                     glitch_mode = "maximum_chaos"
-                elif low_mean > 0.21 or current_low > 0.24:
+                elif low_mean > 0.25 or current_low > 0.28:
                     glitch_mode = "medium"
                 elif (current_high - high_mean) > GLITCH_THRESHOLD_HIGH or (
                         current_mid - mid_mean) > GLITCH_THRESHOLD_MID:
-                    glitch_timer = 2  # glitch für 2 Schleifendurchgänge aktivieren
+                    glitch_timer = 5  # glitch für 2 Schleifendurchgänge aktivieren
 
                 if glitch_timer > 0:
                     glitch_mode = "glitch"
