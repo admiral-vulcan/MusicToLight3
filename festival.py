@@ -18,6 +18,8 @@ import os
 import sys
 import json
 from PIL import Image
+from collections import deque
+
 
 # If DISPLAY not set (headless), default to :0
 if 'DISPLAY' not in os.environ:
@@ -32,6 +34,8 @@ SAMPLE_RATE = 44100
 BUFFER_SIZE = 1024
 CHANNELS = 2
 flip_channels = True
+BAND_HISTORY_LEN = 60  # normalization over about 2 seconds at 30 FPS
+OFFSET_CORRECTION = 0.015
 
 # Channel selection: set in __main__
 SELECTED_CHANNEL = None
@@ -44,7 +48,8 @@ OPACITY_MAP_RIGHT = "right_op.png"
 # Buffers and gains
 audio_levels = np.zeros(2)
 audio_buffer = np.zeros(BUFFER_SIZE * 4)
-band_gains = np.array([0.5, 0.7, 0.8, 1.0, 1.2, 3.1, 5.2, 7.6, 30])
+#band_gains = np.array([0.7, 0.8, 0.9, 1.0, 1.2, 3.1, 5.2, 7.6, 30])
+band_gains = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 boost = 40
 
 # Colors for visualization
@@ -202,7 +207,7 @@ def calibrate(seconds=5):
             win.blit(msg, (size[0] // 2 - msg.get_width() // 2, size[1] // 2 - msg.get_height() // 2))
             pygame.display.flip()
             clock.tick(30)
-            bands = compute_bands(audio_buffer, SAMPLE_RATE, bands_n=9, band_noise_floor=None, normalize=False)
+            bands = compute_bands(audio_buffer, SAMPLE_RATE, bands_n=ROWS, band_noise_floor=None, normalize=False)
             band_history.append(bands)
         levels_left.append(audio_levels[0])
         levels_right.append(audio_levels[1])
@@ -242,7 +247,7 @@ def load_offset():
         return None
 
 
-def load_band_noise_floor(bands_n=9):
+def load_band_noise_floor(bands_n=ROWS):
     """Loads the noise floor for each frequency band."""
     try:
         with open("band_noise_floor.json", "r") as f:
@@ -289,8 +294,11 @@ def build_tilemap(mask_path, size, rows=ROWS, cols=COLS, threshold=128):
     return tiles
 
 
-def compute_bands(audio, sample_rate, bands_n=9, band_noise_floor=None, normalize=True):
-    """FFT-based frequency band extraction and normalization, with noise floor subtraction."""
+def compute_bands(audio, sample_rate, bands_n=ROWS, band_noise_floor=None, normalize=True):
+    """
+    FFT-based frequency band extraction and dynamic normalization.
+    Uses a rolling max of each band over the last N frames for adaptive normalization.
+    """
     fft = np.abs(np.fft.rfft(audio * np.hanning(len(audio))))
     freqs = np.fft.rfftfreq(len(audio), 1 / sample_rate)
     band_edges = np.logspace(np.log10(40), np.log10(sample_rate / 2), bands_n + 1)
@@ -307,16 +315,37 @@ def compute_bands(audio, sample_rate, bands_n=9, band_noise_floor=None, normaliz
         band_values = np.maximum(band_values - band_noise_floor, 0)
 
     if normalize:
-        signal_sum = band_values.sum()
-        if signal_sum > 0.05:
-            band_values = band_values / (band_values.max() + 1e-8)
+        # -------- Dynamic normalization using a rolling maximum over N frames --------
+        # Threshold small values for stability (using calibrated offset)
+        band_values[band_values < OFFSET_CORRECTION] = 0
 
-    if normalize:
-        band_values = band_values * band_gains[:bands_n]
+        # Initialize per-band rolling max buffers on first run
+        if not hasattr(compute_bands, "band_max_buffers") or len(compute_bands.band_max_buffers) != bands_n:
+            from collections import deque
+            # Create one deque per band for the last N values
+            compute_bands.band_max_buffers = [deque([1e-6] * BAND_HISTORY_LEN, maxlen=BAND_HISTORY_LEN) for _ in
+                                              range(bands_n)]
+        band_max_buffers = compute_bands.band_max_buffers
+
+        dynamic_max = np.zeros(bands_n)
+        for i in range(bands_n):
+            # Only update the rolling history if the value is > 0 (otherwise keep last real value)
+            if band_values[i] > 0:
+                band_max_buffers[i].append(band_values[i])
+            # Use max of last N frames for normalization
+            dynamic_max[i] = max(band_max_buffers[i])
+            # Prevent division by zero (if the buffer is all zeros)
+            if dynamic_max[i] < 1e-8:
+                dynamic_max[i] = 1.0
+
+        # Normalize bands individually to their recent maximum
+        band_values = band_values / dynamic_max
+
+
+    # Apply gain correction per band
+    band_values = band_values * band_gains[:bands_n]
+    # Clamp to [0, 1]
     band_values = np.clip(band_values, 0, 1)
-
-    if normalize:
-        band_values[band_values < 0.07] = 0
 
     return band_values
 
@@ -361,7 +390,7 @@ def main(mapping=False):
     # Load calibrated audio offset from file (used to remove input noise floor)
     offset = load_offset()
     # Load per-band noise floor values from file (for improved frequency normalization)
-    band_noise_floor = load_band_noise_floor(bands_n=9)
+    band_noise_floor = load_band_noise_floor(bands_n=ROWS)
     # Buffer to store previous row values (used for jitter detection and effect)
     prev_row_values = np.zeros((ROWS, COLS), dtype=float)
 
@@ -450,7 +479,7 @@ def main(mapping=False):
 
             # FFT bands
             current_audio = audio_buffer
-            band_values = compute_bands(current_audio, SAMPLE_RATE, bands_n=9, band_noise_floor=band_noise_floor)
+            band_values = compute_bands(current_audio, SAMPLE_RATE, bands_n=ROWS, band_noise_floor=band_noise_floor)
 
             # Scroll effect: leftmost (or rightmost) tile is current value, values move outward
             for row in range(ROWS):
