@@ -11,25 +11,42 @@ import sys
 import json
 from PIL import Image
 
+# If DISPLAY not set (headless), default to :0
 if 'DISPLAY' not in os.environ:
     os.environ['DISPLAY'] = ':0'
 
+# Tile grid configuration
+ROWS = 9   # number of frequency bands (vertical tiles)
+COLS = 16  # number of time steps visualized horizontally (scrolling history)
+
+# Audio settings
 SAMPLE_RATE = 44100
 BUFFER_SIZE = 1024
 CHANNELS = 2
 flip_channels = True
+
+# Channel selection: set in __main__
+SELECTED_CHANNEL = None
+
+# File paths
 OFFSET_FILE = "audio_offset.json"
 OPACITY_MAP_LEFT = "left_op.png"
 OPACITY_MAP_RIGHT = "right_op.png"
-audio_levels = [0.0, 0.0]
-offset = [0.0, 0.0]
-boost = 40
+
+# Buffers and gains
+audio_levels = np.zeros(2)
 audio_buffer = np.zeros(BUFFER_SIZE * 4)
 band_gains = np.array([0.5, 0.7, 0.8, 1.0, 1.2, 3.1, 5.2, 7.6, 30])
+boost = 40
 
+# Colors for visualization
 COLOR_TREBLE = (0, 160, 255)
 COLOR_MID = (255, 255, 40)
 COLOR_BASS = (255, 0, 32)
+
+# Audio threading
+audio_running = threading.Event()
+
 
 def print_intro():
     print(r"""
@@ -50,20 +67,22 @@ Perfect for festivals, art installations, and synchronized audio-visual shows!
 
 def print_usage():
     print("""
-Usage: python3 festival.py [left|right] [mapping]
+Usage: python3 festival.py [left|right] [mapping] [fullgrid]
        python3 festival.py calibrate
 
 Arguments:
   left        Visualize the left audio channel (for the left display).
   right       Visualize the right audio channel (for the right display).
   mapping     (Optional) Show the opacity map for projector alignment and mask verification.
+  fullgrid    (Optional) Display the complete grid of tiles, ignoring any opacity map.
   calibrate   Start the audio offset and noise-floor calibration. Run this in silence.
 
 Notes:
-- Either 'left' or 'right' must be specified. 
-- 'mapping' can be added in any order, together with 'left' or 'right'.
+- Either 'left' or 'right' must be specified.
+- 'mapping' and/or 'fullgrid' can be added in any order, together with 'left' or 'right'.
 - Example: python3 festival.py left mapping
            python3 festival.py mapping right
+           python3 festival.py left fullgrid
 
 If no valid mode is specified, this help is shown.
 """)
@@ -89,21 +108,48 @@ def get_band_color(row, bands_n):
 
 
 def audio_callback(indata, frames, time_info, status):
-    """Audio callback for input stream. Updates global audio_levels and audio_buffer."""
-    global audio_levels, audio_buffer
-    if flip_channels:
-        left = indata[:, 1]
-        right = indata[:, 0]
+    """
+    Audio callback function for sounddevice.InputStream.
+    Processes either one selected channel ('left' or 'right') or both (in 'both' mode for calibration).
+    Updates global audio_levels and audio_buffer accordingly.
+    """
+    global audio_levels, audio_buffer, SELECTED_CHANNEL
+
+    if SELECTED_CHANNEL == 'both':
+        # Calibration mode: process both left and right channels
+        if flip_channels:
+            left = indata[:, 1]
+            right = indata[:, 0]
+        else:
+            left = indata[:, 0]
+            right = indata[:, 1]
+
+        # Calculate RMS levels for both channels
+        level_left = np.sqrt(np.mean(left ** 2))
+        level_right = np.sqrt(np.mean(right ** 2))
+        audio_levels = [level_left, level_right]
+
+        # Create mono mix for spectral analysis
+        mono = (left + right) / 2
+        audio_buffer[:-frames] = audio_buffer[frames:]
+        audio_buffer[-frames:] = mono
+
     else:
-        left = indata[:, 0]
-        right = indata[:, 1]
-    level_left = np.sqrt(np.mean(left**2))
-    level_right = np.sqrt(np.mean(right**2))
-    audio_levels = [level_left, level_right]
-    # Store latest mono samples in buffer for analysis
-    mono = (left + right) / 2
-    audio_buffer[:-frames] = audio_buffer[frames:]
-    audio_buffer[-frames:] = mono
+        # Single channel mode: process only selected channel
+        if SELECTED_CHANNEL == 'left':
+            idx = 1 if flip_channels else 0
+        else:  # 'right'
+            idx = 0 if flip_channels else 1
+
+        channel_data = indata[:, idx]
+
+        # Calculate RMS level for the selected channel
+        level = np.sqrt(np.mean(channel_data ** 2))
+        audio_levels = [level, 0.0]  # Keep format consistent for downstream code
+
+        # Update buffer for spectral analysis
+        audio_buffer[:-frames] = audio_buffer[frames:]
+        audio_buffer[-frames:] = channel_data
 
 
 def audio_thread():
@@ -114,19 +160,25 @@ def audio_thread():
         blocksize=BUFFER_SIZE,
         callback=audio_callback
     ):
-        while True:
+        while audio_running.is_set():
             time.sleep(0.01)
 
 
 def calibrate(seconds=5):
     """Runs calibration for offset and band noise floor. Must be silent."""
+    if SELECTED_CHANNEL != 'both':
+        print(f"Calibration can only be run in stereo mode.")
+        sys.exit(0)
     print(f"Starting calibration ({seconds} seconds silence, do not input any sound)...")
     levels_left = []
     levels_right = []
     band_history = []
 
+    # Start audio thread
+    audio_running.set()
     t_audio = threading.Thread(target=audio_thread, daemon=True)
     t_audio.start()
+
     pygame.init()
     info = pygame.display.Info()
     size = (info.current_w, info.current_h)
@@ -152,6 +204,8 @@ def calibrate(seconds=5):
     win.blit(msg, (size[0] // 2 - msg.get_width() // 2, size[1] // 2 - msg.get_height() // 2))
     pygame.display.flip()
     time.sleep(1)
+    audio_running.clear()
+    t_audio.join()
     pygame.quit()
 
     offset_left = float(np.median(levels_left))
@@ -208,7 +262,7 @@ def load_mask_surface(mask_path, resolution):
     return mask_surface
 
 
-def build_tilemap(mask_path, size, rows=9, cols=16, threshold=128):
+def build_tilemap(mask_path, size, rows=ROWS, cols=COLS, threshold=128):
     """Creates a tile map based on the opacity map and desired grid size."""
     opacity_map = np.array(Image.open(mask_path).convert("L").resize(size))
     cell_h = size[1] // rows
@@ -259,16 +313,52 @@ def compute_bands(audio, sample_rate, bands_n=9, band_noise_floor=None, normaliz
     return band_values
 
 
-def main(channel=None, mapping=False):
+def show_mapping_preview(alpha_mask, size):
+    """Displays the mapping overlay fullscreen with label."""
+    pygame.init()
+    win = pygame.display.set_mode(size, pygame.FULLSCREEN)
+    pygame.display.set_caption("Mapping Preview")
+    pygame.mouse.set_visible(False)
+    font = pygame.font.SysFont("monospace", 60)
+    clock = pygame.time.Clock()
+    test_surf = pygame.Surface(size, pygame.SRCALPHA)
+    test_surf.fill((255, 255, 255, 255))
+    test_surf.blit(alpha_mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    info_text = f"Mapping: {SELECTED_CHANNEL.upper()}"
+    text_color = (255, 220, 60)
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or (
+                event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
+            ):
+                running = False
+        win.fill((0, 0, 0))
+        win.blit(test_surf, (0, 0))
+        msg = font.render(info_text, True, text_color)
+        win.blit(msg, (size[0] // 2 - msg.get_width() // 2, 20))
+        pygame.display.flip()
+        clock.tick(30)
+    pygame.quit()
+
+
+def main(mapping=False):
     """
     Main loop for MusicToLight visualization.
     If mapping is True, only show the opacity mask.
-    If channel is 'left' or 'right', visualize only the respective audio channel.
+    If SELECTED_CHANNEL is 'left' or 'right', visualize only the respective audio channel.
     """
     global offset
+
+    # Load calibrated audio offset from file (used to remove input noise floor)
     offset = load_offset()
+    # Load per-band noise floor values from file (for improved frequency normalization)
     band_noise_floor = load_band_noise_floor(bands_n=9)
+    # Buffer to store previous row values (used for jitter detection and effect)
+    prev_row_values = np.zeros((ROWS, COLS), dtype=float)
+
     if offset is None:
+        # Show error and exit if no calibration data is available
         print(f"Offset file '{OFFSET_FILE}' is missing! Please run calibration first:\n   python3 {sys.argv[0]} calibrate")
         pygame.init()
         info = pygame.display.Info()
@@ -285,9 +375,12 @@ def main(channel=None, mapping=False):
         pygame.quit()
         return
 
+    # Start audio thread
+    audio_running.set()
     t_audio = threading.Thread(target=audio_thread, daemon=True)
     t_audio.start()
 
+    # Initialize Pygame display
     pygame.init()
     info = pygame.display.Info()
     size = (info.current_w, info.current_h)
@@ -295,138 +388,140 @@ def main(channel=None, mapping=False):
     pygame.display.set_caption("MusicToLight Level Display")
     pygame.mouse.set_visible(False)
 
-    # Choose opacity map based on channel
-    if channel == "right":
+    # Choose mask based on SELECTED_CHANNEL
+    if SELECTED_CHANNEL == 'right':
         mask_path = os.path.join(os.path.dirname(__file__), OPACITY_MAP_RIGHT)
     else:
         mask_path = os.path.join(os.path.dirname(__file__), OPACITY_MAP_LEFT)
 
-    # Load opacity mask and build tilemap
-    if not os.path.isfile(mask_path):
-        alpha_mask = None
+    if fullgrid_mode:
+        # Grid without opacity map
+        print("Full grid mode: Zeige alle Kacheln!")
         tiles = []
-        print("Opacity map not found:", mask_path)
+        cell_h = size[1] // ROWS
+        cell_w = size[0] // COLS
+        for row in range(ROWS):
+            for col in range(COLS):
+                x = col * cell_w
+                y = row * cell_h
+                tiles.append({
+                    "x": x, "y": y, "w": cell_w, "h": cell_h, "row": row, "col": col
+                })
+        scroll_values = np.zeros((ROWS, COLS), dtype=float)
+        alpha_mask = None
     else:
-        alpha_mask = load_mask_surface(mask_path, size)
-        print("Opacity map loaded:", mask_path)
-        rows, cols = 9, 16
-        tiles = build_tilemap(mask_path, size, rows=rows, cols=cols)
-        scroll_values = np.zeros((rows, cols), dtype=float)
-        print(f"{len(tiles)} of {rows*cols} tiles visible in this map.")
-        if mapping and alpha_mask:
-            # Determine which channel's map is being shown
-            map_side = "LEFT" if channel == "left" else "RIGHT" if channel == "right" else "UNKNOWN"
-            print(f"Showing test image with opacity map for {map_side} side...")
-
-            running = True
-            clock = pygame.time.Clock()
-            test_surf = pygame.Surface(size, pygame.SRCALPHA)
-            test_surf.fill((255, 255, 255, 255))  # All white
-            test_surf.blit(alpha_mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-            # Render the info text onto the screen
-            font = pygame.font.SysFont("monospace", 60)
-            info_text = f"Mapping: {map_side}"
-            text_color = (255, 220, 60)
-            while running:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT or (
-                            event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
-                    ):
-                        running = False
-                win.fill((0, 0, 0))
-                win.blit(test_surf, (0, 0))
-                # Draw the info text in the corner or centered
-                msg = font.render(info_text, True, text_color)
-                win.blit(msg, (size[0] // 2 - msg.get_width() // 2, 20))
-                pygame.display.flip()
-                clock.tick(30)
-            pygame.quit()
-            return
+        # Grid with opacity map
+        if not os.path.isfile(mask_path):
+            alpha_mask = None
+            tiles = []
+            print("Opacity map not found:", mask_path)
+        else:
+            alpha_mask = load_mask_surface(mask_path, size)
+            print("Opacity map loaded:", mask_path)
+            tiles = build_tilemap(mask_path, size)
+            scroll_values = np.zeros((ROWS, COLS), dtype=float)
+            print(f"{len(tiles)} of {ROWS * COLS} tiles visible in this map.")
+            if mapping and alpha_mask:
+                show_mapping_preview(alpha_mask, size)
+                audio_running.clear()
+                t_audio.join()
+                return
 
     clock = pygame.time.Clock()
     running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+    try:
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
 
-        # Determine which channel to visualize
-        if channel == "left":
+            # Compute loudness and visualization parameters
             loud = max(audio_levels[0] - offset[0], 0.0)
-        elif channel == "right":
-            loud = max(audio_levels[1] - offset[1], 0.0)
-        else:
-            # Use the greater of the two, fallback for general mode
-            loud = min(max(audio_levels[0] - offset[0], audio_levels[1] - offset[1]), 1.0)
-        loud_vis = min(loud * boost, 1.0)
-        color = (int(loud_vis * 255), 0, int((1 - loud_vis) * 128) + 64)
+            loud_vis = min(loud * boost, 1.0)
+            color = (int(loud_vis * 255), 0, int((1 - loud_vis) * 128) + 64)
 
-        # Calculate frequency bands for current channel
-        if channel == "left":
-            # Extract only left channel samples from buffer
-            current_audio = audio_buffer  # for now, mono (your audio_callback fills mono), advanced: separate buffer for L/R
-        elif channel == "right":
-            current_audio = audio_buffer  # same here, see note below
-        else:
+            # FFT bands
             current_audio = audio_buffer
+            band_values = compute_bands(current_audio, SAMPLE_RATE, bands_n=9, band_noise_floor=band_noise_floor)
 
-        band_values = compute_bands(current_audio, SAMPLE_RATE, bands_n=9, band_noise_floor=band_noise_floor)
+            # Scroll effect: leftmost (or rightmost) tile is current value, values move outward
+            for row in range(ROWS):
+                if SELECTED_CHANNEL == "left":
+                    # left channel: new value leftmost, shift right
+                    for col in reversed(range(1, COLS)):
+                        scroll_values[row, col] = scroll_values[row, col - 1]
+                    scroll_values[row, 0] = band_values[len(band_values) - 1 - row]
+                elif SELECTED_CHANNEL == "right":
+                    # right channel: new value rightmost, shift left
+                    for col in range(COLS - 1):
+                        scroll_values[row, col] = scroll_values[row, col + 1]
+                    scroll_values[row, COLS - 1] = band_values[len(band_values) - 1 - row]
+                else:
+                    # fallback: left to right
+                    for col in reversed(range(1, COLS)):
+                        scroll_values[row, col] = scroll_values[row, col - 1]
+                    scroll_values[row, 0] = band_values[len(band_values) - 1 - row]
 
-        # Scroll effect: leftmost (or rightmost) tile is current value, values move outward
-        for row in range(rows):
-            if channel == "left":
-                # left channel: new value leftmost, shift right
-                for col in reversed(range(1, cols)):
-                    scroll_values[row, col] = scroll_values[row, col - 1]
-                scroll_values[row, 0] = band_values[len(band_values) - 1 - row]
-            elif channel == "right":
-                # right channel: new value rightmost, shift left
-                for col in range(cols - 1):
-                    scroll_values[row, col] = scroll_values[row, col + 1]
-                scroll_values[row, cols - 1] = band_values[len(band_values) - 1 - row]
-            else:
-                # fallback: left to right
-                for col in reversed(range(1, cols)):
-                    scroll_values[row, col] = scroll_values[row, col - 1]
-                scroll_values[row, 0] = band_values[len(band_values) - 1 - row]
+            # Row-wise jitter if a row remains static, to keep visuals lively
+            for row in range(ROWS):
+                # If the entire row has not changed since the last frame, apply jitter
+                if np.allclose(scroll_values[row, :], prev_row_values[row, :], atol=1e-6):
+                    # Add a small random noise to each tile in the row to create a subtle movement effect
+                    scroll_values[row, :] += np.random.uniform(-0.03, 0.03, size=COLS)
+                    # Clamp values to valid range [0, 1] after jitter
+                    scroll_values[row, :] = np.clip(scroll_values[row, :], 0, 1)
+            # Store the current row values for comparison in the next frame
+            prev_row_values[:, :] = scroll_values[:, :]
 
-        # Draw visualization
-        vis_surface = pygame.Surface(size, pygame.SRCALPHA)
-        for k in tiles:
-            row = k["row"]
-            col = k["col"]
-            val = scroll_values[row, col]
-            scale = 0.1 + val * 0.85
-            w = int(k["w"] * scale)
-            h = int(k["h"] * scale)
-            x = k["x"] + (k["w"] - w) // 2
-            y = k["y"] + (k["h"] - h) // 2
-            color = get_band_color(row, rows)
-            pygame.draw.rect(vis_surface, color, (x, y, w, h))
+            # Draw visualization
+            vis_surface = pygame.Surface(size, pygame.SRCALPHA)
+            for k in tiles:
+                row = k["row"]
+                col = k["col"]
+                val = scroll_values[row, col]
+                scale = 0.1 + val * 0.85
+                w = int(k["w"] * scale)
+                h = int(k["h"] * scale)
+                x = k["x"] + (k["w"] - w) // 2
+                y = k["y"] + (k["h"] - h) // 2
+                color = get_band_color(row, ROWS)
+                pygame.draw.rect(vis_surface, color, (x, y, w, h))
 
-        win.fill((0, 0, 0))
-        win.blit(vis_surface, (0, 0))
-        pygame.display.flip()
+            win.fill((0, 0, 0))
+            win.blit(vis_surface, (0, 0))
+            pygame.display.flip()
 
-        clock.tick(30)
-
-    pygame.quit()
+            clock.tick(30)
+    finally:
+        audio_running.clear()
+        t_audio.join()
+        pygame.quit()
 
 
 if __name__ == '__main__':
     print_intro()
     args = set(arg.lower() for arg in sys.argv[1:])
 
-    if not (('left' in args) ^ ('right' in args)):  # XOR: genau eins muss drin sein!
+    # Validate args
+    if 'calibrate' in args:
+        SELECTED_CHANNEL = 'both'
+        calibrate()
+        sys.exit(0)
+    if not (('left' in args) ^ ('right' in args)):
         print_usage()
         print("\nYou must specify either 'left' or 'right' as the display side. Optionally add 'mapping' for mask preview.")
         sys.exit(0)
 
     mapping = 'mapping' in args
+    fullgrid_mode = 'fullgrid' in args
 
-    if 'calibrate' in args:
-        calibrate()
-    elif 'left' in args:
-        main(channel="left", mapping=mapping)
+    # Set SELECTED_CHANNEL and start main
+    if 'left' in args:
+        SELECTED_CHANNEL = 'left'
     elif 'right' in args:
-        main(channel="right", mapping=mapping)
+        SELECTED_CHANNEL = 'right'
+
+    try:
+        main(mapping=mapping)
+    except KeyboardInterrupt:
+        print("\n\nProgram ended.")
