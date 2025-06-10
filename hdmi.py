@@ -48,7 +48,7 @@ def get_video_list(directory):
 # Screen resolution settings
 screen_width = 1280
 screen_height = 720
-screen = pygame.display.set_mode((screen_width, screen_height))
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
 
 # colors = [(255, 0, 0), (255, 0, 255), (0, 0, 255)]
 font = 0

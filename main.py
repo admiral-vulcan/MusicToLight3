@@ -12,9 +12,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# --- HDMI / Pygame Display Environment Setup ---
+import os
+os.environ["SDL_VIDEODRIVER"] = "x11"     # Use X11 for SDL (Pygame)
+if "DISPLAY" not in os.environ:
+    os.environ["DISPLAY"] = ":0"          # Set default X11 display if unset
+
+# --- Standard Libraries ---
+import sys
 import time
 import math
+import argparse
+import cProfile
+import pstats
+import io
 
+# --- MusicToLight3 Core Modules ---
 from aud_proc import *
 from eurolite_t36 import *
 from scanner import *
@@ -22,89 +35,90 @@ from laser_show import *
 from led_strip import *
 from hdmi import *
 from helpers import *
-import os
-import sys
 from com_udp import *
 from gui import *
 
-import argparse
-
-import cProfile
-import pstats
-import io
-
-# Parse arguments from console
+# --- Command line argument parsing ---
 parser = argparse.ArgumentParser(description='MusicToLight3')
-parser.add_argument('--fastboot', action='store_true', help='Activates Fastboot-Mode. Deactivates calibrating.')
+parser.add_argument('--fastboot', action='store_true',
+                    help='Activates Fastboot-Mode. Deactivates calibrating.')
 args = parser.parse_args()
 
-profiling = False  # performance analysis
+# --- Profiling and Debugging ---
+profiling = False         # Enable cProfile performance analysis
 execution_counter = 0
 
-use_hdmi = True
+# --- Main App Settings ---
+use_hdmi = True           # Set to False to disable HDMI output (for headless mode)
+main_led_set = [None] * 3 # State of main LED colors
 
-main_led_set = [None] * 3
-
+# --- Runtime State ---
 runtime_bit = 0
 runtime_byte = 0
 runtime_kb = 0
 runtime_mb = 0
 
+# --- Signal & Analyzer State ---
 no_drop_count = 0
-
 signal_noise = 0.009
-
 heavy_ever_detected = False
 previous_heavy = True
 sentSpectrumAnalyzerOff = False
 
+# --- Glitch Effect State ---
 glitch_timer = 0
 glitch_mode = "off"
 
-print("")
-print("\nProgram ended gracefully.\n")
-print("MusicToLight3  Copyright (C) 2025  Felix Rau")
-print("This program is licensed under the terms of the ")
-print("GNU General Public License version 3.")
-print("It comes with ABSOLUTELY NO WARRANTY; for details see README.md.")
-print("This is free software, and you are welcome to redistribute it")
-print("under certain conditions; see LICENSE.md.\n")
-print("")
-print("        Initializing devices.")
-print("")
 
-# initialise devices
+print("""
 
-# spectrum analyzer all off
-mode = 0
-intensity = 255
-color_start = 7
-color_end = 7
-num_leds_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+MusicToLight3  Copyright (C) 2025  Felix Rau
+This program is licensed under the terms of the 
+GNU General Public License version 3.
+It comes with ABSOLUTELY NO WARRANTY; for details see README.md.
+This is free software, and you are welcome to redistribute it
+under certain conditions; see LICENSE.md.
+
+        Initializing devices.
+""")
+
+
+# --- Initialize Devices ---
+
+# --- Spectrum analyzer: All channels OFF ---
+mode = 0              # Mode 0: All off
+intensity = 255       # Max intensity (ignored in off-mode)
+color_start = 7       # Color channel start (white)
+color_end = 7         # Color channel end (white)
+num_leds_list = [0] * 12  # 12 channels, all off
+
 send_spectrum_analyzer_data(UDP_IP_ADDRESS_LED2, mode, intensity, color_start, color_end, num_leds_list)
-led_set_all_pixels_color(0, 0, 0)
+led_set_all_pixels_color(0, 0, 0)  # Turn off all pixels
+
+
+
+# Show initialization banner (console + HDMI if active)
+init_banner = (
+    "MusicToLight3  Copyright (C) 2025  Felix Rau\n\n"
+    "This program is licensed under the terms of the \n"
+    "GNU General Public License version 3.\n"
+    "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n"
+    "Initializing devices..."
+)
 
 if use_hdmi:
     init_hdmi()
-
-if use_hdmi:
-    hdmi_draw_centered_text(
-        "MusicToLight3  Copyright (C) 2025  Felix Rau\n\n\n"
-        "This program is licensed under the terms of the \n"
-        "GNU General Public License version 3.\n"
-        "It is open source, free, and comes with ABSOLUTELY NO WARRANTY.\n\n\n"
-        "Initialising devices...")
+    hdmi_draw_centered_text(init_banner)
+print(init_banner)
 
 if args.fastboot:
-    print('        Fastboot-Mode on.')
-    print(' ')
+    print("        Fastboot-Mode on.\n")
     time.sleep(1)
 else:
     time.sleep(3)
 
+print("        Listening... Press Ctrl+C to stop.\n")
 
-print("        Listening... Press Ctrl+C to stop.")
-print("")
 if use_hdmi:
     hdmi_draw_black()
     hdmi_intro_animation()
