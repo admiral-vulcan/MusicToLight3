@@ -1,5 +1,13 @@
 # MusicToLight FESTIVAL EDITION  Copyright (C) 2025  Felix Rau.
 # Licensed under the GNU GPL v3. See LICENSE for details.
+#
+# This program analyzes live music input, processes frequency bands,
+# and visualizes them in real time for light installations or projections.
+# Designed for multi-display setups with a left/right stereo concept and
+# customizable opacity maps for each projector area.
+#
+# Perfect for festivals, art installations, and synchronized audio-visual shows!
+
 
 import pygame
 import sounddevice as sd
