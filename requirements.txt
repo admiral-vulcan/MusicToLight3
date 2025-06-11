@@ -1,0 +1,12 @@
+aubio
+opencv-python
+numpy<2
+pygame
+pyaudio
+redis
+requests
+rpi-ws281x
+scipy
+Flask
+sounddevice
+pillow

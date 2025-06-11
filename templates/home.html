@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    /* Allgemeine Stile */
+    body {
+        background-color: black;
+        color: green;
+        font-family: 'Consolas', monospace;
+        padding: 20px;
+    }
+
+    /* Link-Stile */
+    a {
+        color: yellow;
+        text-decoration: none; /* Entfernt Unterstreichungen von Links */
+    }
+
+    a:hover {
+        text-decoration: underline; /* Fügt beim Überfahren mit der Maus eine Unterstreichung hinzu */
+    }
+
+    /* Stil für bereits besuchte Links */
+    a:visited {
+        color: yellow;
+    }
+</style>
+
+</head>
+<body>
+    <h2>Musictolight3 Control Panel</h2>
+	<br>
+	
+    <p><a href="#" id="start">Start Musictolight</a></p>
+    <p><a href="#" id="stop">Stop Musictolight</a></p>
+	<br>
+	
+    <p><a href="#" id="shutdown">Shutdown Musictolight</a></p>
+    <p><a href="#" id="reboot">Reboot Musictolight</a></p>
+	<br>
+	
+	<p id="status">Status: Checking...</p>
+	<br>
+	
+	<p>Calibrate scanner</p>
+	<p><a href="#" class="calibrate" data-mode="on">Set to ON</a></p>
+	<p><a href="#" class="calibrate" data-mode="off">Set to OFF</a></p>
+	<br>
+	
+	<p>Panic Mode</p>
+	<p><a href="#" class="set-panic-mode" data-mode="on">Set to ON</a></p>
+	<p><a href="#" class="set-panic-mode" data-mode="off">Set to OFF</a></p>
+	<p id="panic_status">Current Panic Mode: Checking...</p>
+	<br>
+	
+	<p>Choose primary color:</p>
+	<p>
+		Set to 
+		<a href="#" class="set-prim-color" data-mode="white">white</a>,
+		<a href="#" class="set-prim-color" data-mode="red">red</a>,
+		<a href="#" class="set-prim-color" data-mode="yellow">yellow</a>,
+		<a href="#" class="set-prim-color" data-mode="purple">purple</a>,
+		<a href="#" class="set-prim-color" data-mode="green">green</a>,
+		<a href="#" class="set-prim-color" data-mode="orange">orange</a>,
+		<a href="#" class="set-prim-color" data-mode="blue">blue</a>,
+		<a href="#" class="set-prim-color" data-mode="pink">pink</a>,
+		<a href="#" class="set-prim-color" data-mode="cyan">cyan</a>.
+	</p>
+	<p id="prim_color_status">Current primary color: Checking...</p>
+	<br>
+
+	<p>Choose secondary color:</p>
+	<p>
+		Set to 
+		<a href="#" class="set-seco-color" data-mode="white">white</a>,
+		<a href="#" class="set-seco-color" data-mode="red">red</a>,
+		<a href="#" class="set-seco-color" data-mode="yellow">yellow</a>,
+		<a href="#" class="set-seco-color" data-mode="purple">purple</a>,
+		<a href="#" class="set-seco-color" data-mode="green">green</a>,
+		<a href="#" class="set-seco-color" data-mode="orange">orange</a>,
+		<a href="#" class="set-seco-color" data-mode="blue">blue</a>,
+		<a href="#" class="set-seco-color" data-mode="pink">pink</a>,
+		<a href="#" class="set-seco-color" data-mode="cyan">cyan</a>.
+	</p>
+	<p id="seco_color_status">Current secondary color: Checking...</p>
+	<br>
+	
+	<p>Chill Mode</p>
+	<p><a href="#" class="set-chill-mode" data-mode="on">Set to ON</a></p>
+	<p><a href="#" class="set-chill-mode" data-mode="off">Set to OFF</a></p>
+	<p id="chill_status">Current Chill Mode: Checking...</p>
+	<br>
+	
+	<p>Play Videos Mode</p>
+	<p><a href="#" class="set-play-videos-mode" data-mode="auto">Set to AUTO</a></p>
+	<p><a href="#" class="set-play-videos-mode" data-mode="off">Set to OFF</a></p>
+	<p id="play_videos_status">Current Play Videos Mode: Checking...</p>
+	<br>
+	
+	<p>Strobe Mode</p>
+	<p><a href="#" class="set-strobe-mode" data-mode="on">Set to ON</a></p>
+	<p><a href="#" class="set-strobe-mode" data-mode="auto">Set to AUTO</a></p>
+	<p><a href="#" class="set-strobe-mode" data-mode="off">Set to OFF</a></p>
+	<p id="strobe_status">Current Strobe Mode: Checking...</p>
+	<br>
+	
+	<p>Smoke Mode</p>
+	<p><a href="#" class="set-smoke-mode" data-mode="on">Set to ON</a></p>
+	<p><a href="#" class="set-smoke-mode" data-mode="auto">Set to AUTO</a></p>
+	<p><a href="#" class="set-smoke-mode" data-mode="off">Set to OFF</a></p>
+	<p id="smoke_status">Current Smoke Mode: Checking...</p>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script>
+    var expectedState = null;
+    var expiryTime = null;
+
+    function updateStatus() {
+		if (navigator.onLine) {
+			$.getJSON('/status', function(data) {
+				var running = data.running;
+				if (expectedState !== null) {
+					if (running == expectedState) {
+						// The expected state has been reached
+						expectedState = null;
+					} else if (Date.now() > expiryTime) {
+						// The expected state was not reached in time
+						$('#status').text('Status: Failed to ' + (expectedState ? 'start' : 'stop'));
+						expectedState = null;
+					}
+					// If neither condition is met, keep showing "Starting..." or "Stopping..."
+				} else {
+					// Show the actual status
+					$('#status').text('Status: ' + (running ? 'Running' : 'Not running'));
+				}
+			});
+		} else {
+			$('#status').text('Status: Offline');
+		}
+	}
+	
+    $(document).ready(function() {
+        updateStatus();
+        setInterval(updateStatus, 1000);  // Update status every second
+
+        $('#start').click(function(e) {
+            e.preventDefault();
+            $('#status').text('Status: Starting...');
+            expectedState = true;
+            expiryTime = Date.now() + 15000;  // 15 seconds from now
+            $.post('/start');
+        });
+
+        $('#stop').click(function(e) {
+            e.preventDefault();
+            $('#status').text('Status: Stopping...');
+            expectedState = false;
+            expiryTime = Date.now() + 15000;  // 15 seconds from now
+            $.post('/stop');
+        });
+
+        $('#shutdown').click(function(e) {
+            e.preventDefault();
+            $('#status').text('Status: Shutting down...');
+            expectedState = false;
+            expiryTime = Date.now() + 15000;  // 15 seconds from now
+            $.post('/shutdown');
+        });
+
+        $('#reboot').click(function(e) {
+            e.preventDefault();
+            $('#status').text('Status: Rebooting...');
+            expectedState = false;
+            expiryTime = Date.now() + 30000;  // 30 seconds from now
+            $.post('/reboot');
+        });
+    });
+	
+	function updatePanicMode() {
+		$.getJSON('/get_panic_mode', function(data) {
+			$('#panic_status').text('Panic Mode: ' + data.panic_mode);
+		});
+	}
+	
+	function updatePrimaryColor() {
+		$.getJSON('/get_prim_color', function(data) {
+			$('#prim_color_status').text('Primary Color: ' + data.st_color_name);
+		});
+	}
+	
+	function updateSecondaryColor() {
+		$.getJSON('/get_seco_color', function(data) {
+			$('#seco_color_status').text('Secondary Color: ' + data.nd_color_name);
+		});
+	}
+	
+	function updateChillMode() {
+		$.getJSON('/get_chill_mode', function(data) {
+			$('#chill_status').text('Chill Mode: ' + data.chill_mode);
+		});
+	}
+	
+	function updatePlayVideosMode() {
+		$.getJSON('/get_play_videos_mode', function(data) {
+			$('#play_videos_status').text('Play Videos Mode: ' + data.play_videos_mode);
+		});
+	}
+
+	function updateStrobeMode() {
+		$.getJSON('/get_strobe_mode', function(data) {
+			$('#strobe_status').text('Strobe Mode: ' + data.strobe_mode);
+		});
+	}
+
+	function updateSmokeMode() {
+		$.getJSON('/get_smoke_mode', function(data) {
+			$('#smoke_status').text('Smoke Mode: ' + data.smoke_mode);
+		});
+	}
+
+$(document).ready(function() {
+    updatePanicMode();
+    setInterval(updatePanicMode, 1000);  // Update panic mode every second
+    updateChillMode();
+    setInterval(updateChillMode, 1000);
+    updatePrimaryColor();
+    setInterval(updatePrimaryColor, 1000);
+    updateSecondaryColor();
+    setInterval(updateSecondaryColor, 1000);
+    updatePlayVideosMode();
+    setInterval(updatePlayVideosMode, 1000);  // Update play videos mode every second
+    updateStrobeMode();
+    setInterval(updateStrobeMode, 1000);  // Update strobe mode every second
+    updateSmokeMode();
+    setInterval(updateSmokeMode, 1000);  // Update smoke mode every second
+
+    $('.set-panic-mode').click(function(e) {
+        e.preventDefault();
+        var mode = $(this).attr('data-mode');
+        $.post('/set_panic_mode/' + mode, function(data) {
+            $('#panic_status').text('Panic Mode: ' + data.panic_mode);
+        });
+    });
+	
+	$('.set-prim-color').click(function(e) {
+		e.preventDefault();
+		var color = $(this).attr('data-mode');
+		$.post('/set_prim_color/' + color, function(data) {
+			$('#prim_color_status').text('Primary Color: ' + data.st_color_name);
+		});
+	});
+
+	$('.set-seco-color').click(function(e) {
+		e.preventDefault();
+		var color = $(this).attr('data-mode');
+		$.post('/set_seco_color/' + color, function(data) {
+			$('#seco_color_status').text('Secondary Color: ' + data.nd_color_name);
+		});
+	});
+
+	$('.set-chill-mode').click(function(e) {
+		e.preventDefault();
+		var mode = $(this).attr('data-mode');
+		$.post('/set_chill_mode/' + mode, function(data) {
+			$('#chill_status').text('Chill Mode: ' + data.chill_mode);
+		});
+	});
+	
+    $('.set-play-videos-mode').click(function(e) {
+        e.preventDefault();
+        var mode = $(this).attr('data-mode');
+        $.post('/set_play_videos_mode/' + mode, function(data) {
+            $('#play_videos_status').text('Play Videos Mode: ' + data.play_videos_mode);
+        });
+    });
+
+    $('.set-strobe-mode').click(function(e) {
+        e.preventDefault();
+        var mode = $(this).attr('data-mode');
+        $.post('/set_strobe_mode/' + mode, function(data) {
+            $('#strobe_status').text('Strobe Mode: ' + data.strobe_mode);
+        });
+    });
+
+    $('.set-smoke-mode').click(function(e) {
+        e.preventDefault();
+        var mode = $(this).attr('data-mode');
+        $.post('/set_smoke_mode/' + mode, function(data) {
+            $('#smoke_status').text('Smoke Mode: ' + data.smoke_mode);
+        });
+    });
+	$('.calibrate').click(function(e) {
+    e.preventDefault();
+    var mode = $(this).attr('data-mode');
+    $.post('/calibrate/' + mode, function(data) {
+    });
+});
+});
+
+</script>
+</body>
+</html>
