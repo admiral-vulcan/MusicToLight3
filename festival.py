@@ -101,6 +101,13 @@ If no valid mode is specified, this help is shown.
 """)
 
 
+def set_display_position(selected_channel):
+    if selected_channel == 'left':
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "0,0"
+    elif selected_channel == 'right':
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "1280,0"
+
+
 def lerp(a, b, t):
     """Linear interpolation between colors a and b, t in [0, 1]."""
     return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
@@ -195,7 +202,7 @@ def calibrate(seconds=5):
     pygame.init()
     info = pygame.display.Info()
     size = (info.current_w, info.current_h)
-    win = pygame.display.set_mode(size, pygame.FULLSCREEN)
+    win = pygame.display.set_mode((1280, 720), pygame.NOFRAME)
     pygame.display.set_caption("Calibration: Silence Please!")
     pygame.mouse.set_visible(False)
     font = pygame.font.SysFont("monospace", 120)
@@ -539,6 +546,13 @@ if __name__ == '__main__':
     print_intro()
     args = set(arg.lower() for arg in sys.argv[1:])
 
+    # Set SELECTED_CHANNEL and start main
+    if 'right' in args:
+        SELECTED_CHANNEL = 'right'
+    else:
+        SELECTED_CHANNEL = 'left'
+    set_display_position(SELECTED_CHANNEL)
+
     # Validate args
     if 'calibrate' in args:
         SELECTED_CHANNEL = 'both'
@@ -551,12 +565,6 @@ if __name__ == '__main__':
 
     mapping = 'mapping' in args
     fullgrid_mode = 'fullgrid' in args
-
-    # Set SELECTED_CHANNEL and start main
-    if 'left' in args:
-        SELECTED_CHANNEL = 'left'
-    elif 'right' in args:
-        SELECTED_CHANNEL = 'right'
 
     try:
         main(mapping=mapping)
