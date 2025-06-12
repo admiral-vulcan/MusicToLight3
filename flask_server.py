@@ -17,9 +17,14 @@ import os
 import subprocess
 import re
 import redis
+import pwd
 
 app = Flask(__name__, static_folder='static')
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+# UID von musictolight automatisch holen
+mtl_uid = pwd.getpwnam("musictolight").pw_uid
+xdg_runtime_dir = f"/run/user/{mtl_uid}"
 
 def is_running(process):
     s = subprocess.Popen(["ps", "axw"],stdout=subprocess.PIPE)
@@ -39,8 +44,14 @@ def status():
 
 @app.route('/start', methods=['POST'])
 def start():
-    subprocess.Popen(['sudo', '-u', 'felix', 'env', 'DISPLAY=:0', 'python3', '/musictolight/main.py'])
+    subprocess.Popen([
+        'env',
+        'DISPLAY=:0',
+        f'XDG_RUNTIME_DIR={xdg_runtime_dir}',
+        '/musictolight/venv/bin/python', '/musictolight/main.py'
+    ])
     return '', 204
+
 
 @app.route('/stop', methods=['POST'])
 def stop():
