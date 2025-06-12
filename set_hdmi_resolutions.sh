@@ -20,3 +20,5 @@ if xrandr | grep -q "HDMI-2 connected"; then
     xrandr --addmode HDMI-2 $MODELINE 2>/dev/null
     xrandr --output HDMI-2 --mode $MODELINE --right-of HDMI-1
 fi
+
+pkill lxpanel
