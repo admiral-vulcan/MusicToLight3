@@ -34,7 +34,7 @@ FPS = 60  # Default is 60 fps, change if screens or Pi are performing poorly
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
 WIDTH = SCREEN_WIDTH * 2       # two screens side by side
-HEIGHT = SCREEN_HEIGHT - 1     # must be < native height
+HEIGHT = SCREEN_HEIGHT + 1     # must be <> native height; > native height to hide mouse
 
 # SDL/pygame hacks
 os.environ['SDL_VIDEO_WINDOW_POS']       = '0,0'
