@@ -22,3 +22,4 @@ if xrandr | grep -q "HDMI-2 connected"; then
 fi
 
 pkill lxpanel
+xrandr --output HDMI-1 --mode 1280x720 --primary --output HDMI-2 --mode 1280x720 --right-of HDMI-1

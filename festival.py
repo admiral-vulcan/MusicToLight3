@@ -27,6 +27,8 @@ from collections import deque
 if 'DISPLAY' not in os.environ:
     os.environ['DISPLAY'] = ':0'
 
+os.system('/musictolight/set_hdmi_resolutions.sh')
+
 # Performance setting
 FPS = 60  # Default is 60 fps, change if screens or Pi are performing poorly
 
@@ -34,7 +36,7 @@ FPS = 60  # Default is 60 fps, change if screens or Pi are performing poorly
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
 WIDTH = SCREEN_WIDTH * 2       # two screens side by side
-HEIGHT = SCREEN_HEIGHT + 1     # must be <> native height; > native height to hide mouse
+HEIGHT = SCREEN_HEIGHT - 1     # must be <> native height
 
 # SDL/pygame hacks
 os.environ['SDL_VIDEO_WINDOW_POS']       = '0,0'
@@ -50,7 +52,7 @@ SAMPLE_RATE = 44100
 BUFFER_SIZE = 1024
 CHANNELS = 2
 flip_channels = True
-BAND_HISTORY_LEN = 60  # normalization over about 2 seconds at 30 FPS
+BAND_HISTORY_LEN = 5 * FPS  # seconds times FPS
 OFFSET_CORRECTION = 0.015
 
 # Channel selection: set in __main__
@@ -63,7 +65,7 @@ OPACITY_MAP_RIGHT = "right_op.png"
 
 # Buffers and gains
 audio_levels = np.zeros(2)
-audio_buffer = np.zeros(BUFFER_SIZE * 4)
+audio_buffer = np.zeros((BUFFER_SIZE * 4, 2))  # Stereo
 #band_gains = np.array([0.7, 0.8, 0.9, 1.0, 1.2, 3.1, 5.2, 7.6, 30])
 band_gains = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 boost = 40
@@ -153,41 +155,21 @@ def audio_callback(indata, frames, time_info, status):
     """
     global audio_levels, audio_buffer, SELECTED_CHANNEL
 
-    if SELECTED_CHANNEL == 'both':
-        # Calibration mode: process both left and right channels
-        if flip_channels:
-            left = indata[:, 1]
-            right = indata[:, 0]
-        else:
-            left = indata[:, 0]
-            right = indata[:, 1]
-
-        # Calculate RMS levels for both channels
-        level_left = np.sqrt(np.mean(left ** 2))
-        level_right = np.sqrt(np.mean(right ** 2))
-        audio_levels = [level_left, level_right]
-
-        # Create mono mix for spectral analysis
-        mono = (left + right) / 2
-        audio_buffer[:-frames] = audio_buffer[frames:]
-        audio_buffer[-frames:] = mono
+    if indata.shape[1] == 2:
+        l = indata[:, 0]
+        r = indata[:, 1]
+        audio_levels = [np.sqrt(np.mean(l ** 2)), np.sqrt(np.mean(r ** 2))]
+        # Schiebe Buffer (Rolling)
+        audio_buffer[:-frames, :] = audio_buffer[frames:, :]
+        audio_buffer[-frames:, 0] = l
+        audio_buffer[-frames:, 1] = r
 
     else:
-        # Single channel mode: process only selected channel
-        if SELECTED_CHANNEL == 'left':
-            idx = 1 if flip_channels else 0
-        else:  # 'right'
-            idx = 0 if flip_channels else 1
-
-        channel_data = indata[:, idx]
-
-        # Calculate RMS level for the selected channel
-        level = np.sqrt(np.mean(channel_data ** 2))
-        audio_levels = [level, 0.0]  # Keep format consistent for downstream code
-
-        # Update buffer for spectral analysis
-        audio_buffer[:-frames] = audio_buffer[frames:]
-        audio_buffer[-frames:] = channel_data
+        # Fallback: Mono oder nur 1 Kanal (shouldn't happen)
+        audio_buffer[:-frames, 0] = audio_buffer[frames:, 0]
+        audio_buffer[-frames:, 0] = indata[:, 0]
+        audio_buffer[:, 1] = 0  # Setze rechten Kanal auf 0
+        audio_levels = [np.sqrt(np.mean(indata[:, 0] ** 2)), 0.0]
 
 
 def audio_thread():
@@ -212,6 +194,9 @@ def calibrate(seconds=5):
     levels_right = []
     band_history = []
 
+    # Schwellenwert für 'zu laut' (RMS-Level, konservativ, kann angepasst werden)
+    MAX_ALLOWED_RMS = 0.04
+
     # Start audio thread
     audio_running.set()
     t_audio = threading.Thread(target=audio_thread, daemon=True)
@@ -225,30 +210,60 @@ def calibrate(seconds=5):
     pygame.mouse.set_visible(False)
     font = pygame.font.SysFont("monospace", 120)
     clock = pygame.time.Clock()
+    aborted = False
     for sec in reversed(range(1, seconds + 1)):
         for _ in range(30):
+            # --- Plausibilitätsprüfung: Ist ein Kanal zu laut?
+            if max(audio_levels[0], audio_levels[1]) > MAX_ALLOWED_RMS:
+                # Fenster rot färben und abbrechen
+                win.fill((180, 0, 0))
+                msg = font.render("CALIBRATION FAILED", True, (255, 255, 0))
+                msg2 = font.render("TOO LOUD!", True, (255, 255, 0))
+                win.blit(msg, (size[0] // 2 - msg.get_width() // 2, size[1] // 2 - msg.get_height() - 40))
+                win.blit(msg2, (size[0] // 2 - msg2.get_width() // 2, size[1] // 2 + 20))
+                pygame.display.flip()
+                print(f"\n[ABORT] Calibration aborted: Signal too loud! (L={audio_levels[0]:.3f} / R={audio_levels[1]:.3f})")
+                time.sleep(3)
+                aborted = True
+                break
+
             win.fill((0, 0, 0))
             msg = font.render(f"Calibrating: {sec}", True, (255, 255, 0))
             win.blit(msg, (size[0] // 2 - msg.get_width() // 2, size[1] // 2 - msg.get_height() // 2))
             pygame.display.flip()
             clock.tick(FPS)
-            bands = compute_bands(audio_buffer, SAMPLE_RATE, bands_n=ROWS, band_noise_floor=None, normalize=False)
+
+            # Band-Noise-Floor: Mittelwert aus beiden Kanälen (Kompatibilität)
+            if audio_buffer.shape[1] == 2:
+                avg = np.mean(audio_buffer, axis=1)
+            else:
+                avg = audio_buffer[:, 0]
+            bands = compute_bands(avg, SAMPLE_RATE, bands_n=ROWS, band_noise_floor=None, normalize=False)
             band_history.append(bands)
+        if aborted:
+            break
         levels_left.append(audio_levels[0])
         levels_right.append(audio_levels[1])
+
+    audio_running.clear()
+    t_audio.join()
+
+    if aborted:
+        pygame.quit()
+        print("Calibration failed: Please ensure no audio is playing and try again.")
+        return
 
     win.fill((0, 0, 0))
     msg = font.render("Done!", True, (0, 255, 0))
     win.blit(msg, (size[0] // 2 - msg.get_width() // 2, size[1] // 2 - msg.get_height() // 2))
     pygame.display.flip()
     time.sleep(1)
-    audio_running.clear()
-    t_audio.join()
     pygame.quit()
 
     offset_left = float(np.median(levels_left))
     offset_right = float(np.median(levels_right))
     offset_data = {"left": offset_left, "right": offset_right}
+
     with open(OFFSET_FILE, "w") as f:
         json.dump(offset_data, f, indent=2)
     print(f"Calibration complete! Values saved to {OFFSET_FILE}: {offset_data}")
@@ -695,7 +710,8 @@ def main_single(mapping=False, fullgrid_mode=False):
             color = (int(loud_vis * 255), 0, int((1 - loud_vis) * 128) + 64)
 
             # FFT bands
-            current_audio = audio_buffer
+            channel_idx = 1 if SELECTED_CHANNEL == "left" else 0
+            current_audio = audio_buffer[:, channel_idx]
             band_values = compute_bands(current_audio, SAMPLE_RATE, bands_n=ROWS, band_noise_floor=band_noise_floor)
 
             # Scroll effect: leftmost (or rightmost) tile is current value, values move outward
