@@ -1,4 +1,5 @@
-# MusicToLight FESTIVAL EDITION  Copyright (C) 2025  Felix Rau.
+# MusicToLight FESTIVAL EDITION Dual Monitor Update (2025)
+# Copyright (C) 2025  Felix Rau
 # Licensed under the GNU GPL v3. See LICENSE for details.
 #
 # This program analyzes live music input, processes frequency bands,
@@ -7,7 +8,8 @@
 # customizable opacity maps for each projector area.
 #
 # Perfect for festivals, art installations, and synchronized audio-visual shows!
-
+#
+# For problems running on two monitors see DUALMONITOR.md and run set_hdmi_resolution as X11 - active user.
 
 import pygame
 import sounddevice as sd
@@ -24,6 +26,20 @@ from collections import deque
 # If DISPLAY not set (headless), default to :0
 if 'DISPLAY' not in os.environ:
     os.environ['DISPLAY'] = ':0'
+
+# Performance setting
+FPS = 60  # Default is 60 fps, change if screens or Pi are performing poorly
+
+# Dual-monitor dimensions
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
+WIDTH = SCREEN_WIDTH * 2       # two screens side by side
+HEIGHT = SCREEN_HEIGHT - 1     # must be < native height
+
+# SDL/pygame hacks
+os.environ['SDL_VIDEO_WINDOW_POS']       = '0,0'
+os.environ['SDL_VIDEO_CENTERED']         = '0'
+os.environ['SDL_VIDEO_FULLSCREEN_HEAD']  = '0'
 
 # Tile grid configuration
 ROWS = 9   # number of frequency bands (vertical tiles)
@@ -60,6 +76,8 @@ COLOR_BASS = (255, 0, 32)
 # Audio threading
 audio_running = threading.Event()
 
+# Opacity map setting
+ALPHA_THRESHOLD = 32 / 255  # about 12% brightness
 
 def print_intro():
     print(r"""
@@ -213,7 +231,7 @@ def calibrate(seconds=5):
             msg = font.render(f"Calibrating: {sec}", True, (255, 255, 0))
             win.blit(msg, (size[0] // 2 - msg.get_width() // 2, size[1] // 2 - msg.get_height() // 2))
             pygame.display.flip()
-            clock.tick(30)
+            clock.tick(FPS)
             bands = compute_bands(audio_buffer, SAMPLE_RATE, bands_n=ROWS, band_noise_floor=None, normalize=False)
             band_history.append(bands)
         levels_left.append(audio_levels[0])
@@ -382,11 +400,203 @@ def show_mapping_preview(alpha_mask, size):
         msg = font.render(info_text, True, text_color)
         win.blit(msg, (size[0] // 2 - msg.get_width() // 2, 20))
         pygame.display.flip()
-        clock.tick(30)
+        clock.tick(FPS)
     pygame.quit()
 
 
-def main(mapping=False):
+def main_dual(fullgrid_mode=False, mapping=False):
+    """
+    Dual-Monitor mode:
+    - No args: dual output (left visuals on left, right visuals on right)
+    - fullgrid_mode: ignore opacity maps, all tiles shown
+    - mapping: preview both opacity maps side by side, then exit
+    """
+    # --- Load calibration and noise floor ---
+    offset = load_offset()
+    band_noise_floor = load_band_noise_floor(bands_n=ROWS)
+
+    # --- Start audio thread ---
+    audio_running.set()
+    t_audio = threading.Thread(target=audio_thread, daemon=True)
+    t_audio.start()
+
+    # --- Pygame window setup (2560×719 for dual monitor hack) ---
+    pygame.init()
+    size = (WIDTH, HEIGHT)
+    win = pygame.display.set_mode(size, pygame.NOFRAME)
+    pygame.display.set_caption("MusicToLight Dual-Monitor")
+    pygame.mouse.set_visible(False)
+    clock = pygame.time.Clock()
+
+    # --- Prepare tile maps and mask alphas for each side ---
+    left_tiles, right_tiles = [], []
+
+    if fullgrid_mode:
+        # All tiles shown, alpha always 1.0
+        cw, ch = SCREEN_WIDTH // COLS, HEIGHT // ROWS
+        for r in range(ROWS):
+            for c in range(COLS):
+                left_tiles.append({"row": r, "col": c,
+                                   "x": c * cw,
+                                   "y": r * ch,
+                                   "w": cw, "h": ch,
+                                   "alpha": 1.0})
+                right_tiles.append({"row": r, "col": c,
+                                    "x": SCREEN_WIDTH + c * cw,
+                                    "y": r * ch,
+                                    "w": cw, "h": ch,
+                                    "alpha": 1.0})
+    else:
+        # Opacity-maps: load as numpy arrays
+        mask_left_path = os.path.join(os.path.dirname(__file__), OPACITY_MAP_LEFT)
+        mask_right_path = os.path.join(os.path.dirname(__file__), OPACITY_MAP_RIGHT)
+
+        mask_left_img = Image.open(mask_left_path).convert("L").resize((SCREEN_WIDTH, HEIGHT))
+        mask_right_img = Image.open(mask_right_path).convert("L").resize((SCREEN_WIDTH, HEIGHT))
+        mask_left_np = np.array(mask_left_img)
+        mask_right_np = np.array(mask_right_img)
+
+        # --- Print mask info (Debug/Status) ---
+        left_min, left_max = mask_left_np.min(), mask_left_np.max()
+        right_min, right_max = mask_right_np.min(), mask_right_np.max()
+        print(f"[HDMI-1] Mask shape: {mask_left_np.shape} min/max: {left_min} {left_max}")
+        print(f"[HDMI-1] Opacity map loaded: {mask_left_path}")
+
+        print(f"[HDMI-2] Mask shape: {mask_right_np.shape} min/max: {right_min} {right_max}")
+        print(f"[HDMI-2] Opacity map loaded: {mask_right_path}")
+
+        # Build tiles with precomputed per-tile alpha
+        cw, ch = SCREEN_WIDTH // COLS, HEIGHT // ROWS
+        for r in range(ROWS):
+            for c in range(COLS):
+                # Left screen
+                x = c * cw
+                y = r * ch
+                # Take alpha as mean over tile area (or just center pixel, up to you!)
+                a_tile = np.mean(mask_left_np[y:y+ch, x:x+cw]) / 255.0
+                left_tiles.append({"row": r, "col": c, "x": x, "y": y, "w": cw, "h": ch, "alpha": a_tile})
+                # Right screen
+                x2 = c * cw
+                y2 = r * ch
+                a2_tile = np.mean(mask_right_np[y2:y2+ch, x2:x2+cw]) / 255.0
+                right_tiles.append({"row": r, "col": c,
+                                    "x": SCREEN_WIDTH + x2, "y": y2, "w": cw, "h": ch, "alpha": a2_tile})
+
+        print(f"[HDMI-1] {sum(1 for t in left_tiles if t['alpha'] >= ALPHA_THRESHOLD)} of {ROWS * COLS} tiles visible in this map.")
+        print(f"[HDMI-2] {sum(1 for t in right_tiles if t['alpha'] >= ALPHA_THRESHOLD)} of {ROWS * COLS} tiles visible in this map.")
+
+    # --- Mapping preview: show both maps side by side and exit ---
+    if mapping and not fullgrid_mode:
+        preview = pygame.Surface(size, pygame.SRCALPHA)
+        left_img = pygame.image.fromstring(mask_left_img.tobytes(), mask_left_img.size, "L").convert()
+        right_img = pygame.image.fromstring(mask_right_img.tobytes(), mask_right_img.size, "L").convert()
+        preview.blit(left_img, (0, 0))
+        preview.blit(right_img, (SCREEN_WIDTH, 0))
+        running = True
+        while running:
+            for e in pygame.event.get():
+                if e.type in (pygame.QUIT, pygame.KEYDOWN):
+                    running = False
+            win.fill((0, 0, 0))
+            win.blit(preview, (0, 0))
+            pygame.display.flip()
+            clock.tick(FPS)
+        audio_running.clear()
+        t_audio.join()
+        pygame.quit()
+        return
+
+    # --- Visualization buffers ---
+    scroll_left = np.zeros((ROWS, COLS), dtype=float)
+    scroll_right = np.zeros((ROWS, COLS), dtype=float)
+    prev_left = np.zeros_like(scroll_left)
+    prev_right = np.zeros_like(scroll_right)
+
+    running = True
+    try:
+        while running:
+            for e in pygame.event.get():
+                if e.type == pygame.QUIT:
+                    running = False
+
+            # Compute bands for both channels (left/right)
+            # Split audio_buffer into channels for analysis
+            # -> audio_callback must fill both channels!
+            # For simplicity: in this version, we use only mono,
+            # but you can split your buffer if you keep a stereo buffer!
+
+            # Assume stereo is interleaved in audio_buffer
+            audio_stereo = audio_buffer.reshape(-1, 2)
+            if flip_channels:
+                l_channel = audio_stereo[:, 1]
+                r_channel = audio_stereo[:, 0]
+            else:
+                l_channel = audio_stereo[:, 0]
+                r_channel = audio_stereo[:, 1]
+
+            bands_left = compute_bands(l_channel, SAMPLE_RATE, bands_n=ROWS, band_noise_floor=band_noise_floor)
+            bands_right = compute_bands(r_channel, SAMPLE_RATE, bands_n=ROWS, band_noise_floor=band_noise_floor)
+
+            # Scroll effect for both sides
+            for row in range(ROWS):
+                # LEFT: scroll right, insert newest leftmost
+                scroll_left[row, 1:] = scroll_left[row, :-1]
+                scroll_left[row, 0] = bands_left[ROWS - 1 - row]
+                # RIGHT: scroll left, insert newest rightmost
+                scroll_right[row, :-1] = scroll_right[row, 1:]
+                scroll_right[row, -1] = bands_right[ROWS - 1 - row]
+
+            # Jitter for both (optional)
+            for row in range(ROWS):
+                if np.allclose(scroll_left[row], prev_left[row], atol=1e-6):
+                    scroll_left[row] += np.random.uniform(-0.03, 0.03, size=COLS)
+                    scroll_left[row] = np.clip(scroll_left[row], 0, 1)
+                if np.allclose(scroll_right[row], prev_right[row], atol=1e-6):
+                    scroll_right[row] += np.random.uniform(-0.03, 0.03, size=COLS)
+                    scroll_right[row] = np.clip(scroll_right[row], 0, 1)
+            prev_left[:, :] = scroll_left[:, :]
+            prev_right[:, :] = scroll_right[:, :]
+
+            # --- Draw everything ---
+            win.fill((0, 0, 0))
+
+            # Left screen tiles
+            for t in left_tiles:
+                if t["alpha"] < ALPHA_THRESHOLD:
+                    continue  # Skip transparent tiles
+                row, col = t["row"], t["col"]
+                val = scroll_left[row, col]
+                scale = 0.1 + val * 0.85
+                w = int(t["w"] * scale)
+                h = int(t["h"] * scale)
+                x = t["x"] + (t["w"] - w) // 2
+                y = t["y"] + (t["h"] - h) // 2
+                color = get_band_color(row, ROWS)
+                pygame.draw.rect(win, color, (x, y, w, h))
+
+            # Right screen tiles
+            for t in right_tiles:
+                if t["alpha"] < ALPHA_THRESHOLD:
+                    continue
+                row, col = t["row"], t["col"]
+                val = scroll_right[row, col]
+                scale = 0.1 + val * 0.85
+                w = int(t["w"] * scale)
+                h = int(t["h"] * scale)
+                x = t["x"] + (t["w"] - w) // 2
+                y = t["y"] + (t["h"] - h) // 2
+                color = get_band_color(row, ROWS)
+                pygame.draw.rect(win, color, (x, y, w, h))
+
+            pygame.display.flip()
+            clock.tick(FPS)
+    finally:
+        audio_running.clear()
+        t_audio.join()
+        pygame.quit()
+
+
+def main_single(mapping=False, fullgrid_mode=False):
     """
     Main loop for MusicToLight visualization.
     If mapping is True, only show the opacity mask.
@@ -535,7 +745,7 @@ def main(mapping=False):
             win.blit(vis_surface, (0, 0))
             pygame.display.flip()
 
-            clock.tick(30)
+            clock.tick(FPS)
     finally:
         audio_running.clear()
         t_audio.join()
@@ -546,27 +756,31 @@ if __name__ == '__main__':
     print_intro()
     args = set(arg.lower() for arg in sys.argv[1:])
 
-    # Set SELECTED_CHANNEL and start main
-    if 'right' in args:
-        SELECTED_CHANNEL = 'right'
-    else:
-        SELECTED_CHANNEL = 'left'
-    set_display_position(SELECTED_CHANNEL)
-
-    # Validate args
+    # Calibration mode
     if 'calibrate' in args:
         SELECTED_CHANNEL = 'both'
-        calibrate()
-        sys.exit(0)
-    if not (('left' in args) ^ ('right' in args)):
-        print_usage()
-        print("\nYou must specify either 'left' or 'right' as the display side. Optionally add 'mapping' for mask preview.")
+        try:
+            calibrate()
+        except KeyboardInterrupt:
+            print("\nProgram ended.")
         sys.exit(0)
 
-    mapping = 'mapping' in args
+    # Determine flags
     fullgrid_mode = 'fullgrid' in args
+    mapping      = 'mapping' in args
+    left         = 'left' in args
+    right        = 'right' in args
 
     try:
-        main(mapping=mapping)
+        # Single-screen mode: exactly one of 'left' or 'right'
+        if left ^ right:
+            SELECTED_CHANNEL = 'left' if left else 'right'
+            set_display_position(SELECTED_CHANNEL)
+            main_single(mapping=mapping, fullgrid_mode=fullgrid_mode)
+
+        # Dual-screen mode: no args OR mapping-only OR fullgrid-only OR mapping+fullgrid
+        else:
+            main_dual(fullgrid_mode=fullgrid_mode, mapping=mapping)
+
     except KeyboardInterrupt:
         print("\n\nProgram ended.")
