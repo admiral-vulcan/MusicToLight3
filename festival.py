@@ -19,8 +19,11 @@ import time
 import os
 import sys
 import json
+from sounddevice import PortAudioError
 from PIL import Image
 from collections import deque
+from scipy.signal import butter, lfilter
+from music_analysis import analyze_energy, detect_drums, is_techno
 
 
 # If DISPLAY not set (headless), default to :0
@@ -174,14 +177,23 @@ def audio_callback(indata, frames, time_info, status):
 
 def audio_thread():
     """Starts the audio input stream in a separate thread."""
-    with sd.InputStream(
-        channels=CHANNELS,
-        samplerate=SAMPLE_RATE,
-        blocksize=BUFFER_SIZE,
-        callback=audio_callback
-    ):
-        while audio_running.is_set():
-            time.sleep(0.01)
+    try:
+        with sd.InputStream(
+            channels=CHANNELS,
+            samplerate=SAMPLE_RATE,
+            blocksize=BUFFER_SIZE,
+            callback=audio_callback
+        ):
+            while audio_running.is_set():
+                time.sleep(0.01)
+    except PortAudioError as e:
+        # Print a friendly message if the device is busy or unavailable
+        print("\n[ERROR] Could not open the audio input device!")
+        print("       This is usually because another program is already using the input device.")
+        print("       Please close any other programs using audio input and try again.")
+        print(f"       (Details: {str(e)})\n")
+        audio_running.clear()
+        os._exit(1)  # Kills program
 
 
 def calibrate(seconds=5):
@@ -418,7 +430,6 @@ def show_mapping_preview(alpha_mask, size):
         clock.tick(FPS)
     pygame.quit()
 
-
 def main_dual(fullgrid_mode=False, mapping=False):
     """
     Dual-Monitor mode:
@@ -527,6 +538,11 @@ def main_dual(fullgrid_mode=False, mapping=False):
     prev_left = np.zeros_like(scroll_left)
     prev_right = np.zeros_like(scroll_right)
 
+    # --- Drum detection dicts ---
+    drum_state_left = {}
+    drum_state_right = {}
+    frame = 0
+
     running = True
     try:
         while running:
@@ -548,6 +564,33 @@ def main_dual(fullgrid_mode=False, mapping=False):
             else:
                 l_channel = audio_stereo[:, 0]
                 r_channel = audio_stereo[:, 1]
+
+
+            """
+            # Drum detection
+            if frame % 2 == 0:  # alle 2 Frames reicht für Peak-Detection!
+                drums_left = detect_drums(l_channel, SAMPLE_RATE, drum_state_left, debug_level=1, FPS=FPS, mean_secs=5.0)
+                #drums_right = detect_drums(r_channel, SAMPLE_RATE, drum_state_right)
+                if drums_left:
+                    print(f"[L] Drums detected: {', '.join(drums_left)}")
+                #else:
+                    #print(f"[L] Drums detected: ")
+            frame += 1
+            energy_info = analyze_energy(l_channel, SAMPLE_RATE, FPS=60, mean_secs=5.0)
+            if energy_info["absolute"]["low"] > energy_info["mean"]["low"] + 2:
+                print("Absolute Low:", energy_info["absolute"]["low"])
+                print("Mean Low:", energy_info["mean"]["low"])
+            if energy_info["absolute"]["overall"] > energy_info["mean"]["overall"] + 2:
+                print("Absolute Overall:", energy_info["absolute"]["overall"])
+                print("Mean Overall:", energy_info["mean"]["overall"])
+            """
+            result = is_techno(l_channel, SAMPLE_RATE, debug_level=2)
+
+            if result:
+                print("TECHNO!")
+            else:
+                print("No Techno")
+
 
             bands_left = compute_bands(l_channel, SAMPLE_RATE, bands_n=ROWS, band_noise_floor=band_noise_floor)
             bands_right = compute_bands(r_channel, SAMPLE_RATE, bands_n=ROWS, band_noise_floor=band_noise_floor)
